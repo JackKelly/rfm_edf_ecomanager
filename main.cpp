@@ -101,7 +101,7 @@ private:
 	Packet packets[NUM_PACKET];
 };
 
-PacketBuffer PACKET_BUFFER;
+PacketBuffer PACKET_BUFFER; // TODO: this should be a member of the Rfm12b class.
 
 
 /**
@@ -183,6 +183,11 @@ static const uint16_t spi_transfer_word(const uint16_t& cmd, const bool& select 
 	return reply;
 }
 
+enum {RX, TX} state; // TODO this should be in Rfm12b class
+const uint8_t packet_length = 18; // this should be in Rfm12b class
+uint8_t packet[packet_length]; // this should be in Rfm12b class
+uint8_t packet_index; // TODO this should be in Rfm12b class
+
 class Rfm12b {
 public:
 	static void enable_rx()
@@ -202,14 +207,70 @@ public:
 	    //                          eeeeeeed
 	    //                          rbtsxbwc
 		spi_transfer_word(0x82D9);
+		state = RX;
 		reset_fifo();
+	}
+
+	static void enable_tx()
+	{
+		// See power managament command in enable_rx()
+		spi_transfer_word(0x8239);
+		state = TX;
+	}
+
+	static void tx_next_byte()
+	{
+		uint8_t out = packet[packet_index++];
+		spi_transfer_word(0xB800 + out);
+		Serial.print(out, HEX);
+		Serial.print(" ");
+
+		if (packet_index >= packet_length) {
+			// we've finished transmitting the packet
+			Serial.print("\r\n");
+			enable_rx();
+		}
+	}
+
+	/*
+	 * TODO: SPI sniff EnviR to see if it picks up my TX
+	 */
+
+	static void tx_payload(const uint8_t* payload, const uint8_t payload_length)
+	{
+		const uint8_t HEADER_LENGTH = 4;
+		const uint8_t HEADER[] = {
+				0x55, // Preamble (to allow RX to lock on). Could try 12 bits.
+				0x55,
+				0x2D, // Synchron byte 0
+				0xD4  // Synchron byte 1
+		};
+
+		const uint8_t TAIL_LENGTH = 2;
+		const uint8_t TAIL[] = {0x00, 0x00};
+
+
+		int i;
+		for (i=0; i<HEADER_LENGTH; i++) {
+			packet[i] = HEADER[i];
+		}
+		for (i=0; i<payload_length; i++) {
+			packet[i+HEADER_LENGTH] = payload[i];
+		}
+		for (i=0; i<TAIL_LENGTH; i++) {
+			packet[i+HEADER_LENGTH+payload_length] = TAIL[i];
+		}
+
+		packet_index = 0;
+		enable_tx();
+		// TODO: tx CRC?
 	}
 
 	static void reset_fifo()
 	{
 
 		// To restart synchron pattern recognition, bit ff should be cleared and set
-		// i.e. packet will start with preable, then synchron pattern, then payload
+		// i.e. packet will start with preable, then synchron pattern, then packet
 		// data, then turn FIFO off and on (I think)
 
 	    // 8. FIFO and Reset Mode Command (CA81)
@@ -232,22 +293,29 @@ public:
 	static void interrupt_handler()
 	{
 		spi_select(true);
-		bool full = false; // is the buffer full after receiving the byte waiting for us?
 		const uint8_t status_MSB = spi_transfer_byte(0x00); // get status word MSB
 		const uint8_t status_LSB = spi_transfer_byte(0x00); // get status word LSB
-		const uint8_t data_1     = spi_transfer_byte(0x00); // get 1st byte of data
 
-		if ((status_MSB & 0x20) != 0) { // FIFO overflow
-			full  = PACKET_BUFFER.add(data_1);
-			full |= PACKET_BUFFER.add(spi_transfer_byte(0x00));
-		} else 	if ((status_MSB & 0x80) != 0) { // FIFO has 8 bits ready
-			full = PACKET_BUFFER.add(data_1);
-		}
-		spi_select(false);
+		if (state == RX) {
+			const uint8_t data_1     = spi_transfer_byte(0x00); // get 1st byte of data
+			bool full = false; // is the buffer full after receiving the byte waiting for us?
+			if ((status_MSB & 0x20) != 0) { // FIFO overflow
+				full  = PACKET_BUFFER.add(data_1);
+				full |= PACKET_BUFFER.add(spi_transfer_byte(0x00));
+			} else 	if ((status_MSB & 0x80) != 0) { // FIFO has 8 bits ready
+				full = PACKET_BUFFER.add(data_1);
+			}
+			spi_select(false);
 
-		if (full) {
-			reset_fifo();
+			if (full) {
+				reset_fifo();
+			}
+		} else { // state == TX
+			if ((status_MSB & 0x80) != 0) { // TX register ready
+				tx_next_byte();
+			}
 		}
+
 	}
 
 	/**
@@ -670,6 +738,17 @@ public:
 		}
 	}
 
+	static void ping_iam()
+	{
+		const uint8_t tx_data[] = {0x46, 0x55, 0x10, 0x00, 0x03,
+				0x00 ,0x50 ,0x53, 0x00, 0x00, 0x4F, 0x9E};
+
+		// 46 55 10 0 3 0 50 53 0 0 0 0 0 0 0 0
+
+		Serial.println("tx_payload");
+		tx_payload(tx_data, 12);
+	}
+
 };
 
 Rfm12b RFM12B;
@@ -683,8 +762,10 @@ void setup() {
 }
 
 void loop() {
-	delay(1000);
+	delay(3000);
 	Serial.println(".");
+	RFM12B.ping_iam();
+	delay(100);
 	RFM12B.print_if_data_available();
 }
 
