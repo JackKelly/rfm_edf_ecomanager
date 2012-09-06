@@ -52,17 +52,17 @@ void Rfm12b::tx_next_byte()
  * TODO: SPI sniff EnviR to see if it picks up my TX
  */
 
-void Rfm12b::tx_payload(const uint8_t* payload, const uint8_t payload_length)
+void Rfm12b::tx_payload(const uint8_t payload[], const uint8_t payload_length)
 {
-	const uint8_t HEADER_LENGTH = 3;
 	const uint8_t HEADER[] = {
 			0x55, // Preamble (to allow RX to lock on). Could try 12 bits.
 			0x2D, // Synchron byte 0
 			0xD4  // Synchron byte 1
 	};
-
-	const uint8_t TAIL_LENGTH = 2;
 	const uint8_t TAIL[] = {0x40, 0x00};
+
+	const uint8_t HEADER_LENGTH = sizeof(HEADER);
+	const uint8_t TAIL_LENGTH   = sizeof(TAIL);
 
 	tx_packet.reset();
 	tx_packet.set_packet_length(HEADER_LENGTH + payload_length + TAIL_LENGTH);
