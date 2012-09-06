@@ -6,21 +6,30 @@
  */
 class Packet {
 public:
-	Packet();
+	Packet(const uint8_t _packet_length = MAX_PACKET_LENGTH);
+
+	void set_packet_length(const uint8_t _packet_length);
 
 	/**
 	 * Add a byte to the packet.
 	 */
 	volatile void add(const uint8_t value);
+	volatile void add(const uint8_t* bytes, const uint8_t length);
+	volatile const uint8_t get_next_byte();
 	void print() const;
-	bool full();
+	const bool full() const;
 	volatile void reset();
 
 private:
-	static const uint8_t PACKET_SIZE = 12; // number of bytes in a packet
-	volatile uint8_t bytes_read; // number of bytes read so far
-	volatile uint8_t packet[PACKET_SIZE];
+	volatile uint8_t packet_length; // number of bytes in a packet
+	volatile uint8_t byte_index;    // index of next byte to write/read
+	const static uint8_t MAX_PACKET_LENGTH = 22;
+	// we can't use new() on the
+	// arduino (not easily, anyway) so let's just have a statically declared
+	// array of length MAX_PACKET_LENGTH.
+	volatile uint8_t packet[MAX_PACKET_LENGTH];
 };
+
 
 /**
  * Class for storing multiple packets.  We need this because
@@ -31,7 +40,7 @@ class PacketBuffer {
 public:
 	// FIXME: concurrency issues. Research mutexes on Arduino.
 
-	PacketBuffer();
+	PacketBuffer(const uint8_t packet_length);
 
 	/**
 	 * @returns true if packet is complete AFTER adding value to it.
@@ -41,7 +50,7 @@ public:
 	volatile const bool data_is_available() const;
 
 private:
-	static const uint8_t NUM_PACKET = 5;
+	const static uint8_t NUM_PACKETS = 5;
 	uint8_t current_packet;
-	Packet packets[NUM_PACKET];
+	Packet packets[NUM_PACKETS];
 };

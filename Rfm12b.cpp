@@ -2,10 +2,9 @@
 #include <Arduino.h>
 #include "spi.h"
 
-uint8_t Rfm12b::packet_index;
-uint8_t Rfm12b::packet[];
 Rfm12b::State Rfm12b::state;
-PacketBuffer Rfm12b::PACKET_BUFFER;
+Packet Rfm12b::tx_packet;
+PacketBuffer Rfm12b::rx_packet_buffer(12);
 
 void Rfm12b::enable_rx()
 {
@@ -37,12 +36,12 @@ void Rfm12b::enable_tx()
 
 void Rfm12b::tx_next_byte()
 {
-	uint8_t out = packet[packet_index++];
+	const uint8_t out = tx_packet.get_next_byte();
 	spi::transfer_word(0xB800 + out);
 	Serial.print(out, HEX);
 	Serial.print(" ");
 
-	if (packet_index >= packet_length) {
+	if (tx_packet.full()) {
 		// we've finished transmitting the packet
 		Serial.print("\r\n");
 		enable_rx();
@@ -62,22 +61,18 @@ void Rfm12b::tx_payload(const uint8_t* payload, const uint8_t payload_length)
 			0xD4  // Synchron byte 1
 	};
 
-	const uint8_t TAIL_LENGTH = 1;
-	const uint8_t TAIL[] = {0x40};
+	const uint8_t TAIL_LENGTH = 2;
+	const uint8_t TAIL[] = {0x40, 0x00};
 
+	tx_packet.reset();
+	tx_packet.set_packet_length(HEADER_LENGTH + payload_length + TAIL_LENGTH);
 
-	int i;
-	for (i=0; i<HEADER_LENGTH; i++) {
-		packet[i] = HEADER[i];
-	}
-	for (i=0; i<payload_length; i++) {
-		packet[i+HEADER_LENGTH] = payload[i];
-	}
-	for (i=0; i<TAIL_LENGTH; i++) {
-		packet[i+HEADER_LENGTH+payload_length] = TAIL[i];
-	}
+	tx_packet.add(HEADER, HEADER_LENGTH);
+	tx_packet.add(payload, payload_length);
+	tx_packet.add(TAIL, TAIL_LENGTH);
 
-	packet_index = 0;
+	tx_packet.reset();
+
 	enable_tx();
 	// TODO: tx CRC?
 }
@@ -116,10 +111,10 @@ void Rfm12b::interrupt_handler()
 		const uint8_t data_1     = spi::transfer_byte(0x00); // get 1st byte of data
 		bool full = false; // is the buffer full after receiving the byte waiting for us?
 		if ((status_MSB & 0x20) != 0) { // FIFO overflow
-			full  = PACKET_BUFFER.add(data_1);
-			full |= PACKET_BUFFER.add(spi::transfer_byte(0x00));
+			full  = rx_packet_buffer.add(data_1);
+			full |= rx_packet_buffer.add(spi::transfer_byte(0x00));
 		} else 	if ((status_MSB & 0x80) != 0) { // FIFO has 8 bits ready
-			full = PACKET_BUFFER.add(data_1);
+			full = rx_packet_buffer.add(data_1);
 		}
 		spi::select(false);
 
@@ -549,8 +544,8 @@ void Rfm12b::init_edf () {
 
 void Rfm12b::print_if_data_available()
 {
-	if (PACKET_BUFFER.data_is_available()) {
-		PACKET_BUFFER.print_and_reset();
+	if (rx_packet_buffer.data_is_available()) {
+		rx_packet_buffer.print_and_reset();
 	}
 }
 
@@ -565,8 +560,7 @@ void Rfm12b::ping_iam()
 
 void Rfm12b::mimick_cc_ct()
 {
-	const uint8_t tx_data[] = {0x55, 0x55, 0x65, 0xA6, 0x95, 0x55, 0x9A,
-			0x65, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55};
-	// 55 55 65 A6 95 55 55 55 55 55 55 55 55 55 55 55
+	const uint8_t tx_data[] = {0x55, 0x55, 0x65, 0xA6, 0x95, 0x55, 0x55,
+			0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55};
 	tx_payload(tx_data, 16);
 }

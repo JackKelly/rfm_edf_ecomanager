@@ -33,8 +33,6 @@ public:
 
 private:
 	static enum State {RX, TX} state;
-	const static uint8_t packet_length = 22;
-	static uint8_t packet[packet_length];
-	static uint8_t packet_index;
-	static PacketBuffer PACKET_BUFFER;
+	static Packet tx_packet;
+	static PacketBuffer rx_packet_buffer;
 };

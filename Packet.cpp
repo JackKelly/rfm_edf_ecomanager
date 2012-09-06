@@ -5,31 +5,58 @@
  * received from a Current Cost transmitter.
  */
 
-Packet::Packet(): bytes_read(0) {}
+Packet::Packet(const uint8_t _packet_length)
+: packet_length(_packet_length), byte_index(0)
+{
+	if (packet_length > MAX_PACKET_LENGTH) {
+		Serial.println("ERROR: packet_length > MAX_PACKET_LENGTH!");
+	}
+}
+
+void Packet::set_packet_length(const uint8_t _packet_length)
+{
+	packet_length = _packet_length;
+}
 
 /**
  * Add a byte to the packet.
  */
-volatile void Packet::add(const uint8_t value) {
-	if (bytes_read < PACKET_SIZE) {
-		packet[bytes_read++] = value;
+volatile void Packet::add(const uint8_t value)
+{
+	if (!full()) {
+		packet[byte_index++] = value;
 	}
 }
 
+volatile void Packet::add(const uint8_t* bytes, const uint8_t length)
+{
+	for (int i=0; i<length; i++) {
+		add(bytes[i]);
+	}
+}
+
+volatile const uint8_t Packet::get_next_byte()
+{
+	if (!full()) {
+		return packet[byte_index++];
+	}
+	return 0;
+}
+
 void Packet::print() const {
-	for (int i=0; i<PACKET_SIZE; i++) {
+	for (int i=0; i<packet_length; i++) {
 		Serial.print(packet[i], HEX);
 		Serial.print(" ");
 	}
 	Serial.print("\r\n");
 }
 
-bool Packet::full() {
-	return bytes_read == PACKET_SIZE;
+const bool Packet::full() const {
+	return byte_index >= packet_length;
 }
 
 volatile void Packet::reset() {
-	bytes_read = 0;
+	byte_index = 0;
 }
 
 /**
@@ -40,7 +67,13 @@ volatile void Packet::reset() {
 
 // FIXME: concurrency issues. Research mutexes on Arduino.
 
-PacketBuffer::PacketBuffer(): current_packet(0) {}
+PacketBuffer::PacketBuffer(const uint8_t packet_length)
+: current_packet(0)
+{
+	for (int i=0; i<NUM_PACKETS; i++) {
+		packets[i].set_packet_length(packet_length);
+	}
+}
 
 /**
  * @returns true if packet is complete AFTER adding value to it.
@@ -49,7 +82,7 @@ volatile const bool PacketBuffer::add(const uint8_t value) {
 	packets[current_packet].add(value);
 
 	if (packets[current_packet].full()) {
-		if (current_packet >= NUM_PACKET) {
+		if (current_packet >= NUM_PACKETS) {
 			Serial.println("NO MORE BUFFERS!");
 		} else {
 			current_packet++;
