@@ -49,10 +49,13 @@ void Packet::print() const {
 		Serial.print(" ");
 	}
 	if (verify()) {
-		Serial.print("OK");
+		Serial.print("OK ");
 	} else {
-		Serial.print("FAIL");
+		Serial.print("FAIL ");
 	}
+
+	Serial.print("wattage=");
+	Serial.print(get_wattage());
 
 	Serial.print("\r\n");
 }
@@ -78,7 +81,7 @@ volatile void Packet::assemble(const uint8_t payload[], const uint8_t payload_le
 		const bool add_checksum)
 {
 	const uint8_t HEADER[] = {
-			0x55, // Preamble (to allow RX to lock on). Could try 12 bits.
+			0x55, // Preamble (to allow RX to lock on).
 			0x2D, // Synchron byte 0
 			0xD4  // Synchron byte 1
 	};
@@ -106,14 +109,20 @@ volatile const bool Packet::verify() const
 	return calculated_checksum == packet[packet_length-1];
 }
 
+volatile const uint16_t Packet::get_wattage() const
+{
+	uint16_t wattage = packet[9] << 8;
+	wattage += packet[8];
+	return wattage;
+}
+
 /**
  * Class for storing multiple packets.  We need this because
  * multiple packets might arrive before we have a chance to
  * read these packets over the FTDI serial port.
  */
 
-// FIXME: concurrency issues. Research mutexes on Arduino.
-
+// FIXME: concurrency issues? Research mutexes on Arduino.
 PacketBuffer::PacketBuffer(const uint8_t packet_length)
 : current_packet(0)
 {

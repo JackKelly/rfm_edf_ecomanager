@@ -22,6 +22,7 @@ public:
 	volatile void assemble(const uint8_t payload[], const uint8_t payload_length,
 			const bool add_checksum = false);
 	volatile const bool verify() const;
+	volatile const uint16_t get_wattage() const;
 
 
 private:
