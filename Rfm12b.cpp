@@ -23,7 +23,7 @@ void Rfm12b::enable_rx()
 	// dc : disable clock output of CLK pin
 	//                          eeeeeeed
 	//                          rbtsxbwc
-	spi::spi_transfer_word(0x82D9);
+	spi::transfer_word(0x82D9);
 	state = RX;
 	reset_fifo();
 }
@@ -31,14 +31,14 @@ void Rfm12b::enable_rx()
 void Rfm12b::enable_tx()
 {
 	// See power managament command in enable_rx()
-	spi::spi_transfer_word(0x8239);
+	spi::transfer_word(0x8239);
 	state = TX;
 }
 
 void Rfm12b::tx_next_byte()
 {
 	uint8_t out = packet[packet_index++];
-	spi::spi_transfer_word(0xB800 + out);
+	spi::transfer_word(0xB800 + out);
 	Serial.print(out, HEX);
 	Serial.print(" ");
 
@@ -101,27 +101,27 @@ void Rfm12b::reset_fifo()
 	// ff: enable FIFO fill
 	// dr: disable hi sensitivity reset mode
 
-	spi::spi_transfer_word(0xCA81); // from EDF config
-	spi::spi_transfer_word(0xCA83); // my attempt to enable FIFO fill
+	spi::transfer_word(0xCA81); // from EDF config
+	spi::transfer_word(0xCA83); // my attempt to enable FIFO fill
 
 }
 
 void Rfm12b::interrupt_handler()
 {
-	spi::spi_select(true);
-	const uint8_t status_MSB = spi::spi_transfer_byte(0x00); // get status word MSB
-	const uint8_t status_LSB = spi::spi_transfer_byte(0x00); // get status word LSB
+	spi::select(true);
+	const uint8_t status_MSB = spi::transfer_byte(0x00); // get status word MSB
+	const uint8_t status_LSB = spi::transfer_byte(0x00); // get status word LSB
 
 	if (state == RX) {
-		const uint8_t data_1     = spi::spi_transfer_byte(0x00); // get 1st byte of data
+		const uint8_t data_1     = spi::transfer_byte(0x00); // get 1st byte of data
 		bool full = false; // is the buffer full after receiving the byte waiting for us?
 		if ((status_MSB & 0x20) != 0) { // FIFO overflow
 			full  = PACKET_BUFFER.add(data_1);
-			full |= PACKET_BUFFER.add(spi::spi_transfer_byte(0x00));
+			full |= PACKET_BUFFER.add(spi::transfer_byte(0x00));
 		} else 	if ((status_MSB & 0x80) != 0) { // FIFO has 8 bits ready
 			full = PACKET_BUFFER.add(data_1);
 		}
-		spi::spi_select(false);
+		spi::select(false);
 
 		if (full) {
 			reset_fifo();
@@ -141,9 +141,9 @@ void Rfm12b::interrupt_handler()
 void Rfm12b::init_cc () {
 	Serial.println("Starting rf12_initialize_cc() ");
 
-	spi::spi_init();
+	spi::init();
 
-	spi::spi_transfer_word(0x0000);
+	spi::transfer_word(0x0000);
 
 	delay(2000); // give RFM time to start up
 
@@ -240,7 +240,7 @@ void Rfm12b::init_cc () {
 	 * BEGIN RFM12b COMMANDS...
 	 ***************************/
 
-	spi::spi_transfer_word(0x0000);
+	spi::transfer_word(0x0000);
 
 	// 2. configuration setting command
 	// 1 0 0 0 0 0 0 0 el ef b1 b0 x3 x2 x1 x0
@@ -253,7 +253,7 @@ void Rfm12b::init_cc () {
 	//
 	//                          ee
 	//                  10000000lfbbxxxx
-	spi::spi_transfer_word(0b1000000001010111);
+	spi::transfer_word(0b1000000001010111);
 
 	// 3. Power Management Command
 	// 1 0 0 0   0 0 1 0  er ebb et es ex eb ew dc
@@ -268,21 +268,21 @@ void Rfm12b::init_cc () {
 	// dc : disable clock output of CLK pin
 	//                          eeeeeeed
 	//                          rbtsxbwc
-	spi::spi_transfer_word(0b1000001011011001);
+	spi::transfer_word(0b1000001011011001);
 
 	// 4. Frequency setting command
 	// 1 0 1 0 F
 	// F  = 1560 decimal = 0x618
 	// Fc = 10 x 1 x (43 + F/4000) MHz = 433.9 MHz
 	//
-	spi::spi_transfer_word(0xA618); // 433.9MHz
+	spi::transfer_word(0xA618); // 433.9MHz
 
 	// 5. Data Rate command
 	// 1 1 0 0   0 1 1 0   cs  r...
 	// r  = 10 decimal
 	// cs = 1
 	// BitRate = 10000 / 29 / (R+1) / (1 + 7) = 3.918 kbps (from CCRFM01)
-	spi::spi_transfer_word(0xC68A);
+	spi::transfer_word(0xC68A);
 
 
 	// 6 Receiver control command
@@ -295,7 +295,7 @@ void Rfm12b::init_cc () {
 	// r: RSSI detector threshold. 000 = -103 dBm
 	//
 	//                  10010Pddiiiggrrr
-	spi::spi_transfer_word(0b1001010011000000);
+	spi::transfer_word(0b1001010011000000);
 
 	// 7. Digital filter command
 	// 1 1 0 0 0 0 1 0 al ml 1 s 1 f2 f1 f0
@@ -308,7 +308,7 @@ void Rfm12b::init_cc () {
 	// f : DQD threshold. CCRFM01=2; but RFM12b manual recommends >4
 	//                          am
 	//                  11000010ll1s1fff
-	spi::spi_transfer_word(0b1100001001101100);
+	spi::transfer_word(0b1100001001101100);
 
 
 	// 13 PLL setting
@@ -327,7 +327,7 @@ void Rfm12b::init_cc () {
 	//
 	//                              safd
 	//                  11001010ffffplfr
-	spi::spi_transfer_word(0b1100101010000001);
+	spi::transfer_word(0b1100101010000001);
 
 	// 8. FIFO and Reset Mode Command
 	// 1 1 0 0 1 0 1 0 f3 f2 f1 f0 sp al ff dr
@@ -342,7 +342,7 @@ void Rfm12b::init_cc () {
 	//
 	//                              safd
 	//                  11001010ffffplfr
-	spi::spi_transfer_word(0b1100101010000011);
+	spi::transfer_word(0b1100101010000011);
 
 	// 9 Synchron pattern command
 	// spi::spi_transfer_word(0xCE55);
@@ -357,19 +357,19 @@ void Rfm12b::init_cc () {
 	// fi=1 Enable AFC hi accuracy mode (RFM01)
 	// oe=1 Enable AFC output register
 	// en=1 Enable AFC function
-	spi::spi_transfer_word(0xC49F);
+	spi::transfer_word(0xC49F);
 
 	// 12. TX config
 	// spi::spi_transfer_word(0x9850); // !mp,9810=30kHz,MAX OUT
 
 	// 15. wake-up timer command
-	spi::spi_transfer_word(0xE000); // NOT USE
+	spi::transfer_word(0xE000); // NOT USE
 
 	// 16. Low duty cycle
-	spi::spi_transfer_word(0xC80E); // NOT USE (last bit is 0 -> disable lower duty cycle mode)
+	spi::transfer_word(0xC80E); // NOT USE (last bit is 0 -> disable lower duty cycle mode)
 
 	// 17. low battery detector and micro controller clock div
-	spi::spi_transfer_word(0xC000); // 1.0MHz,2.2V
+	spi::transfer_word(0xC000); // 1.0MHz,2.2V
 
 	Serial.println("attaching interrupt");
 	attachInterrupt(0, interrupt_handler, LOW);
@@ -381,9 +381,9 @@ void Rfm12b::init_cc () {
 void Rfm12b::init_edf () {
 	Serial.println("Starting rf12_initialize_edf() ");
 
-	spi::spi_init();
+	spi::init();
 
-	spi::spi_transfer_word(0x0000);
+	spi::transfer_word(0x0000);
 	// TODO: do we need a software reset here?
 
 	delay(2000); // give RFM time to start up
@@ -407,7 +407,7 @@ void Rfm12b::init_edf () {
 	//
 	//                          ee
 	//                  10000000lfbbxxxx
-	spi::spi_transfer_word(0x80D8);
+	spi::transfer_word(0x80D8);
 
 	// 3. Power Management Command 0x8201
 	// 1 0 0 0   0 0 1 0  er ebb et es ex eb ew dc
@@ -423,20 +423,20 @@ void Rfm12b::init_edf () {
 	// dc : disable clock output of CLK pin
 	//                          eeeeeeed
 	//                          rbtsxbwc
-	spi::spi_transfer_word(0x8201);
+	spi::transfer_word(0x8201);
 
 	// 4. Frequency setting command
 	// 1 0 1 0 F
 	// F  = 1588 decimal = 0x634 (EnviR RFM01 has 1560 decimal)
 	// Fc = 10 x 1 x (43 + F/4000) MHz = 433.97 MHz (EnviR RFM01 uses 433.9 MHz)
-	spi::spi_transfer_word(0xA634);
+	spi::transfer_word(0xA634);
 
 	// 5. Data Rate command
 	// 1 1 0 0   0 1 1 0   cs  r...
 	// r  = 0b1010111 = 87 decimal
 	// cs = 0
 	// BitRate = 10000 / 29 / (R+1) = 3.918 kbps (same as CC RFM01)
-	spi::spi_transfer_word(0xC657);
+	spi::transfer_word(0xC657);
 
 	// 6 Receiver control command 94C0
 	// 1 0 0 1 0 P16 d1 d0 i2 i1 i0 g1 g0 r2 r1 r0
@@ -448,7 +448,7 @@ void Rfm12b::init_edf () {
 	// r: RSSI detector threshold. 000 = -103 dBm (same as CC RFM01)
 	//
 	//                  10010Pddiiiggrrr
-	spi::spi_transfer_word(0x94C0);
+	spi::transfer_word(0x94C0);
 
 	// 7. Digital filter command C22C
 	// 1 1 0 0 0 0 1 0 al ml 1 s 1 f2 f1 f0
@@ -461,7 +461,7 @@ void Rfm12b::init_edf () {
 	// f : DQD threshold. CCRFM01=2; but RFM12b manual recommends >4 (diff to CC RFM01)
 	//                          am
 	//                  11000010ll1s1fff
-	spi::spi_transfer_word(0xC22C);
+	spi::transfer_word(0xC22C);
 
 	// 8. FIFO and Reset Mode Command (CA81)
 	// 1 1 0 0 1 0 1 0 f3 f2 f1 f0 sp al ff dr
@@ -474,11 +474,11 @@ void Rfm12b::init_edf () {
 	//     1=always fill
 	// ff: enable FIFO fill
 	// dr: disable hi sensitivity reset mode
-	spi::spi_transfer_word(0xCA81); // from EDF config
+	spi::transfer_word(0xCA81); // from EDF config
 
 	// 9. Synchron Pattern Command CED4
 	// D4 = default synchron pattern
-	spi::spi_transfer_word(0xCED4);
+	spi::transfer_word(0xCED4);
 
 	// 11. AFC Command C4F7
 	// 1 1 0 0 0 1 0 0 a1 a0 rl1 rl0 st fi oe en
@@ -503,7 +503,7 @@ void Rfm12b::init_edf () {
 	// en: Enable AFC function. (Same as CC RFM01)
 	//     Enables the calculation of the
 	//     offset frequency by the AFC circuit.
-	spi::spi_transfer_word(0xC4F7);
+	spi::transfer_word(0xC4F7);
 
 	// 12. TX Configuration Control Command 0x9820
 	// 1 0 0 1 1 0 0 mp m3 m2 m1 m0 0 p2 p1 p0
@@ -512,7 +512,7 @@ void Rfm12b::init_edf () {
 	//     frequency shift = pos
 	//     deviation       = 45 kHz
 	// p : Output power. 0x000=0dB
-	spi::spi_transfer_word(0x9820);
+	spi::transfer_word(0x9820);
 
 	// 13. PLL Setting Command 0xCC66
 	// 1 1 0 0 1 1 0 0 0 ob1 ob0 1 dly ddit 1 bw0
@@ -527,19 +527,19 @@ void Rfm12b::init_edf () {
 	// ddit: disables dithering in the PLL loop
 	// bw0: PLL bandwidth set fo optimal TX RM performance
 	//      0 = Max bit rate = 86.2kbps
-	spi::spi_transfer_word(0xCC66);
+	spi::transfer_word(0xCC66);
 
 	// 15. Wake-up timer command
 	// R=0, M=0 (i.e. Twakeup = 0ms, the minimum)
-	spi::spi_transfer_word(0xE000);
+	spi::transfer_word(0xE000);
 
 	// 16. Low Duty-Cycle disabled
-	spi::spi_transfer_word(0xC800);
+	spi::transfer_word(0xC800);
 
 	// 17. Low Batt Detector and Microcontroller Clock Div
 	// Low batt threshold = 2.2V (lowest poss)
 	// Clock pin freq = 1.0Mhz (lowest poss)
-	spi::spi_transfer_word(0xC000);
+	spi::transfer_word(0xC000);
 
 	Serial.println("attaching interrupt");
 	delay(500);

@@ -10,30 +10,28 @@
 #define SPI_SCK     13 // PB5, pin 19
 
 namespace spi {
+	/* Select or de-select the RFM01.
+	 *
+	 * @param state: if true then select the RFM01 (ready for data transfer)
+	 */
+	void select(const bool state);
 
-/* Select or de-select the RFM01.
- *
- * @param state: if true then select the RFM01 (ready for data transfer)
- */
-void spi_select(const bool state);
+	/**
+	 * Initialise the ATmega's SPI hardware for use with the RFM01.
+	 */
+	void init();
 
-/**
- * Initialise the ATmega's SPI hardware for use with the RFM01.
- */
-void spi_init();
+	/**
+	 * Send a byte over the SPI bus
+	 *
+	 * @return 8-bit response
+	 */
+	const uint8_t transfer_byte(const uint8_t& out);
 
-/**
- * Send a byte over the SPI bus
- *
- * @return 8-bit response
- */
-const uint8_t spi_transfer_byte(const uint8_t& out);
-
-/**
- * Send a 16-bit word over the SPI bus, with MSB first.
- *
- * @return 16-bit response. First response is MSB.
- */
-const uint16_t spi_transfer_word(const uint16_t& cmd, const bool& select = true);
-
+	/**
+	 * Send a 16-bit word over the SPI bus, with MSB first.
+	 *
+	 * @return 16-bit response. First response is MSB.
+	 */
+	const uint16_t transfer_word(const uint16_t& cmd, const bool& ss = true);
 };

@@ -6,7 +6,7 @@
  *
  * @param state: if true then select the RFM01 (ready for data transfer)
  */
-inline void spi::spi_select(const bool state)
+inline void spi::select(const bool state)
 {
 	if (state == true) {
 		bitClear(SS_PORT, SS_BIT);
@@ -18,9 +18,9 @@ inline void spi::spi_select(const bool state)
 /**
  * Initialise the ATmega's SPI hardware for use with the RFM01.
  */
-void spi::spi_init()
+void spi::init()
 {
-	spi_select(false);
+	select(false);
     bitSet(SS_DDR, SS_BIT);
     digitalWrite(SPI_SS, 1);
 
@@ -57,7 +57,7 @@ void spi::spi_init()
  *
  * @return 8-bit response
  */
-const uint8_t spi::spi_transfer_byte(const uint8_t& out)
+const uint8_t spi::transfer_byte(const uint8_t& out)
 {
 	SPDR = out;
     // this loop spins 4 usec with a 2 MHz SPI clock
@@ -71,12 +71,12 @@ const uint8_t spi::spi_transfer_byte(const uint8_t& out)
  *
  * @return 16-bit response. First response is MSB.
  */
-const uint16_t spi::spi_transfer_word(const uint16_t& cmd, const bool& select)
+const uint16_t spi::transfer_word(const uint16_t& cmd, const bool& ss)
 {
-	if (select) spi_select(true);
-	uint16_t reply = spi_transfer_byte(cmd >> 8) << 8; 	// transfer MSB first
-	reply |= spi_transfer_byte(cmd & 0x00FF); // transfer LSB
-	if (select) spi_select(false);
+	if (ss) select(true);
+	uint16_t reply = transfer_byte(cmd >> 8) << 8; 	// transfer MSB first
+	reply |= transfer_byte(cmd & 0x00FF); // transfer LSB
+	if (ss) select(false);
 	return reply;
 }
 
