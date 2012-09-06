@@ -12,12 +12,13 @@ void setup() {
 }
 
 void loop() {
-	delay(3000);
-	Serial.println(".");
-//	RFM12B.ping_iam();
-//	delay(100);
-	RFM12B.mimick_cc_ct();
-	RFM12B.print_if_data_available();
+	for (int i=0; i<256; i++) {
+		delay(4900);
+		Serial.println(".");
+		RFM12B.ping_edf_iam(0xA0);
+		delay(100);
+		RFM12B.print_if_data_available();
+	}
 }
 
 
@@ -26,8 +27,8 @@ int main(void) {
   init();
   setup();
 
-  while(true) {
+//  while(true) {
     loop();
-  }
+//  }
 }
 

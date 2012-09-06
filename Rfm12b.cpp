@@ -48,35 +48,6 @@ void Rfm12b::tx_next_byte()
 	}
 }
 
-/*
- * TODO: SPI sniff EnviR to see if it picks up my TX
- */
-
-void Rfm12b::tx_payload(const uint8_t payload[], const uint8_t payload_length)
-{
-	const uint8_t HEADER[] = {
-			0x55, // Preamble (to allow RX to lock on). Could try 12 bits.
-			0x2D, // Synchron byte 0
-			0xD4  // Synchron byte 1
-	};
-	const uint8_t TAIL[] = {0x40, 0x00};
-
-	const uint8_t HEADER_LENGTH = sizeof(HEADER);
-	const uint8_t TAIL_LENGTH   = sizeof(TAIL);
-
-	tx_packet.reset();
-	tx_packet.set_packet_length(HEADER_LENGTH + payload_length + TAIL_LENGTH);
-
-	tx_packet.add(HEADER, HEADER_LENGTH);
-	tx_packet.add(payload, payload_length);
-	tx_packet.add(TAIL, TAIL_LENGTH);
-
-	tx_packet.reset();
-
-	enable_tx();
-	// TODO: tx CRC?
-}
-
 void Rfm12b::reset_fifo()
 {
 
@@ -549,18 +520,20 @@ void Rfm12b::print_if_data_available()
 	}
 }
 
-void Rfm12b::ping_iam()
+void Rfm12b::ping_edf_iam(const uint8_t chksum)
 {
 	const uint8_t tx_data[] = {0x46, 0x55, 0x10, 0x00, 0x03,
-			0x00 ,0x50 ,0x53, 0x00, 0x00, 0x4F, 0x9E};
+			0x00 ,0x50 ,0x53, 0x00, 0x00, 0x4F};
 
 	Serial.println("tx_payload");
-	tx_payload(tx_data, 12);
+	tx_packet.assemble(tx_data, 11, true);
+	enable_tx();
 }
 
 void Rfm12b::mimick_cc_ct()
 {
 	const uint8_t tx_data[] = {0x55, 0x55, 0x65, 0xA6, 0x95, 0x55, 0x55,
 			0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55};
-	tx_payload(tx_data, 16);
+	tx_packet.assemble(tx_data, 16);
+	enable_tx();
 }

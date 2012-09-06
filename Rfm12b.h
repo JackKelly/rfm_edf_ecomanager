@@ -8,11 +8,6 @@ public:
 
 	static void tx_next_byte();
 
-	/*
-	 * TODO: SPI sniff EnviR to see if it picks up my TX
-	 */
-	static void tx_payload(const uint8_t* payload, const uint8_t payload_length);
-
 	static void reset_fifo();
 
 	static void interrupt_handler();
@@ -27,7 +22,7 @@ public:
 
 	static void print_if_data_available();
 
-	static void ping_iam();
+	static void ping_edf_iam(const uint8_t chksum);
 
 	static void mimick_cc_ct();
 

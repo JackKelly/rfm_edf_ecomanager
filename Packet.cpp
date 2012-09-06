@@ -48,6 +48,12 @@ void Packet::print() const {
 		Serial.print(packet[i], HEX);
 		Serial.print(" ");
 	}
+	if (verify()) {
+		Serial.print("OK");
+	} else {
+		Serial.print("FAIL");
+	}
+
 	Serial.print("\r\n");
 }
 
@@ -57,6 +63,47 @@ const bool Packet::full() const {
 
 volatile void Packet::reset() {
 	byte_index = 0;
+}
+
+const uint8_t Packet::modular_sum(volatile const uint8_t payload[], const uint8_t length)
+{
+    uint8_t acc = 0;
+    for (uint8_t i=0; i<length; i++) {
+    	acc += payload[i]; // deliberately overflow
+    }
+    return acc;
+}
+
+volatile void Packet::assemble(const uint8_t payload[], const uint8_t payload_length,
+		const bool add_checksum)
+{
+	const uint8_t HEADER[] = {
+			0x55, // Preamble (to allow RX to lock on). Could try 12 bits.
+			0x2D, // Synchron byte 0
+			0xD4  // Synchron byte 1
+	};
+	const uint8_t TAIL[] = {0x40, 0x00};
+
+	const uint8_t HEADER_LENGTH = sizeof(HEADER);
+	const uint8_t TAIL_LENGTH   = sizeof(TAIL);
+
+	reset();
+	set_packet_length(HEADER_LENGTH + payload_length + add_checksum + TAIL_LENGTH);
+
+	add(HEADER, HEADER_LENGTH);
+	add(payload, payload_length);
+	if (add_checksum) {
+		add(modular_sum(payload, payload_length));
+	}
+	add(TAIL, TAIL_LENGTH);
+
+	reset();
+}
+
+volatile const bool Packet::verify() const
+{
+	volatile const uint8_t calculated_checksum = modular_sum(packet, packet_length-1);
+	return calculated_checksum == packet[packet_length-1];
 }
 
 /**

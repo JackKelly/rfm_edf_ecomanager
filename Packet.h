@@ -19,6 +19,10 @@ public:
 	void print() const;
 	const bool full() const;
 	volatile void reset();
+	volatile void assemble(const uint8_t payload[], const uint8_t payload_length,
+			const bool add_checksum = false);
+	volatile const bool verify() const;
+
 
 private:
 	volatile uint8_t packet_length; // number of bytes in a packet
@@ -28,6 +32,7 @@ private:
 	// arduino (not easily, anyway) so let's just have a statically declared
 	// array of length MAX_PACKET_LENGTH.
 	volatile uint8_t packet[MAX_PACKET_LENGTH];
+	static const uint8_t modular_sum(volatile const uint8_t payload[], const uint8_t length);
 };
 
 
