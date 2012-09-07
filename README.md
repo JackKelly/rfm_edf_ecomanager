@@ -1,7 +1,8 @@
-Code for communicating wirelessly with Current Cost home energy monitors
-and EDF EcoManager monitors.  The main planned aim of this code is the
-robust gathering of data from and arbitrary number of EDF EcoManager
-Wireless Transmitter Plugs; but other features may also be added.
+Code for communicating wirelessly with [Current Cost home energy monitors](http://www.currentcost.com/products.html)
+and [EDF EcoManager](http://www.edfenergy.com/products-services/for-your-home/ecomanager/) monitors.  The main planned aim of this code is the
+robust gathering of data from an arbitrary number of EDF EcoManager
+[Wireless Transmitter Plugs](https://shop.edfenergy.com/Item.aspx?id=540&CategoryID=1) for tracking the state of the majority of appliances
+in a building.
 
 Hardware requirements
 =====================
