@@ -4,6 +4,7 @@ robust gathering of data from an arbitrary number of EDF EcoManager
 [Wireless Transmitter Plugs](https://shop.edfenergy.com/Item.aspx?id=540&CategoryID=1) for tracking the state of the majority of appliances
 in a building.
 
+
 Hardware requirements
 =====================
 
@@ -14,6 +15,7 @@ Hardware requirements
  - If you build a DIY board, or if you connect an RFM12b to an Arduino,
    make sure the RFM12b's nFFS pin is set permanently high.
 
+
 Usage
 =====
 
@@ -21,26 +23,26 @@ Usage
    the pre-compiled hex file (see "Uploading pre-compiled hex file" below).  
 
  - Then watch the serial port.  On Linux this can be achieved with
-   the command:
-       screen /dev/ttyUSB0 115200
+   the command: `screen /dev/ttyUSB0 115200`
 
  - You should see each RF packet displayed on your screen (each byte
    displayed as hex).
 
+
 Acknowledgements & further reading
 ==================================
 
-    - Many thanks to the good folks who wrote [JeeLib](https://github.com/jcw/jeelib) as it provided lots
-      of help.
+ - Many thanks to the good folks who wrote [JeeLib](https://github.com/jcw/jeelib) as it provided lots
+   of help.
 
-    - As did [this tutorial on SPI on AVR devices](https://sites.google.com/site/qeewiki/books/avr-guide/spi).
+ - As did [this tutorial on SPI on AVR devices](https://sites.google.com/site/qeewiki/books/avr-guide/spi).
 
-    - If you want an indepth insight into the RFM01 then read the [RFM12B.pdf](http://www.hoperf.com/upload/rf/RFM12B.pdf)
-      manual BEFORE or INSTEAD OF [RFM12B_code.pdf](http://www.hoperf.com/upload/rf/RF12B_code.pdf) as the latter has far less detail.
-      The only advantage of the RFM12B_code.pdf is that it contains a
-      code example in C.
+ - If you want an indepth insight into the RFM01 then read the [RFM12B.pdf](http://www.hoperf.com/upload/rf/RFM12B.pdf)
+   manual BEFORE or INSTEAD OF [RFM12B_code.pdf](http://www.hoperf.com/upload/rf/RF12B_code.pdf) as the latter has far less detail.
+   The only advantage of the RFM12B_code.pdf is that it contains a
+   code example in C.
 
-    - For more details please see [the CurrentCost category on my blog](http://jack-kelly.com/taxonomy/term/121).
+ - For more details please see [the CurrentCost category on my blog](http://jack-kelly.com/taxonomy/term/121).
 
 
 Uploading pre-compiled hex file
