@@ -5,7 +5,6 @@ Uploading pre-compiled hex file
 First change directory into the Release/ directory.
 
 Uploading to AVR using FTDI serial cable:
------------------------------------------
 
 ```bash
 avrdude -pm328p -carduino -P/dev/ttyUSB0 -b57600 -F -V 
@@ -13,14 +12,16 @@ avrdude -pm328p -carduino -P/dev/ttyUSB0 -b57600 -F -V
 ```
 
 Uploading to AVR using STK500v2 programmer:
--------------------------------------------
 
 ```bash
 avrdude -pm328p -cstk500v2 -P/dev/ttyACM0 -Uflash:w:rfm_edf_ecomanager.hex:a
 ```
 
-Building using Eclipse
-======================
+Building from source
+====================
+
+Using Eclipse
+-------------
 
 I'm afraid building this code isn't especially user-friendly at the moment
 because I'm developing on Eclipse and am using the auto-generated makefile
@@ -34,7 +35,7 @@ an AVR C++ project (don't import the stuff in this repository's Release/
 directory: Eclipse should make that for you automatically.)
 
 Building without Eclipse
-========================
+------------------------
 
 I haven't tried this so I'm afraid I don't know if this will work but
 here are some pointers.
@@ -49,5 +50,5 @@ Then run:
 cd Release
 make all
 ```
-Then upload your rfm_edf_ecomanager.hex using the "Uploading pre-compiled
+Then upload your `rfm_edf_ecomanager.hex` using the "Uploading pre-compiled
 hex file" instructions above.
