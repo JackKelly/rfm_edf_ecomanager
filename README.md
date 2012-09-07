@@ -20,7 +20,7 @@ Usage
 =====
 
  - Load this program onto your ATmega. The easiest way to do this is to use
-   the pre-compiled hex file (see ["Uploading pre-compiled hex file"](#uploading-pre-compiled-hex-file) below).  
+   the pre-compiled hex file (see "[Uploading pre-compiled hex file](#uploading-pre-compiled-hex-file)" below).  
 
  - Then watch the serial port.  On Linux this can be achieved with
    the command: `screen /dev/ttyUSB0 115200`
@@ -96,8 +96,8 @@ Then run:
 cd Release
 make all
 ```
-Then upload your `rfm_edf_ecomanager.hex` using the "Uploading pre-compiled
-hex file" instructions above.
+Then upload your `rfm_edf_ecomanager.hex` using the "[Uploading pre-compiled hex file](#uploading-pre-compiled-hex-file)"
+instructions above.
 
 Using the Arduino IDE
 ---------------------
