@@ -4,6 +4,15 @@ robust gathering of data from an arbitrary number of EDF EcoManager
 [Wireless Transmitter Plugs](https://shop.edfenergy.com/Item.aspx?id=540&CategoryID=1) for tracking the state of the majority of appliances
 in a building.
 
+Current status
+==============
+
+At present the code is in a very early stage.  The code simply transmits a
+hard-coded ping to my EDF IAM and displays all responses.  The code as-is
+will capture and display and Current Cost or EDF EcoManager RF packets it
+receives.  Note that the RX packets are buffered and the buffer is displayed
+and emtpied once every 5 seconds.
+
 
 Hardware requirements
 =====================

@@ -3,7 +3,8 @@
 
 Rfm12b RFM12B;
 
-void setup() {
+void setup()
+{
     Serial.begin(115200);
     Serial.println("EDF EcoManager Receiver");
     RFM12B.init_edf();
@@ -11,24 +12,22 @@ void setup() {
     Serial.println("Finished init");
 }
 
-void loop() {
-	for (int i=0; i<256; i++) {
-		delay(4900);
-		Serial.println(".");
-		RFM12B.ping_edf_iam(0xA0);
-		delay(100);
-		RFM12B.print_if_data_available();
-	}
+void loop()
+{
+	delay(4900);
+	Serial.println(".");
+	RFM12B.ping_edf_iam();
+	delay(100);
+	RFM12B.print_if_data_available();
 }
 
-
-int main(void) {
-
+int main(void)
+{
   init();
   setup();
 
-//  while(true) {
+  while(true) {
     loop();
-//  }
+  }
 }
 

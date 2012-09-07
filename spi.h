@@ -10,19 +10,20 @@
 #define SPI_SCK     13 // PB5, pin 19
 
 namespace spi {
-	/* Select or de-select the RFM01.
+	/* Select or de-select the RFM.
 	 *
-	 * @param state: if true then select the RFM01 (ready for data transfer)
+	 * @param state: if true then select the RFM
+	 *               (ready for data transfer)
 	 */
 	void select(const bool state);
 
 	/**
-	 * Initialise the ATmega's SPI hardware for use with the RFM01.
+	 * Initialise the ATmega's SPI hardware for use with the RFM.
 	 */
 	void init();
 
 	/**
-	 * Send a byte over the SPI bus
+	 * Send a byte over the SPI bus.
 	 *
 	 * @return 8-bit response
 	 */

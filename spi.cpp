@@ -1,11 +1,6 @@
 #include <Arduino.h>
 #include "spi.h"
 
-/**
- * Select or de-select the RFM01.
- *
- * @param state: if true then select the RFM01 (ready for data transfer)
- */
 inline void spi::select(const bool state)
 {
 	if (state == true) {
@@ -15,9 +10,6 @@ inline void spi::select(const bool state)
 	}
 }
 
-/**
- * Initialise the ATmega's SPI hardware for use with the RFM01.
- */
 void spi::init()
 {
 	select(false);
@@ -52,11 +44,6 @@ void spi::init()
 	bitClear(SPCR, CPHA);
 }
 
-/**
- * Send a byte over the SPI bus
- *
- * @return 8-bit response
- */
 const uint8_t spi::transfer_byte(const uint8_t& out)
 {
 	SPDR = out;
@@ -66,11 +53,6 @@ const uint8_t spi::transfer_byte(const uint8_t& out)
     return SPDR;
 }
 
-/**
- * Send a 16-bit word over the SPI bus, with MSB first.
- *
- * @return 16-bit response. First response is MSB.
- */
 const uint16_t spi::transfer_word(const uint16_t& cmd, const bool& ss)
 {
 	if (ss) select(true);

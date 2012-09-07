@@ -32,16 +32,18 @@ void Rfm12b::enable_tx()
 	// See power managament command in enable_rx()
 	spi::transfer_word(0x8239);
 	state = TX;
+	Serial.println("TX:");
 }
 
 void Rfm12b::tx_next_byte()
 {
 	const uint8_t out = tx_packet.get_next_byte();
 	spi::transfer_word(0xB800 + out);
+
 	Serial.print(out, HEX);
 	Serial.print(" ");
 
-	if (tx_packet.full()) {
+	if (tx_packet.done()) {
 		// we've finished transmitting the packet
 		Serial.print("\r\n");
 		enable_rx();
@@ -100,10 +102,6 @@ void Rfm12b::interrupt_handler()
 
 }
 
-/**
- * Initialise RMF12b using commands translated from Current Cost EnviR
- * RFM01 commands.
- */
 void Rfm12b::init_cc () {
 	Serial.println("Starting rf12_initialize_cc() ");
 
@@ -217,8 +215,8 @@ void Rfm12b::init_cc () {
 	//    0010 (0x2)=9.5pF (from CC RFM01)
 	//    0111 (0x7)=12.0pF (from jeelib)
 	//
-	//                          ee
-	//                  10000000lfbbxxxx
+	//                           ee
+	//                   10000000lfbbxxxx
 	spi::transfer_word(0b1000000001010111);
 
 	// 3. Power Management Command
@@ -232,8 +230,8 @@ void Rfm12b::init_cc () {
 	// eb : enable low batt detector
 	// ew : enable wake-up timer
 	// dc : disable clock output of CLK pin
-	//                          eeeeeeed
-	//                          rbtsxbwc
+	//                           eeeeeeed
+	//                           rbtsxbwc
 	spi::transfer_word(0b1000001011011001);
 
 	// 4. Frequency setting command
@@ -260,7 +258,7 @@ void Rfm12b::init_cc () {
 	// g: LNA gain. 00=0dB.
 	// r: RSSI detector threshold. 000 = -103 dBm
 	//
-	//                  10010Pddiiiggrrr
+	//                   10010Pddiiiggrrr
 	spi::transfer_word(0b1001010011000000);
 
 	// 7. Digital filter command
@@ -272,8 +270,8 @@ void Rfm12b::init_cc () {
 	// ml: enable clock recovery fast mode. CCRFM01=1
 	// s :  data filter. 0=digital filter. (default & CCRFM01)=0
 	// f : DQD threshold. CCRFM01=2; but RFM12b manual recommends >4
-	//                          am
-	//                  11000010ll1s1fff
+	//                           am
+	//                   11000010ll1s1fff
 	spi::transfer_word(0b1100001001101100);
 
 
@@ -291,8 +289,8 @@ void Rfm12b::init_cc () {
 	// ff: enable FIFO fill
 	// dr: disable hi sensitivity reset mode
 	//
-	//                              safd
-	//                  11001010ffffplfr
+	//                               safd
+	//                   11001010ffffplfr
 	spi::transfer_word(0b1100101010000001);
 
 	// 8. FIFO and Reset Mode Command
@@ -306,8 +304,8 @@ void Rfm12b::init_cc () {
 	// ff: enable FIFO fill
 	// dr: disable hi sensitivity reset mode
 	//
-	//                              safd
-	//                  11001010ffffplfr
+	//                               safd
+	//                   11001010ffffplfr
 	spi::transfer_word(0b1100101010000011);
 
 	// 9 Synchron pattern command
@@ -370,9 +368,6 @@ void Rfm12b::init_edf () {
 	//      0010 (0x2)=9.5pF  (from EnviR RFM01)
 	//      0111 (0x7)=12.0pF (from jeelib)
 	//      1000 (0x8)=12.5pF (from EDF EcoManager)
-	//
-	//                          ee
-	//                  10000000lfbbxxxx
 	spi::transfer_word(0x80D8);
 
 	// 3. Power Management Command 0x8201
@@ -387,8 +382,6 @@ void Rfm12b::init_edf () {
 	// eb : enable low batt detector
 	// ew : enable wake-up timer
 	// dc : disable clock output of CLK pin
-	//                          eeeeeeed
-	//                          rbtsxbwc
 	spi::transfer_word(0x8201);
 
 	// 4. Frequency setting command
@@ -412,8 +405,6 @@ void Rfm12b::init_edf () {
 	// i: baseband bandwidth. 110=67kHz (same as CC RFM01)
 	// g: LNA gain. 00=0dB. (same as CC RFM01)
 	// r: RSSI detector threshold. 000 = -103 dBm (same as CC RFM01)
-	//
-	//                  10010Pddiiiggrrr
 	spi::transfer_word(0x94C0);
 
 	// 7. Digital filter command C22C
@@ -425,8 +416,6 @@ void Rfm12b::init_edf () {
 	// ml: enable clock recovery fast mode. CCRFM01=1 (diff to CC RFM01)
 	// s :  data filter. 0=digital filter. (default & CCRFM01)=0 (same as CC RFM01)
 	// f : DQD threshold. CCRFM01=2; but RFM12b manual recommends >4 (diff to CC RFM01)
-	//                          am
-	//                  11000010ll1s1fff
 	spi::transfer_word(0xC22C);
 
 	// 8. FIFO and Reset Mode Command (CA81)
@@ -520,12 +509,11 @@ void Rfm12b::print_if_data_available()
 	}
 }
 
-void Rfm12b::ping_edf_iam(const uint8_t chksum)
+void Rfm12b::ping_edf_iam()
 {
 	const uint8_t tx_data[] = {0x46, 0x55, 0x10, 0x00, 0x03,
 			0x00 ,0x50 ,0x53, 0x00, 0x00, 0x4F};
 
-	Serial.println("tx_payload");
 	tx_packet.assemble(tx_data, 11, true);
 	enable_tx();
 }

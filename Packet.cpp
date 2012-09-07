@@ -1,10 +1,5 @@
 #include "Packet.h"
 
-/**
- * Simple class for representing a packet of consecutive bytes
- * received from a Current Cost transmitter.
- */
-
 Packet::Packet(const uint8_t _packet_length)
 : packet_length(_packet_length), byte_index(0)
 {
@@ -18,12 +13,9 @@ void Packet::set_packet_length(const uint8_t _packet_length)
 	packet_length = _packet_length;
 }
 
-/**
- * Add a byte to the packet.
- */
 volatile void Packet::add(const uint8_t value)
 {
-	if (!full()) {
+	if (!done()) {
 		packet[byte_index++] = value;
 	}
 }
@@ -37,7 +29,7 @@ volatile void Packet::add(const uint8_t* bytes, const uint8_t length)
 
 volatile const uint8_t Packet::get_next_byte()
 {
-	if (!full()) {
+	if (!done()) {
 		return packet[byte_index++];
 	}
 	return 0;
@@ -60,7 +52,7 @@ void Packet::print() const {
 	Serial.print("\r\n");
 }
 
-const bool Packet::full() const {
+const bool Packet::done() const {
 	return byte_index >= packet_length;
 }
 
@@ -116,12 +108,6 @@ volatile const uint16_t Packet::get_wattage() const
 	return wattage;
 }
 
-/**
- * Class for storing multiple packets.  We need this because
- * multiple packets might arrive before we have a chance to
- * read these packets over the FTDI serial port.
- */
-
 // FIXME: concurrency issues? Research mutexes on Arduino.
 PacketBuffer::PacketBuffer(const uint8_t packet_length)
 : current_packet(0)
@@ -131,13 +117,10 @@ PacketBuffer::PacketBuffer(const uint8_t packet_length)
 	}
 }
 
-/**
- * @returns true if packet is complete AFTER adding value to it.
- */
 volatile const bool PacketBuffer::add(const uint8_t value) {
 	packets[current_packet].add(value);
 
-	if (packets[current_packet].full()) {
+	if (packets[current_packet].done()) {
 		if (current_packet >= NUM_PACKETS) {
 			Serial.println("NO MORE BUFFERS!");
 		} else {
@@ -150,11 +133,12 @@ volatile const bool PacketBuffer::add(const uint8_t value) {
 }
 
 void PacketBuffer::print_and_reset() {
+	Serial.println("RX:");
 	for (int i=0; i<current_packet; i++) {
 		packets[i].print();
 		packets[i].reset();
 	}
-	if (packets[current_packet].full()) {
+	if (packets[current_packet].done()) {
 		packets[current_packet].print();
 		packets[current_packet].reset();
 	}
