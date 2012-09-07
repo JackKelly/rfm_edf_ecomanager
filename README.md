@@ -9,7 +9,7 @@ Current status
 
 At present the code is in a very early stage.  The code simply transmits a
 hard-coded ping to my EDF IAM and displays all responses.  The code as-is
-will capture and display and Current Cost or EDF EcoManager RF packets it
+will capture and display all Current Cost or EDF EcoManager RF packets it
 receives.  Note that the RX packets are buffered and the buffer is displayed
 and emtpied once every 5 seconds.
 
