@@ -16,7 +16,7 @@ void loop()
 {
 	delay(4900);
 	Serial.println(".");
-	RFM12B.ping_edf_iam();
+//	RFM12B.ping_edf_iam();
 	delay(100);
 	RFM12B.print_if_data_available();
 }

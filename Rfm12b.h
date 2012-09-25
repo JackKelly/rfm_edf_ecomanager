@@ -40,21 +40,21 @@ public:
 
 private:
 	static enum State {RX, TX} state; // state RFM12b is in
-	static Packet tx_packet; // the packet about to be sent
-	static PacketBuffer rx_packet_buffer;
+	static Packet tx_packet; // the packet about to be sent TODO: volatile?
+	static PacketBuffer rx_packet_buffer; // TODO: volatile?
 
 	/**
 	 * Get the next byte in Rfm12b::tx_packet
 	 * and send it to the RFM12b for transmission.
 	 */
-	static void tx_next_byte();
+	static void tx_next_byte(); // TODO: volatile?
 
 	/**
 	 * Reset the RFM12b's FIFO buffer. This is necessary
 	 * at the end of each packet to tells the RFM12b to
 	 * only fill the buffer again if a sync word is received.
 	 */
-	static void reset_fifo();
+	static void reset_fifo(); // TODO: volatile?
 
 	/**
 	 * Called every time the RFM12b fires an interrupt request.
