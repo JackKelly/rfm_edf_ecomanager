@@ -40,12 +40,12 @@ void Rfm12b::tx_next_byte()
 	const uint8_t out = tx_packet.get_next_byte();
 	spi::transfer_word(0xB800 + out);
 
-	Serial.print(out, HEX);
-	Serial.print(" ");
+	Serial.print(out, HEX); // TODO: remove after debugging
+	Serial.print(" "); // TODO: remove after debugging
 
 	if (tx_packet.done()) {
 		// we've finished transmitting the packet
-		Serial.print("\r\n");
+		Serial.print("\r\n");  // TODO: remove after debugging
 		enable_rx();
 	}
 }
@@ -78,16 +78,15 @@ void Rfm12b::interrupt_handler()
 {
 	spi::select(true);
 	const uint8_t status_MSB = spi::transfer_byte(0x00); // get status word MSB
-	const uint8_t status_LSB = spi::transfer_byte(0x00); // get status word LSB
+	spi::transfer_byte(0x00); // get status word LSB
 
 	if (state == RX) {
-		const uint8_t data_1     = spi::transfer_byte(0x00); // get 1st byte of data
 		bool full = false; // is the buffer full after receiving the byte waiting for us?
 		if ((status_MSB & 0x20) != 0) { // FIFO overflow
-			full  = rx_packet_buffer.add(data_1);
+			full  = rx_packet_buffer.add(spi::transfer_byte(0x00)); // get 1st byte of data
 			full |= rx_packet_buffer.add(spi::transfer_byte(0x00));
 		} else 	if ((status_MSB & 0x80) != 0) { // FIFO has 8 bits ready
-			full = rx_packet_buffer.add(data_1);
+			full = rx_packet_buffer.add(spi::transfer_byte(0x00)); // get 1st byte of data
 		}
 		spi::select(false);
 
@@ -98,6 +97,7 @@ void Rfm12b::interrupt_handler()
 		if ((status_MSB & 0x80) != 0) { // TX register ready
 			tx_next_byte();
 		}
+		spi::select(false);
 	}
 
 }
