@@ -7,9 +7,9 @@ class Packet {
 public:
 	Packet(const uint8_t _packet_length = MAX_PACKET_LENGTH);
 
-	void set_packet_length(const uint8_t _packet_length);
+	void set_packet_length(const uint8_t& _packet_length);
 
-	void add(const uint8_t* bytes, const uint8_t length);
+	void add(const uint8_t* bytes, const uint8_t& length);
 	/**
 	 * Print contents of packet to Serial port.
 	 */
@@ -29,7 +29,7 @@ public:
 	 *   4. (optional) checksum
 	 *   5. tail
 	 */
-	void assemble(const uint8_t payload[], const uint8_t payload_length,
+	void assemble(const uint8_t payload[], const uint8_t& payload_length,
 			const bool add_checksum = false);
 
 
@@ -47,7 +47,7 @@ public:
 	/**
 	 * Add a byte to the packet.
 	 */
-	void add(const uint8_t value);
+	void add(const uint8_t& value);
 
 	/**
 	 * Returns true if we've reached the end of the packet.
@@ -100,7 +100,7 @@ private:
 	 */
 	static const uint8_t modular_sum(
 			const volatile uint8_t payload[],
-			const uint8_t length);
+			const uint8_t& length);
 
 	/**
 	 * @ return true if checksum in packet matches calculated checksum
@@ -131,7 +131,7 @@ private:
 class PacketBuffer {
 public:
 
-	PacketBuffer(const uint8_t packet_length);
+	PacketBuffer(const uint8_t& packet_length);
 
 	/**
 	 * Print all packets to the Serial port and reset each packet.
@@ -151,7 +151,7 @@ public:
 	/**
 	 * @returns true if packet is complete AFTER adding value to it.
 	 */
-	const bool add(const uint8_t value);
+	const bool add(const uint8_t& value);
 
 
 private:

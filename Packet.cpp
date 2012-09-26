@@ -8,12 +8,12 @@ Packet::Packet(const uint8_t _packet_length)
 	}
 }
 
-void Packet::set_packet_length(const uint8_t _packet_length)
+void Packet::set_packet_length(const uint8_t& _packet_length)
 {
 	packet_length = _packet_length;
 }
 
-void Packet::add(const uint8_t value)
+void Packet::add(const uint8_t& value)
 {
 	if (!done()) {
 		if (byte_index==0) {
@@ -29,7 +29,7 @@ void Packet::add(const uint8_t value)
 	}
 }
 
-void Packet::add(const uint8_t* bytes, const uint8_t length)
+void Packet::add(const uint8_t* bytes, const uint8_t& length)
 {
 	for (int i=0; i<length; i++) {
 		add(bytes[i]);
@@ -85,7 +85,7 @@ void Packet::reset() {
 
 const uint8_t Packet::modular_sum(
 		const volatile uint8_t payload[],
-		const uint8_t length
+		const uint8_t& length
 		)
 {
     uint8_t acc = 0;
@@ -95,7 +95,7 @@ const uint8_t Packet::modular_sum(
     return acc;
 }
 
-void Packet::assemble(const uint8_t payload[], const uint8_t payload_length,
+void Packet::assemble(const uint8_t payload[], const uint8_t& payload_length,
 		const bool add_checksum)
 {
 	const uint8_t HEADER[] = {
@@ -223,7 +223,7 @@ const bool Packet::is_ok() const
 
 
 // FIXME: concurrency issues? Research mutexes on Arduino.
-PacketBuffer::PacketBuffer(const uint8_t packet_length)
+PacketBuffer::PacketBuffer(const uint8_t& packet_length)
 : current_packet(0)
 {
 	for (int i=0; i<NUM_PACKETS; i++) {
@@ -231,7 +231,7 @@ PacketBuffer::PacketBuffer(const uint8_t packet_length)
 	}
 }
 
-const bool PacketBuffer::add(const uint8_t value) {
+const bool PacketBuffer::add(const uint8_t& value) {
 	packets[current_packet].add(value);
 
 	if (packets[current_packet].done()) {
