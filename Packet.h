@@ -42,43 +42,65 @@ public:
 	/****************************************
 	 * FUNCTIONS WHICH MAY BE CALLED FROM AN
 	 * INTERRUPT HANDLER
-	 * and hence must be declared volatile
 	 * **************************************/
 
 	/**
 	 * Add a byte to the packet.
 	 */
-	volatile void add(const uint8_t value);
+	void add(const uint8_t value);
 
 	/**
 	 * Returns true if we've reached the end of the packet.
 	 */
-	volatile const bool done() const;
+	const bool done() const;
 
-	volatile const uint8_t get_next_byte();
+	const uint8_t get_next_byte();
+
+	/*
+	 * @return contents of packet_ok
+	 */
+	const bool is_ok() const;
 
 private:
-	volatile uint8_t packet_length; // number of bytes in this packet
-	volatile uint8_t byte_index;    // index of next byte to write/read
+	/********************
+	 * Consts           *
+	 * ******************/
 	const static uint8_t EDF_IAM_PACKET_LENGTH = 12;
 	const static uint8_t WHOLE_HOUSE_TX_PACKET_LENGTH = 16;
 	const static uint8_t MAX_PACKET_LENGTH = 22;
+	// Error codes:
+	const static uint16_t WATTS_NOT_VALID = 0xFFFF;
+	const static uint32_t UID_NOT_VALID = 0xFFFFFFFF;
+
+	/****************************************************
+	 * Member variables used within ISR and outside ISR *
+	 ****************************************************/
+	volatile uint8_t packet_length; // number of bytes in this packet
+	volatile uint8_t byte_index;    // index of next byte to write/read
 	// we can't use new() on the
 	// arduino (not easily, anyway) so let's just have a statically declared
 	// array of length MAX_PACKET_LENGTH.
 	volatile uint8_t packet[MAX_PACKET_LENGTH];
-	volatile bool whole_house_tx;
-	bool packet_ok; // does the checksum / de-manchesterisation check out?
-	const static uint16_t WATTS_NOT_VALID = 0xFFFF;
-	uint16_t watts[3];
-	const static uint32_t UID_NOT_VALID = 0xFFFFFFFF;
-	uint32_t uid;
+	volatile bool whole_house_tx; // is this packet from a whole-house tx?
+
+	/******************************************
+	 * Member variables never used within ISR *
+	 ******************************************/
+	bool packet_ok; // does the checksum or de-manchesterisation check out?
+	uint16_t watts[3]; // the decoded reading from sensors
+	uint32_t uid; // the sensor radio ID
+
+	/********************************************
+	 * Private methods                          *
+	 ********************************************/
 
 	/**
 	 * @returns the modular sum (the checksum algorithm used in the
 	 *           EDF EcoManager protocol) given the payload.
 	 */
-	static const uint8_t modular_sum(volatile const uint8_t payload[], const uint8_t length);
+	static const uint8_t modular_sum(
+			const volatile uint8_t payload[],
+			const uint8_t length);
 
 	/**
 	 * @ return true if checksum in packet matches calculated checksum
@@ -124,13 +146,12 @@ public:
 	/****************************************
 	 * FUNCTIONS WHICH MAY BE CALLED FROM AN
 	 * INTERRUPT HANDLER
-	 * and hence must be declared volatile
 	 * **************************************/
 
 	/**
 	 * @returns true if packet is complete AFTER adding value to it.
 	 */
-	volatile const bool add(const uint8_t value);
+	const bool add(const uint8_t value);
 
 
 private:

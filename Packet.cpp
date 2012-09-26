@@ -1,7 +1,7 @@
 #include "Packet.h"
 
 Packet::Packet(const uint8_t _packet_length)
-: packet_length(_packet_length), byte_index(0)
+: packet_length(_packet_length), byte_index(0), packet_ok(false), uid(UID_NOT_VALID)
 {
 	if (packet_length > MAX_PACKET_LENGTH) {
 		Serial.println("ERROR: packet_length > MAX_PACKET_LENGTH!");
@@ -13,7 +13,7 @@ void Packet::set_packet_length(const uint8_t _packet_length)
 	packet_length = _packet_length;
 }
 
-volatile void Packet::add(const uint8_t value)
+void Packet::add(const uint8_t value)
 {
 	if (!done()) {
 		if (byte_index==0) {
@@ -36,7 +36,7 @@ void Packet::add(const uint8_t* bytes, const uint8_t length)
 	}
 }
 
-volatile const uint8_t Packet::get_next_byte()
+const uint8_t Packet::get_next_byte()
 {
 	if (!done()) {
 		return packet[byte_index++];
@@ -70,7 +70,7 @@ void Packet::print() const {
 	Serial.print("\r\n");
 }
 
-volatile const bool Packet::done() const {
+const bool Packet::done() const {
 	return byte_index >= packet_length;
 }
 
@@ -83,7 +83,10 @@ void Packet::reset() {
 	packet_length = EDF_IAM_PACKET_LENGTH;
 }
 
-const uint8_t Packet::modular_sum(volatile const uint8_t payload[], const uint8_t length)
+const uint8_t Packet::modular_sum(
+		const volatile uint8_t payload[],
+		const uint8_t length
+		)
 {
     uint8_t acc = 0;
     for (uint8_t i=0; i<length; i++) {
@@ -140,6 +143,7 @@ void Packet::post_process()
 
 void Packet::decode_wattage()
 {
+	uint8_t msb;
 
 	for (uint8_t sensor=0; sensor<3; sensor++) {
 		watts[sensor] = WATTS_NOT_VALID; // "not valid" value
@@ -148,9 +152,10 @@ void Packet::decode_wattage()
 	if (whole_house_tx) {
 		for (uint8_t sensor=0; sensor<3; sensor++) {
 			if (packet[2+(sensor*2)] & 0x80) { // plugged in
-				watts[sensor] = packet[2+(sensor*2)] << 8;
+				msb            = packet[2+(sensor*2)];
+				msb           &= 0x7F;  // mask off first bit.
+				watts[sensor]  = msb << 8;
 				watts[sensor] |= packet[3+(sensor*2)];
-				watts[sensor] &= 0x7FFF; // mask off first bit.
 			}
 		}
 	} else {
@@ -211,6 +216,11 @@ const bool Packet::de_manchesterise()
 	return success;
 }
 
+const bool Packet::is_ok() const
+{
+	return packet_ok;
+}
+
 
 // FIXME: concurrency issues? Research mutexes on Arduino.
 PacketBuffer::PacketBuffer(const uint8_t packet_length)
@@ -221,7 +231,7 @@ PacketBuffer::PacketBuffer(const uint8_t packet_length)
 	}
 }
 
-volatile const bool PacketBuffer::add(const uint8_t value) {
+const bool PacketBuffer::add(const uint8_t value) {
 	packets[current_packet].add(value);
 
 	if (packets[current_packet].done()) {
@@ -239,16 +249,18 @@ volatile const bool PacketBuffer::add(const uint8_t value) {
 void PacketBuffer::print_and_reset() {
 	Serial.println("RX:");
 	for (int i=0; i<current_packet; i++) {
-		packets[i].print();
 		packets[i].post_process();
-		packets[i].print();
+		if (packets[i].is_ok()) {
+			packets[i].print();
+		}
 		packets[i].reset();
 	}
 	if (packets[current_packet].done()) {
 		Serial.println("current_packet");
-		packets[current_packet].print();
 		packets[current_packet].post_process();
-		packets[current_packet].print();
+		if (packets[current_packet].is_ok()) {
+			packets[current_packet].print();
+		}
 		packets[current_packet].reset();
 	}
 	current_packet = 0;
