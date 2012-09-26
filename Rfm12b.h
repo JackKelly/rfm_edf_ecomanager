@@ -1,3 +1,6 @@
+#ifndef RFM12B_H_
+#define RFM12B_H_
+
 #include "Packet.h"
 
 class Rfm12b {
@@ -63,3 +66,5 @@ private:
 	static void interrupt_handler();
 
 };
+
+#endif /* RFM12B_H_ */

@@ -1,3 +1,6 @@
+#ifndef SPI_H_
+#define SPI_H_
+
 // Pins
 #define RFM_IRQ      2 // PD2
 #define SS_DDR      DDRB
@@ -36,3 +39,5 @@ namespace spi {
 	 */
 	const uint16_t transfer_word(const uint16_t& cmd, const bool& ss = true);
 };
+
+#endif /* SPI_H_ */

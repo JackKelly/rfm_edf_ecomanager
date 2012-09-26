@@ -1,3 +1,6 @@
+#ifndef PACKET_H_
+#define PACKET_H_
+
 #include <Arduino.h>
 
 /**
@@ -159,3 +162,5 @@ private:
 	uint8_t current_packet;
 	Packet packets[NUM_PACKETS];
 };
+
+#endif /* PACKET_H_ */

@@ -4,18 +4,21 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../Manager.cpp \
 ../Packet.cpp \
 ../Rfm12b.cpp \
 ../main.cpp \
 ../spi.cpp 
 
 OBJS += \
+./Manager.o \
 ./Packet.o \
 ./Rfm12b.o \
 ./main.o \
 ./spi.o 
 
 CPP_DEPS += \
+./Manager.d \
 ./Packet.d \
 ./Rfm12b.d \
 ./main.d \
