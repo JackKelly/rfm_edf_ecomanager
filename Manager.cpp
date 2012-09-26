@@ -177,6 +177,8 @@ void Manager::wait_for_whole_house_tx()
 	uint8_t index;
 	uint32_t uid;
 
+	// TODO handle roll-over over millis().
+
 	// listen for WHOLE_HOUSE_TX for defined period.
 	Serial.print(millis());
 	Serial.println(" Window open!");
