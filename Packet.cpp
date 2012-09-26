@@ -1,7 +1,8 @@
 #include "Packet.h"
+#include "consts.h"
 
 Packet::Packet(const uint8_t _packet_length)
-: packet_length(_packet_length), byte_index(0), packet_ok(false), uid(UID_NOT_VALID)
+: packet_length(_packet_length), byte_index(0), packet_ok(false), uid(UID_INVALID)
 {
 	if (packet_length > MAX_PACKET_LENGTH) {
 		Serial.println("ERROR: packet_length > MAX_PACKET_LENGTH!");
@@ -77,8 +78,8 @@ const bool Packet::done() const {
 void Packet::reset() {
 	byte_index = 0;
 	whole_house_tx = false;
-	watts[0] = watts[1] = watts[2] = WATTS_NOT_VALID;
-	uid = UID_NOT_VALID;
+	watts[0] = watts[1] = watts[2] = WATTS_INVALID;
+	uid = UID_INVALID;
 	packet_ok = false;
 	packet_length = EDF_IAM_PACKET_LENGTH;
 }
@@ -146,7 +147,7 @@ void Packet::decode_wattage()
 	uint8_t msb;
 
 	for (uint8_t sensor=0; sensor<3; sensor++) {
-		watts[sensor] = WATTS_NOT_VALID; // "not valid" value
+		watts[sensor] = WATTS_INVALID; // "not valid" value
 	}
 
 	if (whole_house_tx) {
@@ -221,6 +222,15 @@ const bool Packet::is_ok() const
 	return packet_ok;
 }
 
+const uint32_t& Packet::get_uid() const
+{
+	return uid;
+}
+
+const uint16_t* Packet::get_watts() const
+{
+	return watts;
+}
 
 // FIXME: concurrency issues? Research mutexes on Arduino.
 PacketBuffer::PacketBuffer(const uint8_t& packet_length)
@@ -231,7 +241,8 @@ PacketBuffer::PacketBuffer(const uint8_t& packet_length)
 	}
 }
 
-const bool PacketBuffer::add(const uint8_t& value) {
+const bool PacketBuffer::add(const uint8_t& value)
+{
 	packets[current_packet].add(value);
 
 	if (packets[current_packet].done()) {
@@ -246,7 +257,8 @@ const bool PacketBuffer::add(const uint8_t& value) {
 	}
 }
 
-void PacketBuffer::print_and_reset() {
+void PacketBuffer::print_and_reset()
+{
 	Serial.println("RX:");
 	for (int i=0; i<current_packet; i++) {
 		packets[i].post_process();
@@ -255,18 +267,35 @@ void PacketBuffer::print_and_reset() {
 		}
 		packets[i].reset();
 	}
-	if (packets[current_packet].done()) {
-		Serial.println("current_packet");
-		packets[current_packet].post_process();
-		if (packets[current_packet].is_ok()) {
-			packets[current_packet].print();
-		}
-		packets[current_packet].reset();
-	}
+
 	current_packet = 0;
 }
 
-const bool PacketBuffer::data_is_available() const {
+void PacketBuffer::reset_all()
+{
+	for (int i=0; i<current_packet; i++) {
+		packets[i].reset();
+	}
+
+	current_packet = 0;
+}
+
+const bool PacketBuffer::data_is_available() const
+{
 	return current_packet > 0;
+}
+
+const bool PacketBuffer::valid_data_is_available()
+{
+	if (data_is_available()) {
+		bool valid_data_available = false;
+		for (int i=0; i<current_packet; i++) {
+			packets[i].post_process();
+			valid_data_available |= packets[i].is_ok();
+		}
+		return valid_data_available;
+	} else {
+		return false;
+	}
 }
 

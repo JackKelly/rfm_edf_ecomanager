@@ -64,6 +64,10 @@ public:
 	 */
 	const bool is_ok() const;
 
+	const uint32_t& get_uid() const;
+
+	const uint16_t* get_watts() const;
+
 private:
 	/********************
 	 * Consts           *
@@ -71,9 +75,6 @@ private:
 	const static uint8_t EDF_IAM_PACKET_LENGTH = 12;
 	const static uint8_t WHOLE_HOUSE_TX_PACKET_LENGTH = 16;
 	const static uint8_t MAX_PACKET_LENGTH = 22;
-	// Error codes:
-	const static uint16_t WATTS_NOT_VALID = 0xFFFF;
-	const static uint32_t UID_NOT_VALID = 0xFFFFFFFF;
 
 	/****************************************************
 	 * Member variables used within ISR and outside ISR *
@@ -146,6 +147,10 @@ public:
 	 */
 	const bool data_is_available() const;
 
+	const bool valid_data_is_available();
+
+	void reset_all();
+
 	/****************************************
 	 * FUNCTIONS WHICH MAY BE CALLED FROM AN
 	 * INTERRUPT HANDLER
@@ -156,8 +161,6 @@ public:
 	 */
 	const bool add(const uint8_t& value);
 
-
-private:
 	const static uint8_t NUM_PACKETS = 5;
 	uint8_t current_packet;
 	Packet packets[NUM_PACKETS];

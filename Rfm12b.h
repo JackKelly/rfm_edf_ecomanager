@@ -41,10 +41,11 @@ public:
 	 */
 	static void mimick_cc_ct();
 
+	static PacketBuffer rx_packet_buffer; // TODO: volatile?
+
 private:
 	static enum State {RX, TX} state; // state RFM12b is in
 	static Packet tx_packet; // the packet about to be sent TODO: volatile?
-	static PacketBuffer rx_packet_buffer; // TODO: volatile?
 
 	/**
 	 * Get the next byte in Rfm12b::tx_packet
