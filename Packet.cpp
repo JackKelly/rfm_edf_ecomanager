@@ -2,7 +2,7 @@
 #include "consts.h"
 
 Packet::Packet(const uint8_t _packet_length)
-: packet_length(_packet_length), byte_index(0), packet_ok(false), uid(UID_INVALID)
+: packet_length(_packet_length), byte_index(0), packet_ok(false), uid(UID_INVALID), timecode(0)
 {
 	if (packet_length > MAX_PACKET_LENGTH) {
 		Serial.println("ERROR: packet_length > MAX_PACKET_LENGTH!");
@@ -17,7 +17,8 @@ void Packet::set_packet_length(const uint8_t& _packet_length)
 void Packet::add(const uint8_t& value)
 {
 	if (!done()) {
-		if (byte_index==0) {
+		if (byte_index==0) { // first byte
+			timecode = millis();
 			if (value==0x55) { // this packet is from a whole house tx
 				whole_house_tx = true;
 				packet_length  = WHOLE_HOUSE_TX_PACKET_LENGTH;
@@ -82,6 +83,7 @@ void Packet::reset() {
 	uid = UID_INVALID;
 	packet_ok = false;
 	packet_length = EDF_IAM_PACKET_LENGTH;
+	timecode = 0;
 }
 
 const uint8_t Packet::modular_sum(
@@ -230,6 +232,11 @@ const uint32_t& Packet::get_uid() const
 const uint16_t* Packet::get_watts() const
 {
 	return watts;
+}
+
+const unsigned long& Packet::get_timecode() const
+{
+	return timecode;
 }
 
 // FIXME: concurrency issues? Research mutexes on Arduino.

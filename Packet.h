@@ -68,6 +68,8 @@ public:
 
 	const uint16_t* get_watts() const;
 
+	const unsigned long& get_timecode() const;
+
 private:
 	/********************
 	 * Consts           *
@@ -86,6 +88,7 @@ private:
 	// array of length MAX_PACKET_LENGTH.
 	volatile uint8_t packet[MAX_PACKET_LENGTH];
 	volatile bool whole_house_tx; // is this packet from a whole-house tx?
+	volatile unsigned long timecode;
 
 	/******************************************
 	 * Member variables never used within ISR *
