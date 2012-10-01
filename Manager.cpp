@@ -9,15 +9,12 @@
 #include "consts.h"
 
 Sensor::Sensor()
-:eta(0), uid(UID_INVALID), watts0(WATTS_INVALID)
+:eta(0), uid(UID_INVALID)
 {}
 
 void Sensor::update(const RXPacket& packet)
 {
 	eta = packet.get_timecode() + SAMPLE_PERIOD;
-
-	const uint16_t* watts = packet.get_watts();
-	watts0 = watts[0];
 }
 
 const unsigned long Sensor::get_eta() const
@@ -29,7 +26,7 @@ void Sensor::missing()
 {
 	eta += SAMPLE_PERIOD;
 	Serial.print(millis());
-	Serial.print("uid:");
+	Serial.print(" uid:");
 	Serial.print(uid);
 	Serial.print(" is missing. new eta = ");
 	Serial.println(eta);
@@ -43,22 +40,6 @@ void Sensor::set_uid(const uint32_t& _uid)
 const uint32_t Sensor::get_uid() const
 {
 	return uid;
-}
-
-WholeHouseTx::WholeHouseTx()
-:Sensor()
-{
-	watts1 = watts2 = WATTS_INVALID;
-}
-
-
-void WholeHouseTx::update(const RXPacket& packet)
-{
-	Sensor::update(packet);
-
-	const uint16_t* watts = packet.get_watts();
-	watts1 = watts[1];
-	watts2 = watts[2];
 }
 
 
@@ -77,7 +58,7 @@ Manager::Manager()
 
 void Manager::init()
 {
-	update_next_expected_tx();
+	find_next_expected_tx();
     rfm.init_edf();
     rfm.enable_rx();
 
@@ -94,7 +75,7 @@ void Manager::init()
 
     Serial.print(millis());
     Serial.println(" ...done passively listening.");
-    update_next_expected_tx();
+    find_next_expected_tx();
 }
 
 void Manager::process_whole_house_uid(const uint32_t& uid, const RXPacket& packet)
@@ -112,7 +93,7 @@ void Manager::run()
 	if (num_whole_house_txs == 0) {
 		poll_next_iam();
 	} else {
-		if (millis() < (whole_house_txs[i_of_next_expected_tx].get_eta()-EARLY_OPEN)) {
+		if (millis() < (whole_house_txs[i_of_next_expected_tx].get_eta()-(WINDOW/2))) {
 			poll_next_iam();
 		} else  {
 			wait_for_whole_house_tx();
@@ -195,7 +176,7 @@ void Manager::wait_for_whole_house_tx()
 		whole_house_txs[i_of_next_expected_tx].missing();
 	}
 
-	update_next_expected_tx();
+	find_next_expected_tx();
 }
 
 const bool Manager::process_rx_packet_buffer(const uint32_t& target_uid)
@@ -237,7 +218,7 @@ const bool Manager::uid_is_iam(const uint32_t& uid) const
 	return false;
 }
 
-void Manager::update_next_expected_tx()
+void Manager::find_next_expected_tx()
 {
 	for (uint8_t i=0; i<num_whole_house_txs; i++) {
 		if (whole_house_txs[i].get_eta() < whole_house_txs[i_of_next_expected_tx].get_eta()) {

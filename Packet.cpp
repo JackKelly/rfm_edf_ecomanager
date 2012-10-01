@@ -104,7 +104,8 @@ void TXPacket::assemble(const uint8_t payload[], const uint8_t& payload_length,
 
 	set_packet_length(HEADER_LENGTH + payload_length + add_checksum + TAIL_LENGTH);
 
-	Serial.print("packet to TX = ");
+	Serial.print(millis());
+	Serial.print(" packet to TX = ");
 	print_bytes();
 
 	byte_index = 0;
@@ -140,8 +141,8 @@ void RXPacket::append(const uint8_t& value)
 void RXPacket::print_uid_and_watts() const
 {
 	Serial.print(millis());
-	Serial.print("{uid:");
-	Serial.print(uid, HEX);
+	Serial.print(" {uid:");
+	Serial.print(uid);
 	Serial.print("{");
 	Serial.print("t: ");
 	Serial.print(timecode);
