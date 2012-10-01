@@ -8,16 +8,16 @@
 #include "Manager.h"
 #include "consts.h"
 
-Sensor::Sensor(const uint32_t _uid, const uint16_t _watts)
-:uid(_uid)
-{
-	update(_watts);
-}
+Sensor::Sensor()
+:uid(UID_INVALID), watts0(WATTS_INVALID), eta(0)
+{}
 
-void Sensor::update(const uint16_t& _watts)
+void Sensor::update(const Packet& packet)
 {
-	eta = millis() + SAMPLE_PERIOD;
-	watts0 = _watts;
+	eta = packet.get_timecode() + SAMPLE_PERIOD;
+
+	const uint16_t* watts = packet.get_watts();
+	watts0 = watts[0];
 }
 
 const unsigned long Sensor::get_eta() const
@@ -73,17 +73,13 @@ void WholeHouseTx::print() const
 }
 
 
-WholeHouseTx::WholeHouseTx(const uint32_t& _uid, const uint16_t _watts[3])
-:Sensor(_uid, _watts[0])
+void WholeHouseTx::update(const Packet& packet)
 {
-	update(_watts);
-}
+	Sensor::update(packet);
 
-void WholeHouseTx::update(const uint16_t _watts[3])
-{
-	Sensor::update(_watts[0]);
-	watts1 = _watts[1];
-	watts2 = _watts[2];
+	const uint16_t* watts = packet.get_watts();
+	watts1 = watts[1];
+	watts2 = watts[2];
 	print();
 }
 
@@ -110,6 +106,7 @@ void Manager::init()
     uint8_t index;
 
     // listen for a while to catch the timings of the whole_house transmitters
+    Serial.println("Passively listening for 30s...");
     const unsigned long start_time = millis();
     while (millis() < (start_time+30000)) {
     	if (rfm.rx_packet_buffer.valid_data_is_available()) {
@@ -119,7 +116,7 @@ void Manager::init()
 					index = find_index_given_uid(uid);
 					if (index!=INVALID_INDEX) {
 						whole_house_txs[index].update(
-								rfm.rx_packet_buffer.packets[i].get_watts());
+								rfm.rx_packet_buffer.packets[i]);
 					}
 				}
 			}
@@ -130,6 +127,7 @@ void Manager::init()
 			rfm.rx_packet_buffer.reset_all();
     	}
     }
+    Serial.println("...done passively listening.");
     update_next_expected_tx();
 
 }
@@ -196,7 +194,7 @@ void Manager::wait_for_whole_house_tx()
 					}
 					if (index!=INVALID_INDEX) {
 						whole_house_txs[index].update(
-								rfm.rx_packet_buffer.packets[i].get_watts());
+								rfm.rx_packet_buffer.packets[i]);
 					}
 				} else {
 					Serial.print(millis());

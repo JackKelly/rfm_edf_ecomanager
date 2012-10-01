@@ -234,7 +234,7 @@ const uint16_t* Packet::get_watts() const
 	return watts;
 }
 
-const unsigned long& Packet::get_timecode() const
+volatile const unsigned long& Packet::get_timecode() const
 {
 	return timecode;
 }

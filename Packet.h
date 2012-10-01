@@ -68,7 +68,7 @@ public:
 
 	const uint16_t* get_watts() const;
 
-	const unsigned long& get_timecode() const;
+	volatile const unsigned long& get_timecode() const;
 
 private:
 	/********************

@@ -11,13 +11,15 @@
 #include <Arduino.h>
 #include "consts.h"
 #include "Rfm12b.h"
+#include "Packet.h"
 
 // TODO: not sure I need this Sensor class; just a WholeHouseTx class. Then I can
 // just use a watts[3] array and make print() much prettier.
 class Sensor {
 public:
-	Sensor(const uint32_t _uid=UID_INVALID, const uint16_t _watts=WATTS_INVALID);
-	void update(const uint16_t& _watts);
+	Sensor();
+
+	void update(const Packet& packet);
 
 	void set_uid(const uint32_t& _uid);
 
@@ -38,8 +40,7 @@ protected:
 class WholeHouseTx : public Sensor {
 public:
 	WholeHouseTx();
-	WholeHouseTx(const uint32_t& _uid, const uint16_t _watts[3]);
-	void update(const uint16_t _watts[3]);
+	void update(const Packet& packet);
 	void print() const;
 
 private:
