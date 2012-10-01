@@ -66,6 +66,11 @@ const uint8_t Packet::modular_sum(
     return acc;
 }
 
+const uint8_t Packet::get_byte_index() const
+{
+	return byte_index;
+}
+
 /**********************************************
  * TXPacket
  **********************************************/
@@ -143,7 +148,7 @@ void RXPacket::print_uid_and_watts() const
 	Serial.print(millis());
 	Serial.print(" {uid:");
 	Serial.print(uid);
-	Serial.print("{");
+	Serial.print(" {");
 	Serial.print("t: ");
 	Serial.print(timecode);
 
@@ -340,6 +345,11 @@ void PacketBuffer::reset_all()
 {
 	for (int i=0; i<current_packet; i++) {
 		packets[i].reset();
+	}
+
+	if (packets[current_packet].get_byte_index() > 0) {
+		Serial.print(millis());
+		Serial.println(" WARNING: LOSING DATA!");
 	}
 
 	current_packet = 0;

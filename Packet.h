@@ -32,6 +32,7 @@ public:
 	 */
 	const bool done() const;
 
+	const uint8_t get_byte_index() const;
 
 protected:
 	const static uint8_t MAX_PACKET_LENGTH = 22;

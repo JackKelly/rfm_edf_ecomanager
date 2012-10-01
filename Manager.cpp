@@ -51,7 +51,6 @@ Manager::Manager()
 	whole_house_txs[0].set_uid(895);
 	whole_house_txs[1].set_uid(28);
 
-	// TODO: write code to pair with IAMs
 	num_iams = 1;
 	iam_ids[0] = 0x55100003;
 }
@@ -105,7 +104,7 @@ void Manager::poll_next_iam()
 {
 	// don't repeatedly poll iams; wait SAMPLE_PERIOD seconds;
 	if (next_iam==0) {
-		if (millis() < timecode_polled_first_iam+SAMPLE_PERIOD) {
+		if (millis() < timecode_polled_first_iam+SAMPLE_PERIOD && retries==0) {
 			return;
 		} else {
 			timecode_polled_first_iam = millis();
@@ -118,10 +117,9 @@ void Manager::poll_next_iam()
 	rfm.poll_edf_iam(iam_ids[next_iam]);
 
 	// wait for response
-	const unsigned long WAIT = 100; // milliseconds to wait to reply
 	const unsigned long start_time = millis();
 	bool success = false;
-	while (millis() < start_time+WAIT) {
+	while (millis() < start_time+IAM_TIMEOUT) {
 		if (rfm.rx_packet_buffer.valid_data_is_available()
 				&& process_rx_packet_buffer(iam_ids[next_iam])) {
 			success = true;

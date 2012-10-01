@@ -40,10 +40,13 @@ private:
 
 	//**************************
 	// Timings (in milliseconds)
+
 	// length of time we're willing to wait
 	// for the whole house tx.  We'll open the window
 	// half of WINDOW before ETA.
 	static const uint16_t WINDOW = 1000;
+
+	static const unsigned long IAM_TIMEOUT = 100; // milliseconds to wait for reply
 
 	Sensor whole_house_txs[MAX_WHOLE_HOUSE_TXS];
 	uint8_t num_whole_house_txs;
@@ -57,6 +60,10 @@ private:
 	unsigned long timecode_polled_first_iam;
 
 	Rfm12b rfm;
+
+	/***************************
+	 * Private methods
+	 ***************************/
 
 	/*
 	 * Poll IAM with ID == iam_ids[next_iam]
