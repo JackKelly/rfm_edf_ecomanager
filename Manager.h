@@ -19,7 +19,7 @@ class Sensor {
 public:
 	Sensor();
 
-	void update(const Packet& packet);
+	void update(const RXPacket& packet);
 
 	void set_uid(const uint32_t& _uid);
 
@@ -40,7 +40,7 @@ protected:
 class WholeHouseTx : public Sensor {
 public:
 	WholeHouseTx();
-	void update(const Packet& packet);
+	void update(const RXPacket& packet);
 
 private:
 	uint16_t watts1;
@@ -88,7 +88,7 @@ private:
 
 	void update_next_expected_tx();
 
-	void process_whole_house_uid(const uint32_t& uid, const Packet& packet);
+	void process_whole_house_uid(const uint32_t& uid, const RXPacket& packet);
 
 	const bool uid_is_iam(const uint32_t& uid) const;
 

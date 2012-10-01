@@ -12,7 +12,7 @@ Sensor::Sensor()
 :eta(0), uid(UID_INVALID), watts0(WATTS_INVALID)
 {}
 
-void Sensor::update(const Packet& packet)
+void Sensor::update(const RXPacket& packet)
 {
 	eta = packet.get_timecode() + SAMPLE_PERIOD;
 
@@ -52,7 +52,7 @@ WholeHouseTx::WholeHouseTx()
 }
 
 
-void WholeHouseTx::update(const Packet& packet)
+void WholeHouseTx::update(const RXPacket& packet)
 {
 	Sensor::update(packet);
 
@@ -97,7 +97,7 @@ void Manager::init()
     update_next_expected_tx();
 }
 
-void Manager::process_whole_house_uid(const uint32_t& uid, const Packet& packet)
+void Manager::process_whole_house_uid(const uint32_t& uid, const RXPacket& packet)
 {
 	for (uint8_t i=0; i<num_whole_house_txs; i++) {
 		if (whole_house_txs[i].get_uid() == uid) {
@@ -202,7 +202,7 @@ const bool Manager::process_rx_packet_buffer(const uint32_t& target_uid)
 {
 	bool success = false;
 	uint32_t uid;
-	Packet* packet = NULL;
+	RXPacket* packet = NULL;
 
 	for (uint8_t packet_i=0; packet_i<=rfm.rx_packet_buffer.current_packet; packet_i++) {
 		packet = &rfm.rx_packet_buffer.packets[packet_i];

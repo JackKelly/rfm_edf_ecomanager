@@ -45,7 +45,7 @@ public:
 
 private:
 	static enum State {RX, TX} state; // state RFM12b is in
-	static Packet tx_packet; // the packet about to be sent TODO: volatile?
+	static TXPacket tx_packet; // the packet about to be sent TODO: volatile?
 
 	/**
 	 * Get the next byte in Rfm12b::tx_packet

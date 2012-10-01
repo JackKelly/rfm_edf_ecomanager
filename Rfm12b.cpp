@@ -3,7 +3,7 @@
 #include "spi.h"
 
 Rfm12b::State Rfm12b::state;
-Packet Rfm12b::tx_packet;
+TXPacket Rfm12b::tx_packet;
 PacketBuffer Rfm12b::rx_packet_buffer(12);
 
 void Rfm12b::enable_rx()
