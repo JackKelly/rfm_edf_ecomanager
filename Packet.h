@@ -12,11 +12,13 @@ public:
 
 	void set_packet_length(const uint8_t& _packet_length);
 
-	void add(const uint8_t* bytes, const uint8_t& length);
+	void append(const uint8_t* bytes, const uint8_t& length);
 	/**
 	 * Print contents of packet to Serial port.
 	 */
 	void print() const;
+
+	void print_uid_and_watts() const;
 
 
 	/**
@@ -50,7 +52,7 @@ public:
 	/**
 	 * Add a byte to the packet.
 	 */
-	void add(const uint8_t& value);
+	void append(const uint8_t& value);
 
 	/**
 	 * Returns true if we've reached the end of the packet.

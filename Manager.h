@@ -41,7 +41,6 @@ class WholeHouseTx : public Sensor {
 public:
 	WholeHouseTx();
 	void update(const Packet& packet);
-	void print() const;
 
 private:
 	uint16_t watts1;
@@ -68,12 +67,14 @@ private:
 
 	WholeHouseTx whole_house_txs[MAX_WHOLE_HOUSE_TXS];
 	uint8_t num_whole_house_txs;
-	uint8_t next_expected_tx;
+	uint8_t i_of_next_expected_tx;
 	uint8_t next_iam;
 	uint8_t num_iams;
 	uint32_t iam_ids[MAX_NUM_IAMS];
 	uint8_t retries;
 	static const uint8_t MAX_RETRIES = 5; // for polling IAMs
+
+	unsigned long timecode_polled_first_iam;
 
 	Rfm12b rfm;
 
@@ -87,10 +88,17 @@ private:
 
 	void update_next_expected_tx();
 
-	const uint8_t find_index_given_uid(const uint32_t& uid);
+	void process_whole_house_uid(const uint32_t& uid, const Packet& packet);
+
+	const bool uid_is_iam(const uint32_t& uid) const;
 
 	void increment_next_iam();
 
+	/**
+	 * Process every packet in rx_packet_buffer appropriately
+	 *
+	 * @return true if a packet corresponding to uid is found
+	 */
 	const bool process_rx_packet_buffer(const uint32_t& uid);
 
 

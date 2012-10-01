@@ -32,20 +32,18 @@ void Rfm12b::enable_tx()
 	// See power managament command in enable_rx()
 	spi::transfer_word(0x8239);
 	state = TX;
-	Serial.println("TX:");
 }
 
 void Rfm12b::tx_next_byte()
 {
 	const uint8_t out = tx_packet.get_next_byte();
-	spi::transfer_word(0xB800 + out);
-
-	Serial.print(out, HEX); // TODO: remove after debugging
-	Serial.print(" "); // TODO: remove after debugging
+	spi::transfer_word(0xB800 | out);
+	Serial.print(" ");
+	Serial.print(out, HEX);
 
 	if (tx_packet.done()) {
 		// we've finished transmitting the packet
-		Serial.print("\r\n");  // TODO: remove after debugging
+		Serial.println("");
 		enable_rx();
 	}
 }
@@ -502,7 +500,7 @@ void Rfm12b::init_edf () {
 	return;
 }
 
-void Rfm12b::print_if_data_available()
+void Rfm12b::print_if_data_available() // TODO: is this function required any more?
 {
 	if (rx_packet_buffer.data_is_available()) {
 		rx_packet_buffer.print_and_reset();

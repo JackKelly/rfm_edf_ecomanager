@@ -2,7 +2,7 @@
 #include "consts.h"
 
 Packet::Packet(const uint8_t _packet_length)
-: packet_length(_packet_length), byte_index(0), packet_ok(false), uid(UID_INVALID), timecode(0)
+: packet_length(_packet_length), byte_index(0), timecode(0), packet_ok(false), uid(UID_INVALID)
 {
 	if (packet_length > MAX_PACKET_LENGTH) {
 		Serial.println("ERROR: packet_length > MAX_PACKET_LENGTH!");
@@ -14,7 +14,7 @@ void Packet::set_packet_length(const uint8_t& _packet_length)
 	packet_length = _packet_length;
 }
 
-void Packet::add(const uint8_t& value)
+void Packet::append(const uint8_t& value)
 {
 	if (!done()) {
 		if (byte_index==0) { // first byte
@@ -31,10 +31,10 @@ void Packet::add(const uint8_t& value)
 	}
 }
 
-void Packet::add(const uint8_t* bytes, const uint8_t& length)
+void Packet::append(const uint8_t* bytes, const uint8_t& length)
 {
 	for (int i=0; i<length; i++) {
-		add(bytes[i]);
+		append(bytes[i]);
 	}
 }
 
@@ -46,7 +46,8 @@ const uint8_t Packet::get_next_byte()
 	return 0;
 }
 
-void Packet::print() const {
+void Packet::print() const
+{
 
 	for (int i=0; i<packet_length; i++) {
 		Serial.print(packet[i], HEX);
@@ -72,7 +73,28 @@ void Packet::print() const {
 	Serial.print("\r\n");
 }
 
-const bool Packet::done() const {
+void Packet::print_uid_and_watts() const
+{
+	Serial.print(millis());
+	Serial.print("{uid:");
+	Serial.print(uid, HEX);
+	Serial.print("{");
+	Serial.print("t: ");
+	Serial.print(timecode);
+
+	for (uint8_t i=0; i<3; i++) {
+		if (watts[i]!=WATTS_INVALID) {
+			Serial.print(", s");
+			Serial.print(i);
+			Serial.print(": ");
+			Serial.print(watts[i]);
+		}
+	}
+	Serial.println("}}");
+}
+
+const bool Packet::done() const
+{
 	return byte_index >= packet_length;
 }
 
@@ -112,16 +134,23 @@ void Packet::assemble(const uint8_t payload[], const uint8_t& payload_length,
 	const uint8_t TAIL_LENGTH   = sizeof(TAIL);
 
 	reset();
+
+	append(HEADER, HEADER_LENGTH);
+
+	append(payload, payload_length);
+	if (add_checksum) {
+		append(modular_sum(payload, payload_length));
+	}
+	append(TAIL, TAIL_LENGTH);
+
+	whole_house_tx = false;
+	packet_ok = true;
 	set_packet_length(HEADER_LENGTH + payload_length + add_checksum + TAIL_LENGTH);
 
-	add(HEADER, HEADER_LENGTH);
-	add(payload, payload_length);
-	if (add_checksum) {
-		add(modular_sum(payload, payload_length));
-	}
-	add(TAIL, TAIL_LENGTH);
+	Serial.print("packet to TX = ");
+	print();
 
-	reset();
+	byte_index = 0;
 }
 
 const bool Packet::verify_checksum() const
@@ -176,9 +205,9 @@ void Packet::decode_uid()
 		uid |= (packet[0] & 0x0F) << 8; // get nibble from first byte
 		uid |= packet[1];
 	} else {
-		uid |= packet[1] << 24;
-		uid |= packet[2] << 16;
-		uid |= packet[3] <<  8;
+		uid |= (uint32_t)packet[1] << 24;
+		uid |= (uint32_t)packet[2] << 16;
+		uid |= (uint16_t)packet[3] <<  8;
 		uid |= packet[4];
 	}
 }
@@ -250,7 +279,7 @@ PacketBuffer::PacketBuffer(const uint8_t& packet_length)
 
 const bool PacketBuffer::add(const uint8_t& value)
 {
-	packets[current_packet].add(value);
+	packets[current_packet].append(value);
 
 	if (packets[current_packet].done()) {
 		if (current_packet >= NUM_PACKETS) {

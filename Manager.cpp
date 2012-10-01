@@ -51,27 +51,6 @@ WholeHouseTx::WholeHouseTx()
 	watts1 = watts2 = WATTS_INVALID;
 }
 
-void WholeHouseTx::print() const
-{
-	Serial.print(millis());
-	Serial.print("{uid:");
-	Serial.print(uid);
-	if (watts0!=WATTS_INVALID) {
-		Serial.print(", s0:");
-		Serial.print(watts0);
-	}
-	if (watts1!=WATTS_INVALID) {
-		Serial.print(", s1:");
-		Serial.print(watts1);
-	}
-	if (watts2!=WATTS_INVALID) {
-		Serial.print(", s2:");
-		Serial.print(watts2);
-	}
-	Serial.println("}");
-
-}
-
 
 void WholeHouseTx::update(const Packet& packet)
 {
@@ -80,12 +59,11 @@ void WholeHouseTx::update(const Packet& packet)
 	const uint16_t* watts = packet.get_watts();
 	watts1 = watts[1];
 	watts2 = watts[2];
-	print();
 }
 
 
 Manager::Manager()
-: next_expected_tx(0), next_iam(0), retries(0)
+: i_of_next_expected_tx(0), next_iam(0), retries(0), timecode_polled_first_iam(0)
 {
 	// TODO: this stuff needs to be programmed over serial not hard-coded.
 	num_whole_house_txs = 2;
@@ -94,7 +72,7 @@ Manager::Manager()
 
 	// TODO: write code to pair with IAMs
 	num_iams = 1;
-	iam_ids[0] = 3;
+	iam_ids[0] = 0x55100003;
 }
 
 void Manager::init()
@@ -103,48 +81,30 @@ void Manager::init()
     rfm.init_edf();
     rfm.enable_rx();
 
-    uint32_t uid;
-    uint8_t index;
-
     // listen for a while to catch the timings of the whole_house transmitters
-    Serial.println("Passively listening for 30s...");
+    Serial.print(millis());
+    Serial.println(" Passively listening for 30s...");
+
     const unsigned long start_time = millis();
     while (millis() < (start_time+30000)) {
     	if (rfm.rx_packet_buffer.valid_data_is_available()) {
-			for (uint8_t i=0; i<rfm.rx_packet_buffer.current_packet; i++) {
-				uid = rfm.rx_packet_buffer.packets[i].get_uid();
-				if (rfm.rx_packet_buffer.packets[i].is_ok()) {
-					index = find_index_given_uid(uid);
-					if (index!=INVALID_INDEX) {
-						whole_house_txs[index].update(
-								rfm.rx_packet_buffer.packets[i]);
-					}
-				}
-			}
-			if (rfm.rx_packet_buffer.packets[rfm.rx_packet_buffer.current_packet].done()) {
-				Serial.print(millis());
-				Serial.println(" DANGER: LOOSING DATA!");
-			}
-			rfm.rx_packet_buffer.reset_all();
+			process_rx_packet_buffer(0);
     	}
     }
-    Serial.println("...done passively listening.");
-    update_next_expected_tx();
 
+    Serial.print(millis());
+    Serial.println(" ...done passively listening.");
+    update_next_expected_tx();
 }
 
-const uint8_t Manager::find_index_given_uid(const uint32_t& uid)
+void Manager::process_whole_house_uid(const uint32_t& uid, const Packet& packet)
 {
 	for (uint8_t i=0; i<num_whole_house_txs; i++) {
 		if (whole_house_txs[i].get_uid() == uid) {
-			return i;
+			whole_house_txs[i].update(packet);
+			break;
 		}
 	}
-	Serial.print(millis());
-	Serial.print(" invalid index=");
-	Serial.println(uid);
-
-	return INVALID_INDEX;
 }
 
 void Manager::run()
@@ -152,7 +112,7 @@ void Manager::run()
 	if (num_whole_house_txs == 0) {
 		poll_next_iam();
 	} else {
-		if (millis() < (whole_house_txs[next_expected_tx].get_eta()-EARLY_OPEN)) {
+		if (millis() < (whole_house_txs[i_of_next_expected_tx].get_eta()-EARLY_OPEN)) {
 			poll_next_iam();
 		} else  {
 			wait_for_whole_house_tx();
@@ -162,18 +122,24 @@ void Manager::run()
 
 void Manager::poll_next_iam()
 {
-	const unsigned long WAIT = 20; // milliseconds to wait to reply
-	// TODO
-	// don't repeatedly poll iams; wait 6 seconds;
-	// if we've finished polling iams for this period then go into listening
-	// mode and respond immediately we get data.
-	// if we accidentally catch a whole-house TX then update_next_expected_tx();
+	// don't repeatedly poll iams; wait SAMPLE_PERIOD seconds;
+	if (next_iam==0) {
+		if (millis() < timecode_polled_first_iam+SAMPLE_PERIOD) {
+			return;
+		} else {
+			timecode_polled_first_iam = millis();
+		}
+	}
 
+	Serial.print(millis());
+	Serial.print(" polling IAM ");
+	Serial.println(iam_ids[next_iam]);
 	rfm.poll_edf_iam(iam_ids[next_iam]);
 
 	// wait for response
+	const unsigned long WAIT = 100; // milliseconds to wait to reply
 	const unsigned long start_time = millis();
-	const bool success = false;
+	bool success = false;
 	while (millis() < start_time+WAIT) {
 		if (rfm.rx_packet_buffer.valid_data_is_available()
 				&& process_rx_packet_buffer(iam_ids[next_iam])) {
@@ -184,12 +150,11 @@ void Manager::poll_next_iam()
 
 	if (success) {
 		increment_next_iam();
-		// TODO: send data over serial
 	} else {
-		if (retries > MAX_RETRIES) {
-			increment_next_iam();
-		} else {
+		if (retries < MAX_RETRIES) {
 			retries++;
+		} else {
+			increment_next_iam();
 		}
 	}
 }
@@ -208,9 +173,6 @@ void Manager::wait_for_whole_house_tx()
 {
 	const unsigned long start_time = millis();
 
-	uint8_t index;
-	uint32_t uid;
-
 	// TODO handle roll-over over millis().
 
 	// listen for WHOLE_HOUSE_TX for defined period.
@@ -218,31 +180,9 @@ void Manager::wait_for_whole_house_tx()
 	Serial.println(" Window open!");
 	bool success = false;
 	while (millis() < (start_time+WINDOW) && !success) {
-		if (rfm.rx_packet_buffer.valid_data_is_available()) {
-			for (uint8_t i=0; i<rfm.rx_packet_buffer.current_packet; i++) {
-				uid = rfm.rx_packet_buffer.packets[i].get_uid();
-				if (rfm.rx_packet_buffer.packets[i].is_ok()) {
-					if (uid == whole_house_txs[next_expected_tx].get_uid()) {
-						success = true; // break out of while loop
-						index = next_expected_tx;
-					} else {
-						index = find_index_given_uid(uid);
-					}
-					if (index!=INVALID_INDEX) {
-						whole_house_txs[index].update(
-								rfm.rx_packet_buffer.packets[i]);
-					}
-				} else {
-					Serial.print(millis());
-					Serial.print(" Broken packet received. uid=");
-					Serial.println(uid);
-				}
-			}
-			if (rfm.rx_packet_buffer.packets[rfm.rx_packet_buffer.current_packet].done()) {
-				Serial.print(millis());
-				Serial.println(" DANGER: LOOSING DATA!");
-			}
-			rfm.rx_packet_buffer.reset_all();
+		if (rfm.rx_packet_buffer.valid_data_is_available() &&
+				process_rx_packet_buffer(whole_house_txs[i_of_next_expected_tx].get_uid())) {
+			success = true;
 		}
 	}
 
@@ -252,22 +192,61 @@ void Manager::wait_for_whole_house_tx()
 
 	if (!success) {
 		// tell whole-house TX it missed its slot
-		whole_house_txs[next_expected_tx].missing();
+		whole_house_txs[i_of_next_expected_tx].missing();
 	}
 
 	update_next_expected_tx();
 }
 
+const bool Manager::process_rx_packet_buffer(const uint32_t& target_uid)
+{
+	bool success = false;
+	uint32_t uid;
+	Packet* packet = NULL;
+
+	for (uint8_t packet_i=0; packet_i<=rfm.rx_packet_buffer.current_packet; packet_i++) {
+		packet = &rfm.rx_packet_buffer.packets[packet_i];
+		if (packet->done()) {
+			if (packet->is_ok()) {
+				packet->print_uid_and_watts(); // send data over serial
+				uid = packet->get_uid();
+				success = (uid == target_uid);
+
+				if (!uid_is_iam(uid)) {
+					process_whole_house_uid(uid, *packet);
+				}
+
+			} else {
+				Serial.print(millis());
+				Serial.println(" Broken packet received.");
+			}
+		}
+	}
+
+	rfm.rx_packet_buffer.reset_all();
+	return success;
+}
+
+const bool Manager::uid_is_iam(const uint32_t& uid) const
+{
+	for (uint8_t i=0; i<num_iams; i++) {
+		if (iam_ids[i] == uid) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void Manager::update_next_expected_tx()
 {
 	for (uint8_t i=0; i<num_whole_house_txs; i++) {
-		if (whole_house_txs[i].get_eta() < whole_house_txs[next_expected_tx].get_eta()) {
-			next_expected_tx = i;
+		if (whole_house_txs[i].get_eta() < whole_house_txs[i_of_next_expected_tx].get_eta()) {
+			i_of_next_expected_tx = i;
 		}
 	}
 	Serial.print(millis());
 	Serial.print(" Next expected tx has uid = ");
-	Serial.print(whole_house_txs[next_expected_tx].get_uid());
+	Serial.print(whole_house_txs[i_of_next_expected_tx].get_uid());
 	Serial.print(" eta=");
-	Serial.println(whole_house_txs[next_expected_tx].get_eta());
+	Serial.println(whole_house_txs[i_of_next_expected_tx].get_eta());
 }
