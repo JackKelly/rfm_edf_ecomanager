@@ -9,7 +9,7 @@
 #include "consts.h"
 
 Sensor::Sensor()
-:uid(UID_INVALID), watts0(WATTS_INVALID), eta(0)
+:eta(0), uid(UID_INVALID), watts0(WATTS_INVALID)
 {}
 
 void Sensor::update(const Packet& packet)
@@ -85,13 +85,14 @@ void WholeHouseTx::update(const Packet& packet)
 
 
 Manager::Manager()
-: next_iam(0), next_expected_tx(0)
+: next_expected_tx(0), next_iam(0), retries(0)
 {
 	// TODO: this stuff needs to be programmed over serial not hard-coded.
 	num_whole_house_txs = 2;
 	whole_house_txs[0].set_uid(895);
 	whole_house_txs[1].set_uid(28);
 
+	// TODO: write code to pair with IAMs
 	num_iams = 1;
 	iam_ids[0] = 3;
 }
@@ -161,11 +162,46 @@ void Manager::run()
 
 void Manager::poll_next_iam()
 {
+	const unsigned long WAIT = 20; // milliseconds to wait to reply
 	// TODO
 	// don't repeatedly poll iams; wait 6 seconds;
 	// if we've finished polling iams for this period then go into listening
 	// mode and respond immediately we get data.
 	// if we accidentally catch a whole-house TX then update_next_expected_tx();
+
+	rfm.poll_edf_iam(iam_ids[next_iam]);
+
+	// wait for response
+	const unsigned long start_time = millis();
+	const bool success = false;
+	while (millis() < start_time+WAIT) {
+		if (rfm.rx_packet_buffer.valid_data_is_available()
+				&& process_rx_packet_buffer(iam_ids[next_iam])) {
+			success = true;
+			break;
+		}
+	}
+
+	if (success) {
+		increment_next_iam();
+		// TODO: send data over serial
+	} else {
+		if (retries > MAX_RETRIES) {
+			increment_next_iam();
+		} else {
+			retries++;
+		}
+	}
+}
+
+void Manager::increment_next_iam()
+{
+	next_iam++;
+	if (next_iam >= num_iams) {
+		next_iam=0;
+	}
+
+	retries = 0;
 }
 
 void Manager::wait_for_whole_house_tx()
@@ -187,7 +223,7 @@ void Manager::wait_for_whole_house_tx()
 				uid = rfm.rx_packet_buffer.packets[i].get_uid();
 				if (rfm.rx_packet_buffer.packets[i].is_ok()) {
 					if (uid == whole_house_txs[next_expected_tx].get_uid()) {
-						success = true;
+						success = true; // break out of while loop
 						index = next_expected_tx;
 					} else {
 						index = find_index_given_uid(uid);

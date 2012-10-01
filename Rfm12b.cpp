@@ -509,10 +509,16 @@ void Rfm12b::print_if_data_available()
 	}
 }
 
-void Rfm12b::ping_edf_iam()
+void Rfm12b::poll_edf_iam(const uint32_t& uid)
 {
-	const uint8_t tx_data[] = {0x46, 0x55, 0x10, 0x00, 0x03,
-			0x00 ,0x50 ,0x53, 0x00, 0x00, 0x4F};
+	uint8_t tx_data[] = {0x46, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x50, 0x53, 0x00, 0x00, 0x4F};
+
+	// convert 32-bit uid into single bytes
+	tx_data[1] = (uid & 0xFF000000) >> 24;
+	tx_data[2] = (uid & 0x00FF0000) >> 16;
+	tx_data[3] = (uid & 0x0000FF00) >>  8;
+	tx_data[4] = (uid & 0x000000FF);
 
 	tx_packet.assemble(tx_data, 11, true);
 	enable_tx();

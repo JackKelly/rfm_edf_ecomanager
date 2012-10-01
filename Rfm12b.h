@@ -33,7 +33,7 @@ public:
 	 * the latest wattage reading.  At the moment the
 	 * EDF IAM's ID is hard-coded.
 	 */
-	static void ping_edf_iam();
+	static void poll_edf_iam(const uint32_t& uid);
 
 	/**
 	 * Mimick a Current Cost CT clamp.

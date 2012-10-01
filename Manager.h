@@ -72,20 +72,14 @@ private:
 	uint8_t next_iam;
 	uint8_t num_iams;
 	uint32_t iam_ids[MAX_NUM_IAMS];
+	uint8_t retries;
+	static const uint8_t MAX_RETRIES = 5; // for polling IAMs
+
+	Rfm12b rfm;
 
 	/*
 	 * Poll IAM with ID == iam_ids[next_iam]
 	 * Listen for response.
-	 * If valid response received within time window
-	 *     send data over serial.
-	 * 	   next_iam++
-	 *     retries = 0
-	 * else
-	 * 	   if (retries > MAX_RETRIES)
-	 * 	       next_iam++
-	 * 	       retries = 0
-	 * 	   else
-	 * 	       retries++
 	 */
 	void poll_next_iam();
 
@@ -95,7 +89,10 @@ private:
 
 	const uint8_t find_index_given_uid(const uint32_t& uid);
 
-	Rfm12b rfm;
+	void increment_next_iam();
+
+	const bool process_rx_packet_buffer(const uint32_t& uid);
+
 
 };
 
