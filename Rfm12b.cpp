@@ -43,12 +43,9 @@ void Rfm12b::tx_next_byte()
 {
 	const uint8_t out = tx_packet.get_next_byte();
 	spi::transfer_word(0xB800 | out);
-	Serial.print(" ");
-	Serial.print(out, HEX);
 
 	if (tx_packet.done()) {
 		// we've finished transmitting the packet
-		Serial.println("");
 		enable_rx();
 	}
 }

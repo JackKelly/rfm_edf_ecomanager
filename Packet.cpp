@@ -1,6 +1,6 @@
-#ifdef ARDUINO
+//#ifdef ARDUINO
 #include <inttypes.h>
-#endif
+//#endif
 
 #include "Packet.h"
 #include "consts.h"
@@ -112,10 +112,6 @@ void TXPacket::assemble(const uint8_t payload[], const uint8_t& payload_length,
 	append(TAIL, TAIL_LENGTH);
 
 	set_packet_length(HEADER_LENGTH + payload_length + add_checksum + TAIL_LENGTH);
-
-	Serial.print(millis());
-	Serial.print(" packet to TX = ");
-	print_bytes();
 
 	byte_index = 0;
 }
@@ -248,7 +244,7 @@ const bool RXPacket::de_manchesterise()
 	const uint8_t ONE  = 0b10000000;
 	const uint8_t ZERO = 0b01000000;
 	uint8_t mask;
-	uint8_t is_one;
+	uint8_t is_one = false;
 	bool success = true;
 
 	for (uint8_t in_byte_i=0; in_byte_i<packet_length; in_byte_i+=2) {
