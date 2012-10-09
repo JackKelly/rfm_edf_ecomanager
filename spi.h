@@ -1,6 +1,10 @@
 #ifndef SPI_H_
 #define SPI_H_
 
+#include <stdio.h>
+#include <Arduino.h>
+#include <avr/pgmspace.h>
+
 // Pins
 #define RFM_IRQ      2 // PD2
 #define SS_DDR      DDRB

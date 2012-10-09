@@ -1,5 +1,10 @@
-#include "Rfm12b.h"
+#ifdef ARDUINO
+#include <inttypes.h>
+#else
 #include <Arduino.h>
+#endif
+
+#include "Rfm12b.h"
 #include "spi.h"
 
 Rfm12b::State Rfm12b::state;

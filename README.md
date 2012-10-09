@@ -7,11 +7,9 @@ in a building.
 Current status
 ==============
 
-At present the code is in a very early stage.  The code simply transmits a
-hard-coded ping to my EDF IAM and displays all responses.  The code as-is
+At present the code is in a very early stage.  The code as-is
 will capture and display all Current Cost or EDF EcoManager RF packets it
-receives.  Note that the RX packets are buffered and the buffer is displayed
-and emtpied once every 5 seconds.
+receives.
 
 
 Hardware requirements
@@ -41,9 +39,11 @@ Usage
 Acknowledgements & further reading
 ==================================
 
+ - A massive thank you to Graham Murphy, Matt Thorpe and Paul Cooper who helped to decode the Current Cost and EDF RF protocols.
+
  - Many thanks to the good folks who wrote [JeeLib](https://github.com/jcw/jeelib) as it provided lots
    of help.
-
+   
  - As did [this tutorial on SPI on AVR devices](https://sites.google.com/site/qeewiki/books/avr-guide/spi).
 
  - If you want an indepth insight into the RFM01 then read the [RFM12B.pdf](http://www.hoperf.com/upload/rf/RFM12B.pdf)
@@ -75,22 +75,30 @@ avrdude -pm328p -cstk500v2 -P/dev/ttyACM0 -Uflash:w:rfm_edf_ecomanager.hex:a
 Building from source
 ====================
 
+Using the Arduino IDE
+---------------------
+
+With the Arduino IDE closed, place the rfm_edf_ecomanager directory and files into your sketchbook directory.
+Then start the Arduino IDE and opening this code should be as simple as going to 
+Open -> rfm_edf_ecomanager.   Please note that I'm currently using Eclipse 
+to develop this code (not the Arduino IDE).  However, I do try to test in the
+Arduino IDE regularly.  Many thanks to [robomotic](https://github.com/robomotic) for
+help converting my code to complile in the Arduino IDE.
+
 Using Eclipse
 -------------
+
+ - Setup Eclipse for Arduino development [as described by Francesco Rigoni](http://horrorcoding.altervista.org/arduino-development-with-eclipse-a-step-by-step-tutorial-to-the-basic-setup/).
+
+ - Create a new C++ AVR project called 'rfm_edf_ecomanager' and check out this project.  Be sure to modify the build settings for this project as described in Francesco's guide.
+
+Building without Eclipse or the Arduino IDE
+-------------------------------------------
 
 I'm afraid building this code isn't especially user-friendly at the moment
 because I'm developing on Eclipse and am using the auto-generated makefile
 at the moment while there's a lot of code churn. If I have time I'll manually
 create a more user friendly makefile.
-
-The easiest way to start development on this code right now is probably to 
-setup Eclipse using the notes at jack-kelly.com/eclipse_notes
-and import this repository's .cpp and .h files as
-an AVR C++ project (don't import the stuff in this repository's Release/
-directory: Eclipse should make that for you automatically.)
-
-Building without Eclipse
-------------------------
 
 I haven't tried this so I'm afraid I don't know if this will work but
 here are some pointers.
@@ -108,9 +116,4 @@ make all
 Then upload your `rfm_edf_ecomanager.hex` using the "[Uploading pre-compiled hex file](#uploading-pre-compiled-hex-file)"
 instructions above.
 
-Using the Arduino IDE
----------------------
 
-If you're using an Arduino IDE then you'll definitely need to delete the
-`main()` function.  I'm afraid I don't use the Arduino IDE so I'm not
-sure what else will be necessary to get this code to work in the Aduino IDE.

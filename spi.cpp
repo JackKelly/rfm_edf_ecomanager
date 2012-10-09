@@ -1,4 +1,9 @@
+#ifdef ARDUINO
+#include <inttypes.h>
+#else
 #include <Arduino.h>
+#endif
+
 #include "spi.h"
 
 inline void spi::select(const bool state)
@@ -12,14 +17,22 @@ inline void spi::select(const bool state)
 
 void spi::init()
 {
-	select(false);
+  
+    select(false);
     bitSet(SS_DDR, SS_BIT);
-    digitalWrite(SPI_SS, 1);
+    digitalWrite(SS, 1);
 
-    pinMode(SPI_SS, OUTPUT);
-    pinMode(SPI_MOSI, OUTPUT);
-    pinMode(SPI_MISO, INPUT);
+    // Set direction register for SCK and MOSI pin.
+    // MISO pin automatically overrides to INPUT.
+    // When the SS pin is set as OUTPUT, it can be used as
+    // a general purpose output port (it doesn't influence
+    // SPI operations).
+
     pinMode(SPI_SCK, OUTPUT);
+    pinMode(SPI_MOSI, OUTPUT);
+    pinMode(SPI_SS, OUTPUT);
+    pinMode(SPI_MISO, INPUT);
+  
 
     // SPE enables SPI
     // MSTR instructs AVR to operate in SPI master mode

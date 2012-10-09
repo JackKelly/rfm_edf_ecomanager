@@ -5,6 +5,10 @@
  *      Author: jack
  */
 
+#ifdef ARDUINO
+#include <inttypes.h>
+#endif
+
 #include "Manager.h"
 #include "consts.h"
 

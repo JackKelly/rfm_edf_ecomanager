@@ -1,3 +1,7 @@
+#ifdef ARDUINO
+#include <inttypes.h>
+#endif
+
 #include "Packet.h"
 #include "consts.h"
 

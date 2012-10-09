@@ -7,21 +7,21 @@ CPP_SRCS += \
 ../Manager.cpp \
 ../Packet.cpp \
 ../Rfm12b.cpp \
-../main.cpp \
+../rfm_edf_ecomanager.cpp \
 ../spi.cpp 
 
 OBJS += \
 ./Manager.o \
 ./Packet.o \
 ./Rfm12b.o \
-./main.o \
+./rfm_edf_ecomanager.o \
 ./spi.o 
 
 CPP_DEPS += \
 ./Manager.d \
 ./Packet.d \
 ./Rfm12b.d \
-./main.d \
+./rfm_edf_ecomanager.d \
 ./spi.d 
 
 
@@ -29,7 +29,7 @@ CPP_DEPS += \
 %.o: ../%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: AVR C++ Compiler'
-	avr-g++ -I/usr/share/arduino/hardware/arduino/cores/arduino/ -I/usr/share/arduino/hardware/arduino/variants/standard/ -I"/home/jack/workspace/avr/rfm_edf_ecomanager" -Wall -Os -fpack-struct -fshort-enums -funsigned-char -funsigned-bitfields -fno-exceptions -mmcu=atmega328p -DF_CPU=16000000UL -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -c -o "$@" "$<"
+	avr-g++ -I/usr/share/arduino/hardware/arduino/cores/arduino -I/usr/share/arduino/hardware/arduino/variants/standard/ -I"/home/jack/workspaces/avr/rfm_edf_ecomanager" -Wall -Os -fpack-struct -fshort-enums -funsigned-char -funsigned-bitfields -fno-exceptions -mmcu=atmega328p -DF_CPU=16000000UL -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -c -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

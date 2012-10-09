@@ -64,7 +64,7 @@ all: rfm_edf_ecomanager.elf secondary-outputs
 rfm_edf_ecomanager.elf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: AVR C++ Linker'
-	avr-g++ --cref -s -Os -o"rfm_edf_ecomanager.elf" $(OBJS) $(USER_OBJS) $(LIBS) -lm -Wl,-Map,rfm_edf_ecomanager.map,--cref -L"/home/jack/workspace/avr/ArduinoCore/Release" -mmcu=atmega328p
+	avr-g++ --cref -s -Os -o"rfm_edf_ecomanager.elf" $(OBJS) $(USER_OBJS) $(LIBS) -lm -Wl,-Map,rfm_edf_ecomanager.map,--cref -L"/home/jack/workspaces/avr/ArduinoCore/Release" -mmcu=atmega328p
 	@echo 'Finished building target: $@'
 	@echo ' '
 

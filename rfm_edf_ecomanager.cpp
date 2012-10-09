@@ -1,4 +1,9 @@
+#ifdef ARDUINO
+#include <inttypes.h>
+#else
 #include <Arduino.h>
+#endif
+
 #include "Manager.h"
 
 Manager manager;
