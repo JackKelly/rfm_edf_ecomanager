@@ -6,7 +6,7 @@
 
 #include "spi.h"
 
-inline void spi::select(const bool state)
+void spi::select(const bool state)
 {
 	if (state == true) {
 		bitClear(SS_PORT, SS_BIT);
