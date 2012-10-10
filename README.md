@@ -90,7 +90,9 @@ Using Eclipse
 
  - Setup Eclipse for Arduino development [as described by Francesco Rigoni](http://horrorcoding.altervista.org/arduino-development-with-eclipse-a-step-by-step-tutorial-to-the-basic-setup/).
 
- - Create a new C++ AVR project called 'rfm_edf_ecomanager' and check out this project.  Be sure to modify the build settings for this project as described in Francesco's guide.
+ - Clone the git repository into your Eclipse workspace directory
+
+ - Create a new C++ AVR Cross Target Application project called 'rfm_edf_ecomanager'.  Be sure to modify the build settings for this project as described in Francesco's guide.
 
 Building without Eclipse or the Arduino IDE
 -------------------------------------------
