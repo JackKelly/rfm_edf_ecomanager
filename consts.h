@@ -8,7 +8,7 @@
 #ifndef CONSTS_H_
 #define CONSTS_H_
 
-// Error codes:
+// Values denoting invalid status
 const uint16_t WATTS_INVALID   = 0xFFFF;
 const uint32_t ID_INVALID      = 0xFFFFFFFF;
 

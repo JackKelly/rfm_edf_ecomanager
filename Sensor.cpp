@@ -2,7 +2,7 @@
 #include "consts.h"
 
 Sensor::Sensor()
-:eta(0), id(ID_INVALID)
+:eta(0xFFFFFFFF), id(ID_INVALID)
 {}
 
 void Sensor::update(const RXPacket& packet)

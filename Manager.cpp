@@ -30,21 +30,9 @@ void Manager::init()
 {
     rfm.init();
     rfm.enable_rx();
-
-    // listen for a while to catch the timings of the cc tx transmit-only sensors
-    Serial.print(millis());
-    Serial.println(" Passively listening for 30s...");
-
-    const unsigned long start_time = millis();
-    while (millis() < (start_time+30000)) {
-    	if (rfm.rx_packet_buffer.valid_data_is_available()) {
-			process_rx_pack_buf_and_find_id(0);
-    	}
-    }
-
-    Serial.print(millis());
-    Serial.println(" ...done passively listening.");
     find_next_expected_cc_tx();
+    Serial.print("Size of unsigned long: ");
+    Serial.println(sizeof(unsigned long));
 }
 
 
@@ -55,7 +43,7 @@ void Manager::run()
         poll_next_cc_trx();
     } else {
         if (millis() < (p_next_cc_tx->get_eta() - (CC_TX_WINDOW/2) )) {
-            // We're far enough away from the next expect CC TX transmission
+            // We're far enough away from the next expected CC TX transmission
             // to mean that we have time to poll TRXs
             poll_next_cc_trx();
         } else  {
@@ -67,7 +55,8 @@ void Manager::run()
 
 void Manager::poll_next_cc_trx()
 {
-	// don't repeatedly poll TRXs; wait SAMPLE_PERIOD seconds;
+	// don't continually poll TRXs;
+    // instead wait SAMPLE_PERIOD between polling the first TRX.
 	if (i_next_cc_trx==0) {
 		if (millis() < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
 			return;
@@ -184,7 +173,7 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 				    packet->print_uid_and_watts(); // send data over serial
 				} else { // TODO: handle pair requests and EDF IAM manual mode changes
 	                Serial.print(millis());
-	                Serial.print(" Unknown ID: ");
+	                Serial.print(" Unknown ID! ");
 	                packet->print_uid_and_watts(); // send data over serial
 				}
 

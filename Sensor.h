@@ -15,7 +15,7 @@ public:
 	const unsigned long get_eta() const;
 
 protected:
-	unsigned long eta; // estimated time of arrival in miliseconds since power-on
+	unsigned long eta; // estimated time of arrival in milliseconds since power-on
 	uint32_t id;
 };
 
