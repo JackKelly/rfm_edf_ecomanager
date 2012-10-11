@@ -13,8 +13,7 @@
 #include "consts.h"
 
 Manager::Manager()
-: i_of_next_expected_cc_tx(0), i_of_next_cc_trx(0),
-  retries(0), timecode_polled_first_cc_trx(0)
+: p_next_cc_tx(cc_txs), i_next_cc_trx(0), retries(0), timecode_polled_first_cc_trx(0)
 {
 	// TODO: this stuff needs to be programmed over serial not hard-coded.
 	num_cc_txs = 2;
@@ -23,6 +22,7 @@ Manager::Manager()
 
 	num_cc_trxs = 1;
 	cc_trx_ids[0] = 0x55100003;
+	id_next_cc_trx = cc_trx_ids[0];
 }
 
 void Manager::init()
@@ -62,7 +62,7 @@ void Manager::run()
 	if (num_cc_txs == 0) {
 		poll_next_cc_trx();
 	} else {
-		if (millis() < (cc_txs[i_of_next_expected_cc_tx].get_eta()-(CC_TX_WINDOW/2))) {
+		if (millis() < (p_next_cc_tx->get_eta() - (CC_TX_WINDOW/2) )) {
 			poll_next_cc_trx();
 		} else  {
 			wait_for_cc_tx();
@@ -73,7 +73,7 @@ void Manager::run()
 void Manager::poll_next_cc_trx()
 {
 	// don't repeatedly poll iams; wait SAMPLE_PERIOD seconds;
-	if (i_of_next_cc_trx==0) {
+	if (i_next_cc_trx==0) {
 		if (millis() < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
 			return;
 		} else {
@@ -83,15 +83,15 @@ void Manager::poll_next_cc_trx()
 
 	Serial.print(millis());
 	Serial.print(" polling CC TRX ");
-	Serial.println(cc_trx_ids[i_of_next_cc_trx]);
-	rfm.poll_cc_trx(cc_trx_ids[i_of_next_cc_trx]);
+	Serial.println(id_next_cc_trx);
+	rfm.poll_cc_trx(id_next_cc_trx);
 
 	// wait for response
 	const unsigned long start_time = millis();
 	bool success = false;
 	while (millis() < start_time+CC_TRX_TIMEOUT) {
 		if (rfm.rx_packet_buffer.valid_data_is_available()
-				&& process_rx_pack_buf_and_find_uid(cc_trx_ids[i_of_next_cc_trx])) {
+				&& process_rx_pack_buf_and_find_uid(id_next_cc_trx)) {
 			success = true;
 			break;
 		}
@@ -110,10 +110,11 @@ void Manager::poll_next_cc_trx()
 
 void Manager::increment_i_of_next_cc_trx()
 {
-	i_of_next_cc_trx++;
-	if (i_of_next_cc_trx >= num_cc_trxs) {
-		i_of_next_cc_trx=0;
+	i_next_cc_trx++;
+	if (i_next_cc_trx >= num_cc_trxs) {
+		i_next_cc_trx=0;
 	}
+	id_next_cc_trx = cc_trx_ids[i_next_cc_trx];
 
 	retries = 0;
 }
@@ -130,7 +131,7 @@ void Manager::wait_for_cc_tx()
 	bool success = false;
 	while (millis() < (start_time+CC_TX_WINDOW) && !success) {
 		if (rfm.rx_packet_buffer.valid_data_is_available() &&
-				process_rx_pack_buf_and_find_uid(cc_txs[i_of_next_expected_cc_tx].get_uid())) {
+				process_rx_pack_buf_and_find_uid(p_next_cc_tx->get_uid())) {
 			success = true;
 		}
 	}
@@ -141,7 +142,7 @@ void Manager::wait_for_cc_tx()
 
 	if (!success) {
 		// tell whole-house TX it missed its slot
-		cc_txs[i_of_next_expected_cc_tx].missing();
+		p_next_cc_tx->missing();
 	}
 
 	find_next_expected_cc_tx();
@@ -189,13 +190,13 @@ const bool Manager::uid_is_cc_trx(const uint32_t& uid) const
 void Manager::find_next_expected_cc_tx()
 {
 	for (uint8_t i=0; i<num_cc_txs; i++) {
-		if (cc_txs[i].get_eta() < cc_txs[i_of_next_expected_cc_tx].get_eta()) {
-			i_of_next_expected_cc_tx = i;
+		if (cc_txs[i].get_eta() < p_next_cc_tx->get_eta()) {
+			p_next_cc_tx = &cc_txs[i];
 		}
 	}
 	Serial.print(millis());
 	Serial.print(" Next expected tx has uid = ");
-	Serial.print(cc_txs[i_of_next_expected_cc_tx].get_uid());
+	Serial.print(p_next_cc_tx->get_uid());
 	Serial.print(" eta=");
-	Serial.println(cc_txs[i_of_next_expected_cc_tx].get_eta());
+	Serial.println(p_next_cc_tx->get_eta());
 }

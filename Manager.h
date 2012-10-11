@@ -33,17 +33,19 @@ private:
 	static const uint16_t CC_TX_WINDOW = 1000;
 
     Sensor cc_txs[MAX_CC_TXS];
+    Sensor* p_next_cc_tx; // The next expected CC TX
     uint8_t num_cc_txs;
-    uint8_t i_of_next_expected_cc_tx;
 
     /*****************************************
      * CC TRX (e.g. EDF IAMs)                *
      *****************************************/
-
+    static const uint8_t  MAX_CC_TRXS = 35;   /* number of CC TRXs (e.g. EDF IAMs) */
 	static const unsigned long CC_TRX_TIMEOUT = 100; // milliseconds to wait for reply
-	uint8_t i_of_next_cc_trx;
+    uint32_t cc_trx_ids[MAX_CC_TRXS];
+    uint8_t  i_next_cc_trx; // index into cc_trx_ids
+	uint32_t id_next_cc_trx;// actual id (i.e. a copy of a cc_trx_ids[i_next_cc_trx])
 	uint8_t num_cc_trxs;
-	uint32_t cc_trx_ids[MAX_CC_TRXS];
+
 	uint8_t retries; // for polling CC TRXs
 	static const uint8_t MAX_RETRIES = 5; // for polling CC TRXs
 
@@ -54,7 +56,7 @@ private:
 	 ***************************/
 
 	/*
-	 * Poll CC TRX (e.g. EDF IAM) with ID == cc_trx_ids[i_of_next_cc_trx]
+	 * Poll CC TRX (e.g. EDF IAM) with ID == cc_trx_ids[p_next_cc_trx]
 	 * Listen for response.
 	 */
 	void poll_next_cc_trx();
