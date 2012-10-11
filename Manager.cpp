@@ -31,8 +31,6 @@ void Manager::init()
     rfm.init();
     rfm.enable_rx();
     find_next_expected_cc_tx();
-    Serial.print("Size of unsigned long: ");
-    Serial.println(sizeof(unsigned long));
 }
 
 
@@ -71,7 +69,7 @@ void Manager::poll_next_cc_trx()
 	rfm.poll_cc_trx(id_next_cc_trx);
 
 	// wait for response
-	const unsigned long start_time = millis();
+	const uint32_t start_time = millis();
 	bool success = false;
 	while (millis() < start_time+CC_TRX_TIMEOUT) {
 		if (rfm.rx_packet_buffer.valid_data_is_available()
@@ -98,13 +96,16 @@ void Manager::poll_next_cc_trx()
 
 void Manager::wait_for_cc_tx()
 {
-	const unsigned long start_time = millis();
+	const uint32_t start_time = millis();
 
 	// TODO handle roll-over over millis().
 
 	// listen for WHOLE_HOUSE_TX for defined period.
 	Serial.print(millis());
-	Serial.println(" Window open!");
+	Serial.print(" Window open! Expecting ");
+	Serial.print(p_next_cc_tx->get_id());
+	Serial.print(" at ");
+	Serial.println(p_next_cc_tx->get_eta());
 	bool success = false;
 	while (millis() < (start_time+CC_TX_WINDOW) && !success) {
 		if (rfm.rx_packet_buffer.valid_data_is_available() &&
