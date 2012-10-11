@@ -132,10 +132,10 @@ void RXPacket::append(const uint8_t& value)
 		if (byte_index==0) { // first byte
 			timecode = millis();
 			if (value==0x55) { // this packet is from a whole house tx
-				whole_house_tx = true;
+				cc_tx = true;
 				packet_length  = CC_TX_PACKET_LENGTH;
 			} else {
-				whole_house_tx = false;
+				cc_tx = false;
 				packet_length  = CC_TRX_PACKET_LENGTH;
 			}
 		}
@@ -167,7 +167,7 @@ void RXPacket::print_id_and_watts() const
 void RXPacket::reset()
 {
 	Packet::reset();
-	whole_house_tx = false;
+	cc_tx = false;
 	watts[0] = watts[1] = watts[2] = WATTS_INVALID;
 	id = ID_INVALID;
 	packet_ok = false;
@@ -185,7 +185,7 @@ const bool RXPacket::verify_checksum() const
 
 void RXPacket::post_process()
 {
-	if (whole_house_tx) { // this is a whole-house TX packet
+	if (cc_tx) { // this is a whole-house TX packet
 		packet_ok = de_manchesterise();
 	} else {
 		packet_ok = verify_checksum();
@@ -198,6 +198,12 @@ void RXPacket::post_process()
 }
 
 
+const bool RXPacket::is_cc_tx() const
+{
+    return cc_tx;
+}
+
+
 void RXPacket::decode_wattage()
 {
 	uint8_t msb;
@@ -206,7 +212,7 @@ void RXPacket::decode_wattage()
 		watts[sensor] = WATTS_INVALID; // "not valid" value
 	}
 
-	if (whole_house_tx) {
+	if (cc_tx) {
 		for (uint8_t sensor=0; sensor<3; sensor++) {
 			if (packet[2+(sensor*2)] & 0x80) { // plugged in
 				msb            = packet[2+(sensor*2)];
@@ -227,15 +233,25 @@ void RXPacket::decode_id()
 {
 	id=0;
 
-	if (whole_house_tx) {
+	if (cc_tx) { // this packet is from a CC transmit-only sensor
 		id |= (packet[0] & 0x0F) << 8; // get nibble from first byte
 		id |= packet[1];
-	} else {
+	} else { // this packet is from a CC transceiver (e.g. an EDF IAM)
 		id |= (uint32_t)packet[1] << 24;
 		id |= (uint32_t)packet[2] << 16;
 		id |= (uint16_t)packet[3] <<  8;
 		id |= packet[4];
 	}
+}
+
+
+const bool RXPacket::is_pairing_request() const
+{
+    if (cc_tx) {
+        return packet[0] & 0b10000000;
+    } else {
+        return packet[6]==0x43 && packet[7]==0x4F;
+    }
 }
 
 

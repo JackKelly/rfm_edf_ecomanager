@@ -79,6 +79,10 @@ public:
 	 */
 	const bool is_ok() const;
 
+	const bool is_pairing_request() const;
+
+    const bool is_cc_tx() const;
+
 	const uint32_t& get_id() const;
 
 	const uint16_t* get_watts() const;
@@ -97,7 +101,7 @@ private:
 	/****************************************************
 	 * Member variables used within ISR and outside ISR *
 	 ****************************************************/
-	volatile bool whole_house_tx; // is this packet from a whole-house tx?
+	volatile bool cc_tx; // is this packet from a transmit-only sensor (as opposed to a transceiver)?
 	volatile unsigned long timecode;
 
 	/******************************************

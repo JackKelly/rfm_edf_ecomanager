@@ -156,11 +156,16 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 				id = packet->get_id();
 				success = (id == target_id); // Was this the packet we were looking for?
 
-				cc_tx = find_cc_tx(id);
-				if (cc_tx) {
-	                // Receive ID is a CC_TX id we know about
-                    cc_tx->update(*packet);
-                    packet->print_id_and_watts(); // send data over serial
+				if (packet->is_pairing_request()) {
+				    Serial.print("{PR: ");
+				    Serial.print(id);
+				    Serial.println("}");
+				} else if (packet->is_cc_tx()) {
+				    cc_tx = find_cc_tx(id);
+				    if (cc_tx) { // Is received ID is a CC_TX id we know about?
+				        cc_tx->update(*packet);
+				        packet->print_id_and_watts(); // send data over serial
+				    }
 				} else if (id_is_cc_trx(id)) {
 				    // Received ID is a CC_TRX id we know about
 				    // TODO don't transmit both packets?
