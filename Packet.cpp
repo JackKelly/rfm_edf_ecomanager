@@ -122,7 +122,7 @@ void TXPacket::assemble(const uint8_t payload[], const uint8_t& payload_length,
  **********************************************/
 
 RXPacket::RXPacket()
-:Packet(), timecode(0), packet_ok(false), uid(ID_INVALID)
+:Packet(), timecode(0), packet_ok(false), id(ID_INVALID)
 {}
 
 
@@ -133,10 +133,10 @@ void RXPacket::append(const uint8_t& value)
 			timecode = millis();
 			if (value==0x55) { // this packet is from a whole house tx
 				whole_house_tx = true;
-				packet_length  = WHOLE_HOUSE_TX_PACKET_LENGTH;
+				packet_length  = CC_TX_PACKET_LENGTH;
 			} else {
 				whole_house_tx = false;
-				packet_length  = EDF_IAM_PACKET_LENGTH;
+				packet_length  = CC_TRX_PACKET_LENGTH;
 			}
 		}
 		packet[byte_index++] = value;
@@ -144,11 +144,11 @@ void RXPacket::append(const uint8_t& value)
 }
 
 
-void RXPacket::print_uid_and_watts() const
+void RXPacket::print_id_and_watts() const
 {
 	Serial.print(millis());
-	Serial.print(" {uid: ");
-	Serial.print(uid);
+	Serial.print(" {id: ");
+	Serial.print(id);
 	Serial.print(", t: ");
 	Serial.print(timecode);
 
@@ -169,10 +169,10 @@ void RXPacket::reset()
 	Packet::reset();
 	whole_house_tx = false;
 	watts[0] = watts[1] = watts[2] = WATTS_INVALID;
-	uid = ID_INVALID;
+	id = ID_INVALID;
 	packet_ok = false;
 	timecode = 0;
-	packet_length = EDF_IAM_PACKET_LENGTH;
+	packet_length = CC_TRX_PACKET_LENGTH;
 }
 
 
@@ -193,7 +193,7 @@ void RXPacket::post_process()
 
 	if (packet_ok) {
 		decode_wattage();
-		decode_uid();
+		decode_id();
 	}
 }
 
@@ -223,18 +223,18 @@ void RXPacket::decode_wattage()
 }
 
 
-void RXPacket::decode_uid()
+void RXPacket::decode_id()
 {
-	uid=0;
+	id=0;
 
 	if (whole_house_tx) {
-		uid |= (packet[0] & 0x0F) << 8; // get nibble from first byte
-		uid |= packet[1];
+		id |= (packet[0] & 0x0F) << 8; // get nibble from first byte
+		id |= packet[1];
 	} else {
-		uid |= (uint32_t)packet[1] << 24;
-		uid |= (uint32_t)packet[2] << 16;
-		uid |= (uint16_t)packet[3] <<  8;
-		uid |= packet[4];
+		id |= (uint32_t)packet[1] << 24;
+		id |= (uint32_t)packet[2] << 16;
+		id |= (uint16_t)packet[3] <<  8;
+		id |= packet[4];
 	}
 }
 
@@ -281,9 +281,9 @@ const bool RXPacket::is_ok() const
 }
 
 
-const uint32_t& RXPacket::get_uid() const
+const uint32_t& RXPacket::get_id() const
 {
-	return uid;
+	return id;
 }
 
 

@@ -65,7 +65,7 @@ class RXPacket : public Packet
 public:
 	RXPacket();
 
-	void print_uid_and_watts() const;
+	void print_id_and_watts() const;
 
 	void append(const uint8_t& value); // override
 
@@ -79,7 +79,7 @@ public:
 	 */
 	const bool is_ok() const;
 
-	const uint32_t& get_uid() const;
+	const uint32_t& get_id() const;
 
 	const uint16_t* get_watts() const;
 
@@ -91,8 +91,8 @@ private:
 	/********************
 	 * Consts           *
 	 * ******************/
-	const static uint8_t EDF_IAM_PACKET_LENGTH = 12;
-	const static uint8_t WHOLE_HOUSE_TX_PACKET_LENGTH = 16;
+	const static uint8_t CC_TRX_PACKET_LENGTH = 12;
+	const static uint8_t CC_TX_PACKET_LENGTH  = 16;
 
 	/****************************************************
 	 * Member variables used within ISR and outside ISR *
@@ -105,7 +105,7 @@ private:
 	 ******************************************/
 	bool packet_ok; // does the checksum or de-manchesterisation check out?
 	uint16_t watts[3]; // the decoded reading from sensors
-	uint32_t uid; // the sensor radio ID
+	uint32_t id; // the sensor radio ID
 
 	/********************************************
 	 * Private methods                          *
@@ -120,7 +120,7 @@ private:
 	 */
 	void decode_wattage();
 
-	void decode_uid();
+	void decode_id();
 
 	/**
 	 * DeManchesterise this packet

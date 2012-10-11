@@ -153,21 +153,21 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 		packet = &rfm.rx_packet_buffer.packets[packet_i];
 		if (packet->done()) {
 			if (packet->is_ok()) {
-				id = packet->get_uid();
+				id = packet->get_id();
 				success = (id == target_id); // Was this the packet we were looking for?
 
 				cc_tx = find_cc_tx(id);
 				if (cc_tx) {
 	                // Receive ID is a CC_TX id we know about
                     cc_tx->update(*packet);
-                    packet->print_uid_and_watts(); // send data over serial
+                    packet->print_id_and_watts(); // send data over serial
 				} else if (id_is_cc_trx(id)) {
 				    // Received ID is a CC_TRX id we know about
 				    // TODO don't transmit both packets?
-				    packet->print_uid_and_watts(); // send data over serial
+				    packet->print_id_and_watts(); // send data over serial
 				} else { // TODO: handle pair requests and EDF IAM manual mode changes
 	                debug(INFO, "Unknown ID: ");
-	                packet->print_uid_and_watts(); // send data over serial
+	                packet->print_id_and_watts(); // send data over serial
 				}
 
 			} else {
@@ -199,5 +199,5 @@ void Manager::find_next_expected_cc_tx()
 			p_next_cc_tx = &cc_txs[i];
 		}
 	}
-	debug(INFO, "Next expected tx has uid=%lu, eta=%lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
+	debug(INFO, "Next expected CC_TX has ID=%lu, ETA=%lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
 }

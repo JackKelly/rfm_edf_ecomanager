@@ -279,7 +279,7 @@ void Rfm12b::poll_cc_trx(const uint32_t& id)
 	uint8_t tx_data[] = {0x46, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x50, 0x53, 0x00, 0x00, 0x4F};
 
-	// convert 32-bit uid into single bytes
+	// convert 32-bit id into single bytes
 	tx_data[1] = (id & 0xFF000000) >> 24;
 	tx_data[2] = (id & 0x00FF0000) >> 16;
 	tx_data[3] = (id & 0x0000FF00) >>  8;
