@@ -10,7 +10,7 @@
 
 Rfm12b::State Rfm12b::state;
 TXPacket Rfm12b::tx_packet;
-PacketBuffer Rfm12b::rx_packet_buffer(12);
+PacketBuffer Rfm12b::rx_packet_buffer;
 
 void Rfm12b::enable_rx()
 {
@@ -84,10 +84,10 @@ void Rfm12b::interrupt_handler()
 	if (state == RX) {
 		bool full = false; // is the buffer full after receiving the byte waiting for us?
 		if ((status_MSB & 0x20) != 0) { // FIFO overflow
-			full  = rx_packet_buffer.add(spi::transfer_byte(0x00)); // get 1st byte of data
-			full |= rx_packet_buffer.add(spi::transfer_byte(0x00));
+			full  = rx_packet_buffer.append(spi::transfer_byte(0x00)); // get 1st byte of data
+			full |= rx_packet_buffer.append(spi::transfer_byte(0x00));
 		} else 	if ((status_MSB & 0x80) != 0) { // FIFO has 8 bits ready
-			full = rx_packet_buffer.add(spi::transfer_byte(0x00)); // get 1st byte of data
+			full = rx_packet_buffer.append(spi::transfer_byte(0x00)); // get 1st byte of data
 		}
 		spi::select(false);
 
@@ -265,12 +265,6 @@ void Rfm12b::init () {
 	return;
 }
 
-void Rfm12b::print_if_data_available() // TODO: is this function required any more?
-{
-	if (rx_packet_buffer.data_is_available()) {
-		rx_packet_buffer.print_and_reset();
-	}
-}
 
 void Rfm12b::poll_cc_trx(const uint32_t& id)
 {

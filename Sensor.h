@@ -10,7 +10,7 @@ public:
 	void missing();
 	void set_id(const uint32_t& _id);
 	const uint32_t& get_id() const;
-	const uint32_t& get_eta() const;
+	const uint32_t& get_eta();
 
 protected:
 	uint32_t eta; // estimated time of arrival in milliseconds since power-on

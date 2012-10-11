@@ -12,7 +12,7 @@ void Sensor::update(const RXPacket& packet)
     if (time_last_seen != 0) {
         // update sample period for this Sensor
         // (seems to vary a little between sensors)
-
+        // TODO: take an average for the sample period
         debug(INFO, "CC_TX ID=%lu, old sample_period=%u", id, sample_period);
 
         sample_period = (packet.get_timecode() - time_last_seen) / num_periods;
@@ -29,8 +29,12 @@ void Sensor::update(const RXPacket& packet)
 	time_last_seen = packet.get_timecode();
 }
 
-const uint32_t& Sensor::get_eta() const
+const uint32_t& Sensor::get_eta()
 {
+    // Sanity-check ETA to make sure it's in the future.
+    if (eta < millis()) {
+        eta = 0xFFFFFFFF;
+    }
 	return eta;
 }
 

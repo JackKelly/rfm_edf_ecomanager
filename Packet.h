@@ -23,7 +23,6 @@ public:
 
 	/**
 	 * Reset the byte_index to point to the first byte in this packet.
-	 * Also reset all other contents
 	 */
 	void reset();
 
@@ -70,7 +69,8 @@ public:
 	void append(const uint8_t& value); // override
 
 	/**
-	 * Run this one packet has been received fully.
+	 * Run this after packet has been received fully to
+	 * set packet_ok, watts and id.
 	 */
 	void post_process();
 
@@ -88,8 +88,6 @@ public:
 	const uint16_t* get_watts() const;
 
 	volatile const unsigned long& get_timecode() const;
-
-	void reset();
 
 private:
 	/********************
@@ -151,11 +149,6 @@ public:
 
 	const uint8_t get_next_byte();
 
-private:
-	/********************************************
-	 * Private methods                          *
-	 ********************************************/
-
 };
 
 
@@ -167,21 +160,7 @@ private:
 class PacketBuffer {
 public:
 
-	PacketBuffer(const uint8_t& packet_length);
-
-	/**
-	 * Print all packets to the Serial port and reset each packet.
-	 */
-	void print_and_reset();
-
-	/**
-	 * @return true if data is available.
-	 */
-	const bool data_is_available() const;
-
-	const bool valid_data_is_available();
-
-	void reset_all();
+	PacketBuffer();
 
 	/****************************************
 	 * FUNCTIONS WHICH MAY BE CALLED FROM AN
@@ -189,9 +168,9 @@ public:
 	 * **************************************/
 
 	/**
-	 * @returns true if packet is complete AFTER adding value to it.
+	 * @returns true if packet is complete AFTER appending value to it.
 	 */
-	const bool add(const uint8_t& value);
+	const bool append(const uint8_t& value);
 
 	const static uint8_t NUM_PACKETS = 5;
 	uint8_t current_packet;

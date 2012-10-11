@@ -15,14 +15,6 @@ public:
 	static void init ();
 
 	/**
-	 * If data has been received (and hence rx_packet_buffer is not
-	 * empty) then print it to the serial port
-	 * and empty rx_packet_buffer.
-	 * The serial port must be initialised first.
-	 */
-	static void print_if_data_available();
-
-	/**
 	 * Poll a CurrentCost transceiver (TRX), e.g. an EDF Wireless Transmitter Plug,
 	 * to ask for the latest wattage reading.
 	 */

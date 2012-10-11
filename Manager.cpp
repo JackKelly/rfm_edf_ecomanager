@@ -58,6 +58,8 @@ void Manager::poll_next_cc_trx()
     // instead wait SAMPLE_PERIOD between polling the first TRX.
 	if (i_next_cc_trx==0) {
 		if (millis() < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
+		    // Receive any unexpected packets and return
+		    process_rx_pack_buf_and_find_id(0);
 			return;
 		} else {
 			timecode_polled_first_cc_trx = millis();
@@ -70,8 +72,7 @@ void Manager::poll_next_cc_trx()
 	const uint32_t start_time = millis();
 	bool success = false;
 	while (millis() < start_time+CC_TRX_TIMEOUT) {
-		if (rfm.rx_packet_buffer.valid_data_is_available()
-				&& process_rx_pack_buf_and_find_id(id_next_cc_trx)) {
+		if (process_rx_pack_buf_and_find_id(id_next_cc_trx)) {
 	        // We got a reply from the TRX we polled
 			success = true;
 			break;
@@ -102,8 +103,7 @@ void Manager::wait_for_cc_tx()
 	debug(INFO, "Window open! Expecting %lu at %lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
 	bool success = false;
 	while (millis() < (start_time+CC_TX_WINDOW) && !success) {
-		if (rfm.rx_packet_buffer.valid_data_is_available() &&
-				process_rx_pack_buf_and_find_id(p_next_cc_tx->get_id())) {
+		if (process_rx_pack_buf_and_find_id(p_next_cc_tx->get_id())) {
 			success = true;
 		}
 	}
@@ -114,8 +114,6 @@ void Manager::wait_for_cc_tx()
 		// tell whole-house TX it missed its slot
 		p_next_cc_tx->missing();
 	}
-
-	find_next_expected_cc_tx();
 }
 
 
@@ -146,42 +144,62 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 {
 	bool success = false;
 	uint32_t id;
-	RXPacket* packet = NULL;
+	RXPacket* packet = NULL; // just using this pointer to make code more readable
 	Sensor* cc_tx = NULL;
 
-	for (uint8_t packet_i=0; packet_i<=rfm.rx_packet_buffer.current_packet; packet_i++) {
+	/* Loop through every packet in packet buffer. If it's done then post-process it
+	 * and then check if it's valid.  If so then handle the different types of
+	 * packet.  Finally reset the packet and return.
+	 */
+	for (uint8_t packet_i=0; packet_i<rfm.rx_packet_buffer.NUM_PACKETS; packet_i++) {
+
 		packet = &rfm.rx_packet_buffer.packets[packet_i];
 		if (packet->done()) {
+		    packet->post_process();
 			if (packet->is_ok()) {
 				id = packet->get_id();
 				success = (id == target_id); // Was this the packet we were looking for?
 
+				//******** PAIRING REQUEST **********************
 				if (packet->is_pairing_request()) {
 				    Serial.print("{PR: ");
 				    Serial.print(id);
 				    Serial.println("}");
-				} else if (packet->is_cc_tx()) {
+				}
+				//********* CC TX (transmit-only sensor) ********
+				else if (packet->is_cc_tx()) {
 				    cc_tx = find_cc_tx(id);
 				    if (cc_tx) { // Is received ID is a CC_TX id we know about?
 				        cc_tx->update(*packet);
 				        packet->print_id_and_watts(); // send data over serial
+	                    find_next_expected_cc_tx();
+				    } else {
+	                    debug(INFO, "Unknown CC_TX ID: ");
+	                    packet->print_id_and_watts(); // send data over serial
 				    }
-				} else if (id_is_cc_trx(id)) {
+				}
+				//****** CC TRX (transceiver; e.g. EDF IAM) ******
+				else if (id_is_cc_trx(id)) {
 				    // Received ID is a CC_TRX id we know about
-				    // TODO don't transmit both packets?
-				    packet->print_id_and_watts(); // send data over serial
-				} else { // TODO: handle pair requests and EDF IAM manual mode changes
+                    packet->print_id_and_watts(); // send data over serial
+
+				    // TODO: handle pair requests and EDF IAM manual mode changes
+				    // TODO: don't transmit both packets?
+				}
+				//********* UNKNOWN ID ****************************
+				else {
 	                debug(INFO, "Unknown ID: ");
 	                packet->print_id_and_watts(); // send data over serial
 				}
 
 			} else {
 				debug(INFO, "Broken packet received.");
+				packet->print_bytes();
 			}
+	        packet->reset();
 		}
 	}
 
-	rfm.rx_packet_buffer.reset_all();
 	return success;
 }
 

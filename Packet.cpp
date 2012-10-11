@@ -130,13 +130,13 @@ void RXPacket::append(const uint8_t& value)
 {
 	if (!done()) {
 		if (byte_index==0) { // first byte
-			timecode = millis();
-			if (value==0x55) { // this packet is from a whole house tx
-				cc_tx = true;
-				packet_length  = CC_TX_PACKET_LENGTH;
+			timecode = millis(); // record timecode that first byte received
+			if (value==0x52) { // this packet is from a CC_TRX
+                cc_tx = false;
+                packet_length  = CC_TRX_PACKET_LENGTH;
 			} else {
-				cc_tx = false;
-				packet_length  = CC_TRX_PACKET_LENGTH;
+                cc_tx = true;
+                packet_length  = CC_TX_PACKET_LENGTH;
 			}
 		}
 		packet[byte_index++] = value;
@@ -161,18 +161,6 @@ void RXPacket::print_id_and_watts() const
 		}
 	}
 	Serial.println("}");
-}
-
-
-void RXPacket::reset()
-{
-	Packet::reset();
-	cc_tx = false;
-	watts[0] = watts[1] = watts[2] = WATTS_INVALID;
-	id = ID_INVALID;
-	packet_ok = false;
-	timecode = 0;
-	packet_length = CC_TRX_PACKET_LENGTH;
 }
 
 
@@ -318,74 +306,31 @@ volatile const unsigned long& RXPacket::get_timecode() const
  * PacketBuffer
  ******************************************/
 
-// FIXME: concurrency issues?
-PacketBuffer::PacketBuffer(const uint8_t& packet_length)
+PacketBuffer::PacketBuffer()
 : current_packet(0)
-{
-	for (int i=0; i<NUM_PACKETS; i++) {
-		packets[i].set_packet_length(packet_length);
-	}
-}
+{}
 
-const bool PacketBuffer::add(const uint8_t& value)
+const bool PacketBuffer::append(const uint8_t& value)
 {
 	packets[current_packet].append(value);
 
 	if (packets[current_packet].done()) {
-		if (current_packet >= NUM_PACKETS) {
-			debug(ERROR, "NO MORE BUFFERS!");
-		} else {
-			current_packet++;
-		}
+	    bool successfully_found_empty_slot = false;
+	    for (uint8_t i=0; i<NUM_PACKETS; i++) { // find empty slot
+	        if (!packets[i].done()) {
+	            current_packet = i;
+	            successfully_found_empty_slot = true;
+	            break;
+	        }
+	    }
+	    if (!successfully_found_empty_slot) {
+	        debug(ERROR, "NO MORE BUFFERS!");
+	    }
+
 		return true;
 	} else {
 		return false;
 	}
 }
 
-void PacketBuffer::print_and_reset()
-{
-	Serial.println("RX:");
-	for (int i=0; i<current_packet; i++) {
-		packets[i].post_process();
-		if (packets[i].is_ok()) {
-			packets[i].print_bytes();
-		}
-		packets[i].reset();
-	}
-
-	current_packet = 0;
-}
-
-void PacketBuffer::reset_all()
-{
-	for (int i=0; i<current_packet; i++) {
-		packets[i].reset();
-	}
-
-	if (packets[current_packet].get_byte_index() > 0) {
-		debug(ERROR, "LOSING DATA!");
-	}
-
-	current_packet = 0;
-}
-
-const bool PacketBuffer::data_is_available() const
-{
-	return current_packet > 0;
-}
-
-const bool PacketBuffer::valid_data_is_available()
-{
-	if (data_is_available()) {
-		bool valid_data_available = false;
-		for (int i=0; i<current_packet; i++) {
-			packets[i].post_process();
-			valid_data_available |= packets[i].is_ok();
-		}
-		return valid_data_available;
-	} else {
-		return false;
-	}
-}
 
