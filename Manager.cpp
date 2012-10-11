@@ -17,17 +17,17 @@ Manager::Manager()
 {
 	// TODO: this stuff needs to be programmed over serial not hard-coded.
 	num_cc_txs = 2;
-	cc_txs[0].set_uid(895);
-	cc_txs[1].set_uid(28);
+	cc_txs[0].set_id(895);
+	cc_txs[1].set_id(28);
 
 	num_cc_trxs = 1;
 	cc_trx_ids[0] = 0x55100003;
 	id_next_cc_trx = cc_trx_ids[0];
 }
 
+
 void Manager::init()
 {
-	find_next_expected_cc_tx();
     rfm.init();
     rfm.enable_rx();
 
@@ -38,7 +38,7 @@ void Manager::init()
     const unsigned long start_time = millis();
     while (millis() < (start_time+30000)) {
     	if (rfm.rx_packet_buffer.valid_data_is_available()) {
-			process_rx_pack_buf_and_find_uid(0);
+			process_rx_pack_buf_and_find_id(0);
     	}
     }
 
@@ -47,32 +47,27 @@ void Manager::init()
     find_next_expected_cc_tx();
 }
 
-void Manager::process_cc_tx_uid(const uint32_t& uid, const RXPacket& packet)
-{
-	for (uint8_t i=0; i<num_cc_txs; i++) {
-		if (cc_txs[i].get_uid() == uid) {
-			cc_txs[i].update(packet);
-			break;
-		}
-	}
-}
 
 void Manager::run()
 {
-	if (num_cc_txs == 0) {
-		poll_next_cc_trx();
-	} else {
-		if (millis() < (p_next_cc_tx->get_eta() - (CC_TX_WINDOW/2) )) {
-			poll_next_cc_trx();
-		} else  {
-			wait_for_cc_tx();
-		}
-	}
+    if (num_cc_txs == 0) {
+        // There are no CC TXs so all we have to do it poll TRXs
+        poll_next_cc_trx();
+    } else {
+        if (millis() < (p_next_cc_tx->get_eta() - (CC_TX_WINDOW/2) )) {
+            // We're far enough away from the next expect CC TX transmission
+            // to mean that we have time to poll TRXs
+            poll_next_cc_trx();
+        } else  {
+            wait_for_cc_tx();
+        }
+    }
 }
+
 
 void Manager::poll_next_cc_trx()
 {
-	// don't repeatedly poll iams; wait SAMPLE_PERIOD seconds;
+	// don't repeatedly poll TRXs; wait SAMPLE_PERIOD seconds;
 	if (i_next_cc_trx==0) {
 		if (millis() < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
 			return;
@@ -91,15 +86,18 @@ void Manager::poll_next_cc_trx()
 	bool success = false;
 	while (millis() < start_time+CC_TRX_TIMEOUT) {
 		if (rfm.rx_packet_buffer.valid_data_is_available()
-				&& process_rx_pack_buf_and_find_uid(id_next_cc_trx)) {
+				&& process_rx_pack_buf_and_find_id(id_next_cc_trx)) {
+	        // We got a reply from the TRX we polled
 			success = true;
 			break;
 		}
 	}
 
 	if (success) {
+        // We got a reply from the TRX we polled
 		increment_i_of_next_cc_trx();
 	} else {
+	    // We didn't get a reply from the TRX we polled
 		if (retries < MAX_RETRIES) {
 			retries++;
 		} else {
@@ -108,16 +106,6 @@ void Manager::poll_next_cc_trx()
 	}
 }
 
-void Manager::increment_i_of_next_cc_trx()
-{
-	i_next_cc_trx++;
-	if (i_next_cc_trx >= num_cc_trxs) {
-		i_next_cc_trx=0;
-	}
-	id_next_cc_trx = cc_trx_ids[i_next_cc_trx];
-
-	retries = 0;
-}
 
 void Manager::wait_for_cc_tx()
 {
@@ -131,7 +119,7 @@ void Manager::wait_for_cc_tx()
 	bool success = false;
 	while (millis() < (start_time+CC_TX_WINDOW) && !success) {
 		if (rfm.rx_packet_buffer.valid_data_is_available() &&
-				process_rx_pack_buf_and_find_uid(p_next_cc_tx->get_uid())) {
+				process_rx_pack_buf_and_find_id(p_next_cc_tx->get_id())) {
 			success = true;
 		}
 	}
@@ -148,22 +136,56 @@ void Manager::wait_for_cc_tx()
 	find_next_expected_cc_tx();
 }
 
-const bool Manager::process_rx_pack_buf_and_find_uid(const uint32_t& target_uid)
+
+void Manager::increment_i_of_next_cc_trx()
+{
+    i_next_cc_trx++;
+    if (i_next_cc_trx >= num_cc_trxs) {
+        i_next_cc_trx=0;
+    }
+    id_next_cc_trx = cc_trx_ids[i_next_cc_trx];
+
+    retries = 0;
+}
+
+
+Sensor* Manager::find_cc_tx(const uint32_t& id)
+{
+    for (uint8_t i=0; i<num_cc_txs; i++) {
+        if (cc_txs[i].get_id() == id) {
+            return &cc_txs[i];
+        }
+    }
+    return NULL;
+}
+
+
+const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 {
 	bool success = false;
-	uint32_t uid;
+	uint32_t id;
 	RXPacket* packet = NULL;
+	Sensor* cc_tx = NULL;
 
 	for (uint8_t packet_i=0; packet_i<=rfm.rx_packet_buffer.current_packet; packet_i++) {
 		packet = &rfm.rx_packet_buffer.packets[packet_i];
 		if (packet->done()) {
 			if (packet->is_ok()) {
-				packet->print_uid_and_watts(); // send data over serial
-				uid = packet->get_uid();
-				success = (uid == target_uid);
+				id = packet->get_uid();
+				success = (id == target_id); // Was this the packet we were looking for?
 
-				if (!uid_is_cc_trx(uid)) {
-					process_cc_tx_uid(uid, *packet);
+				cc_tx = find_cc_tx(id);
+				if (cc_tx) {
+	                // Receive ID is a CC_TX id we know about
+                    cc_tx->update(*packet);
+                    packet->print_uid_and_watts(); // send data over serial
+				} else if (id_is_cc_trx(id)) {
+				    // Received ID is a CC_TRX id we know about
+				    packet->print_uid_and_watts(); // send data over serial
+				} else { // TODO: handle pair requests and EDF IAM manual mode changes
+	                Serial.print(millis());
+	                Serial.print(" Unknown ID: ");
+	                packet->print_uid_and_watts(); // send data over serial
 				}
 
 			} else {
@@ -177,15 +199,17 @@ const bool Manager::process_rx_pack_buf_and_find_uid(const uint32_t& target_uid)
 	return success;
 }
 
-const bool Manager::uid_is_cc_trx(const uint32_t& uid) const
+
+const bool Manager::id_is_cc_trx(const uint32_t& id) const
 {
 	for (uint8_t i=0; i<num_cc_trxs; i++) {
-		if (cc_trx_ids[i] == uid) {
+		if (cc_trx_ids[i] == id) {
 			return true;
 		}
 	}
 	return false;
 }
+
 
 void Manager::find_next_expected_cc_tx()
 {
@@ -196,7 +220,7 @@ void Manager::find_next_expected_cc_tx()
 	}
 	Serial.print(millis());
 	Serial.print(" Next expected tx has uid = ");
-	Serial.print(p_next_cc_tx->get_uid());
+	Serial.print(p_next_cc_tx->get_id());
 	Serial.print(" eta=");
 	Serial.println(p_next_cc_tx->get_eta());
 }

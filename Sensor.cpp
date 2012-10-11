@@ -2,7 +2,7 @@
 #include "consts.h"
 
 Sensor::Sensor()
-:eta(0), uid(UID_INVALID)
+:eta(0), id(ID_INVALID)
 {}
 
 void Sensor::update(const RXPacket& packet)
@@ -20,17 +20,17 @@ void Sensor::missing()
 	eta += SAMPLE_PERIOD;
 	Serial.print(millis());
 	Serial.print(" uid:");
-	Serial.print(uid);
+	Serial.print(id);
 	Serial.print(" is missing. new eta = ");
 	Serial.println(eta);
 }
 
-void Sensor::set_uid(const uint32_t& _uid)
+void Sensor::set_id(const uint32_t& _id)
 {
-	uid = _uid;
+	id = _id;
 }
 
-const uint32_t Sensor::get_uid() const
+const uint32_t Sensor::get_id() const
 {
-	return uid;
+	return id;
 }

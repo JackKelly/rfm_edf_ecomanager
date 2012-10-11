@@ -55,28 +55,30 @@ private:
 	 * Private methods
 	 ***************************/
 
-	/*
-	 * Poll CC TRX (e.g. EDF IAM) with ID == cc_trx_ids[p_next_cc_trx]
-	 * Listen for response.
-	 */
+	/* Poll CC TRX (e.g. EDF IAM) with ID == id_next_cc_trx
+	 * Listen for response. */
 	void poll_next_cc_trx();
 
 	void wait_for_cc_tx();
 
 	void find_next_expected_cc_tx();
 
-	void process_cc_tx_uid(const uint32_t& uid, const RXPacket& packet);
+	/* Loop through the cc_txs array and return a pointer
+	 * to the Sensor with the appropriate id.
+	 * If no Sensor is found then returns NULL.
+	 */
+	Sensor* find_cc_tx(const uint32_t& id);
 
-	const bool uid_is_cc_trx(const uint32_t& uid) const;
+	const bool id_is_cc_trx(const uint32_t& id) const;
 
 	void increment_i_of_next_cc_trx();
 
 	/**
 	 * Process every packet in rx_packet_buffer appropriately
 	 *
-	 * @return true if a packet corresponding to uid is found
+	 * @return true if a packet corresponding to id is found
 	 */
-	const bool process_rx_pack_buf_and_find_uid(const uint32_t& uid);
+	const bool process_rx_pack_buf_and_find_id(const uint32_t& id);
 };
 
 #endif /* MANAGER_H_ */

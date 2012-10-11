@@ -121,7 +121,7 @@ void TXPacket::assemble(const uint8_t payload[], const uint8_t& payload_length,
  **********************************************/
 
 RXPacket::RXPacket()
-:Packet(), timecode(0), packet_ok(false), uid(UID_INVALID)
+:Packet(), timecode(0), packet_ok(false), uid(ID_INVALID)
 {}
 
 
@@ -146,10 +146,9 @@ void RXPacket::append(const uint8_t& value)
 void RXPacket::print_uid_and_watts() const
 {
 	Serial.print(millis());
-	Serial.print(" {uid:");
+	Serial.print(" {uid: ");
 	Serial.print(uid);
-	Serial.print(" {");
-	Serial.print("t: ");
+	Serial.print(", t: ");
 	Serial.print(timecode);
 
 	for (uint8_t i=0; i<3; i++) {
@@ -160,7 +159,7 @@ void RXPacket::print_uid_and_watts() const
 			Serial.print(watts[i]);
 		}
 	}
-	Serial.println("}}");
+	Serial.println("}");
 }
 
 
@@ -169,7 +168,7 @@ void RXPacket::reset()
 	Packet::reset();
 	whole_house_tx = false;
 	watts[0] = watts[1] = watts[2] = WATTS_INVALID;
-	uid = UID_INVALID;
+	uid = ID_INVALID;
 	packet_ok = false;
 	timecode = 0;
 	packet_length = EDF_IAM_PACKET_LENGTH;

@@ -10,7 +10,7 @@
 
 // Error codes:
 const uint16_t WATTS_INVALID   = 0xFFFF;
-const uint32_t UID_INVALID     = 0xFFFFFFFF;
+const uint32_t ID_INVALID      = 0xFFFFFFFF;
 
 const uint16_t SAMPLE_PERIOD   = 6000; /* miliseconds    */
 const uint8_t  INVALID_INDEX   = 0xFF;
