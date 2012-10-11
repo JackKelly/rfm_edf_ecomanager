@@ -13,44 +13,45 @@
 #include "consts.h"
 
 Manager::Manager()
-: i_of_next_expected_tx(0), next_iam(0), retries(0), timecode_polled_first_iam(0)
+: i_of_next_expected_cc_tx(0), i_of_next_cc_trx(0),
+  retries(0), timecode_polled_first_cc_trx(0)
 {
 	// TODO: this stuff needs to be programmed over serial not hard-coded.
-	num_whole_house_txs = 2;
-	whole_house_txs[0].set_uid(895);
-	whole_house_txs[1].set_uid(28);
+	num_cc_txs = 2;
+	cc_txs[0].set_uid(895);
+	cc_txs[1].set_uid(28);
 
-	num_iams = 1;
-	iam_ids[0] = 0x55100003;
+	num_cc_trxs = 1;
+	cc_trx_ids[0] = 0x55100003;
 }
 
 void Manager::init()
 {
-	find_next_expected_tx();
-    rfm.init_edf();
+	find_next_expected_cc_tx();
+    rfm.init();
     rfm.enable_rx();
 
-    // listen for a while to catch the timings of the whole_house transmitters
+    // listen for a while to catch the timings of the cc tx transmit-only sensors
     Serial.print(millis());
     Serial.println(" Passively listening for 30s...");
 
     const unsigned long start_time = millis();
     while (millis() < (start_time+30000)) {
     	if (rfm.rx_packet_buffer.valid_data_is_available()) {
-			process_rx_packet_buffer(0);
+			process_rx_pack_buf_and_find_uid(0);
     	}
     }
 
     Serial.print(millis());
     Serial.println(" ...done passively listening.");
-    find_next_expected_tx();
+    find_next_expected_cc_tx();
 }
 
-void Manager::process_whole_house_uid(const uint32_t& uid, const RXPacket& packet)
+void Manager::process_cc_tx_uid(const uint32_t& uid, const RXPacket& packet)
 {
-	for (uint8_t i=0; i<num_whole_house_txs; i++) {
-		if (whole_house_txs[i].get_uid() == uid) {
-			whole_house_txs[i].update(packet);
+	for (uint8_t i=0; i<num_cc_txs; i++) {
+		if (cc_txs[i].get_uid() == uid) {
+			cc_txs[i].update(packet);
 			break;
 		}
 	}
@@ -58,66 +59,66 @@ void Manager::process_whole_house_uid(const uint32_t& uid, const RXPacket& packe
 
 void Manager::run()
 {
-	if (num_whole_house_txs == 0) {
-		poll_next_iam();
+	if (num_cc_txs == 0) {
+		poll_next_cc_trx();
 	} else {
-		if (millis() < (whole_house_txs[i_of_next_expected_tx].get_eta()-(WINDOW/2))) {
-			poll_next_iam();
+		if (millis() < (cc_txs[i_of_next_expected_cc_tx].get_eta()-(CC_TX_WINDOW/2))) {
+			poll_next_cc_trx();
 		} else  {
-			wait_for_whole_house_tx();
+			wait_for_cc_tx();
 		}
 	}
 }
 
-void Manager::poll_next_iam()
+void Manager::poll_next_cc_trx()
 {
 	// don't repeatedly poll iams; wait SAMPLE_PERIOD seconds;
-	if (next_iam==0) {
-		if (millis() < timecode_polled_first_iam+SAMPLE_PERIOD && retries==0) {
+	if (i_of_next_cc_trx==0) {
+		if (millis() < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
 			return;
 		} else {
-			timecode_polled_first_iam = millis();
+			timecode_polled_first_cc_trx = millis();
 		}
 	}
 
 	Serial.print(millis());
-	Serial.print(" polling IAM ");
-	Serial.println(iam_ids[next_iam]);
-	rfm.poll_edf_iam(iam_ids[next_iam]);
+	Serial.print(" polling CC TRX ");
+	Serial.println(cc_trx_ids[i_of_next_cc_trx]);
+	rfm.poll_cc_trx(cc_trx_ids[i_of_next_cc_trx]);
 
 	// wait for response
 	const unsigned long start_time = millis();
 	bool success = false;
-	while (millis() < start_time+IAM_TIMEOUT) {
+	while (millis() < start_time+CC_TRX_TIMEOUT) {
 		if (rfm.rx_packet_buffer.valid_data_is_available()
-				&& process_rx_packet_buffer(iam_ids[next_iam])) {
+				&& process_rx_pack_buf_and_find_uid(cc_trx_ids[i_of_next_cc_trx])) {
 			success = true;
 			break;
 		}
 	}
 
 	if (success) {
-		increment_next_iam();
+		increment_i_of_next_cc_trx();
 	} else {
 		if (retries < MAX_RETRIES) {
 			retries++;
 		} else {
-			increment_next_iam();
+			increment_i_of_next_cc_trx();
 		}
 	}
 }
 
-void Manager::increment_next_iam()
+void Manager::increment_i_of_next_cc_trx()
 {
-	next_iam++;
-	if (next_iam >= num_iams) {
-		next_iam=0;
+	i_of_next_cc_trx++;
+	if (i_of_next_cc_trx >= num_cc_trxs) {
+		i_of_next_cc_trx=0;
 	}
 
 	retries = 0;
 }
 
-void Manager::wait_for_whole_house_tx()
+void Manager::wait_for_cc_tx()
 {
 	const unsigned long start_time = millis();
 
@@ -127,9 +128,9 @@ void Manager::wait_for_whole_house_tx()
 	Serial.print(millis());
 	Serial.println(" Window open!");
 	bool success = false;
-	while (millis() < (start_time+WINDOW) && !success) {
+	while (millis() < (start_time+CC_TX_WINDOW) && !success) {
 		if (rfm.rx_packet_buffer.valid_data_is_available() &&
-				process_rx_packet_buffer(whole_house_txs[i_of_next_expected_tx].get_uid())) {
+				process_rx_pack_buf_and_find_uid(cc_txs[i_of_next_expected_cc_tx].get_uid())) {
 			success = true;
 		}
 	}
@@ -140,13 +141,13 @@ void Manager::wait_for_whole_house_tx()
 
 	if (!success) {
 		// tell whole-house TX it missed its slot
-		whole_house_txs[i_of_next_expected_tx].missing();
+		cc_txs[i_of_next_expected_cc_tx].missing();
 	}
 
-	find_next_expected_tx();
+	find_next_expected_cc_tx();
 }
 
-const bool Manager::process_rx_packet_buffer(const uint32_t& target_uid)
+const bool Manager::process_rx_pack_buf_and_find_uid(const uint32_t& target_uid)
 {
 	bool success = false;
 	uint32_t uid;
@@ -160,8 +161,8 @@ const bool Manager::process_rx_packet_buffer(const uint32_t& target_uid)
 				uid = packet->get_uid();
 				success = (uid == target_uid);
 
-				if (!uid_is_iam(uid)) {
-					process_whole_house_uid(uid, *packet);
+				if (!uid_is_cc_trx(uid)) {
+					process_cc_tx_uid(uid, *packet);
 				}
 
 			} else {
@@ -175,26 +176,26 @@ const bool Manager::process_rx_packet_buffer(const uint32_t& target_uid)
 	return success;
 }
 
-const bool Manager::uid_is_iam(const uint32_t& uid) const
+const bool Manager::uid_is_cc_trx(const uint32_t& uid) const
 {
-	for (uint8_t i=0; i<num_iams; i++) {
-		if (iam_ids[i] == uid) {
+	for (uint8_t i=0; i<num_cc_trxs; i++) {
+		if (cc_trx_ids[i] == uid) {
 			return true;
 		}
 	}
 	return false;
 }
 
-void Manager::find_next_expected_tx()
+void Manager::find_next_expected_cc_tx()
 {
-	for (uint8_t i=0; i<num_whole_house_txs; i++) {
-		if (whole_house_txs[i].get_eta() < whole_house_txs[i_of_next_expected_tx].get_eta()) {
-			i_of_next_expected_tx = i;
+	for (uint8_t i=0; i<num_cc_txs; i++) {
+		if (cc_txs[i].get_eta() < cc_txs[i_of_next_expected_cc_tx].get_eta()) {
+			i_of_next_expected_cc_tx = i;
 		}
 	}
 	Serial.print(millis());
 	Serial.print(" Next expected tx has uid = ");
-	Serial.print(whole_house_txs[i_of_next_expected_tx].get_uid());
+	Serial.print(cc_txs[i_of_next_expected_cc_tx].get_uid());
 	Serial.print(" eta=");
-	Serial.println(whole_house_txs[i_of_next_expected_tx].get_eta());
+	Serial.println(cc_txs[i_of_next_expected_cc_tx].get_eta());
 }

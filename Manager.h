@@ -20,57 +20,61 @@ public:
 	void init();
 	void run();
 private:
-	static const uint8_t MAX_WHOLE_HOUSE_TXS = 5;
+    Rfm12b rfm;
 
-	//**************************
-	// Timings (in milliseconds)
+	/*****************************************
+	 * CC TX (e.g. whole-house transmitters) *
+	 *****************************************/
+	static const uint8_t MAX_CC_TXS = 5;
 
-	// length of time we're willing to wait
-	// for the whole house tx.  We'll open the window
-	// half of WINDOW before ETA.
-	static const uint16_t WINDOW = 1000;
+	/* length of time we're willing to wait
+	 * for a CC TX.  We'll open the window
+	 * half of WINDOW before CC TX's ETA. */
+	static const uint16_t CC_TX_WINDOW = 1000;
 
-	static const unsigned long IAM_TIMEOUT = 100; // milliseconds to wait for reply
+    Sensor cc_txs[MAX_CC_TXS];
+    uint8_t num_cc_txs;
+    uint8_t i_of_next_expected_cc_tx;
 
-	Sensor whole_house_txs[MAX_WHOLE_HOUSE_TXS];
-	uint8_t num_whole_house_txs;
-	uint8_t i_of_next_expected_tx;
-	uint8_t next_iam;
-	uint8_t num_iams;
-	uint32_t iam_ids[MAX_NUM_IAMS];
-	uint8_t retries;
-	static const uint8_t MAX_RETRIES = 5; // for polling IAMs
+    /*****************************************
+     * CC TRX (e.g. EDF IAMs)                *
+     *****************************************/
 
-	unsigned long timecode_polled_first_iam;
+	static const unsigned long CC_TRX_TIMEOUT = 100; // milliseconds to wait for reply
+	uint8_t i_of_next_cc_trx;
+	uint8_t num_cc_trxs;
+	uint32_t cc_trx_ids[MAX_CC_TRXS];
+	uint8_t retries; // for polling CC TRXs
+	static const uint8_t MAX_RETRIES = 5; // for polling CC TRXs
 
-	Rfm12b rfm;
+	unsigned long timecode_polled_first_cc_trx;
 
 	/***************************
 	 * Private methods
 	 ***************************/
 
 	/*
-	 * Poll IAM with ID == iam_ids[next_iam]
+	 * Poll CC TRX (e.g. EDF IAM) with ID == cc_trx_ids[i_of_next_cc_trx]
 	 * Listen for response.
 	 */
-	void poll_next_iam();
+	void poll_next_cc_trx();
 
-	void wait_for_whole_house_tx();
+	void wait_for_cc_tx();
 
-	void find_next_expected_tx();
+	void find_next_expected_cc_tx();
 
-	void process_whole_house_uid(const uint32_t& uid, const RXPacket& packet);
+	void process_cc_tx_uid(const uint32_t& uid, const RXPacket& packet);
 
-	const bool uid_is_iam(const uint32_t& uid) const;
+	const bool uid_is_cc_trx(const uint32_t& uid) const;
 
-	void increment_next_iam();
+	void increment_i_of_next_cc_trx();
 
 	/**
 	 * Process every packet in rx_packet_buffer appropriately
 	 *
 	 * @return true if a packet corresponding to uid is found
 	 */
-	const bool process_rx_packet_buffer(const uint32_t& uid);
+	const bool process_rx_pack_buf_and_find_uid(const uint32_t& uid);
 };
 
 #endif /* MANAGER_H_ */

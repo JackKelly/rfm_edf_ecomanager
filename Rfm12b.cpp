@@ -102,247 +102,9 @@ void Rfm12b::interrupt_handler()
 
 }
 
-void Rfm12b::init_cc () {
-	Serial.println("Starting rf12_initialize_cc() ");
-
-	spi::init();
-
-	spi::transfer_word(0x0000);
-
-	delay(2000); // give RFM time to start up
-
-	Serial.println("RFM12b finished power-up reset.  Starting init...");
-
-	// From RFM01 command #1 0x892D
-	// eb=0 (disable low batt detection)
-	// et=0 (disable wake-up timer)
-	// ex=1 (enable crystal oscillator)
-	// baseband bandwidth = 67kHz
-	// dc=1 (disable signal output of CLK pin)
-
-	// RFM01 command #2 E196 (5. wake-up timer command)
-
-	// RFM01 command #3 CC0E (6. low duty-cycle command)
-	// en = 0: disable low duty cycle mode
-
-	// From RFM01 command #4 C69F (8. AFC Command)
-	// a1 a0 rl1 rl0 st fi oe en
-	//  1  0   0   1  1  1  1  1
-	// a  = AFC auto-mode: keep offset when VDI hi
-	// rl = range limit: +15/-16 (433band: 2.5kHz)
-	// st=1 st goes hi will store offset into output register
-	// fi=1 Enable AFC hi accuracy mode
-	// oe=1 Enable AFC output register
-	// en=1 Enable AFC function
-
-	// From RFM01 command #5 C46A (9. data filter command)
-	// al ml 1 s1 s0 f2 f1 f0
-	//  0  1 1  0  1  0  1  0
-	// al=0: disable clock recovery auto-lock
-	// ml=1: enable clock recovery fast mode
-	// s: data filter=digital filter
-	// f: DQD threshold = 2
-
-	// From RFM command #6 C88A
-	// 3918.5 bps
-
-	// From RFM01 command #7 C080 (4. receiver setting command)
-	// d1 d0 g1 g0 r2 r1 r0 en
-	//  1  0  0  0  0  0  0  0
-	// d: VDI source = clock recovery lock output
-	// g: LNA gain = 0 dBm
-	// r: DRSSI threshold = -103 dBm
-	// en=0: disable receiver
-
-	// GanglionTwitch has command CE88 here, my CC doesn't (11. output and FIFO mode)
-
-	// From RFM01 command #8 CE8B (11. output and FIFO mode)
-	// f3 f2 f1 f0 s1 s0 ff fe
-	//  1  0  0  0  1  0  1  1
-	// f: FIFO interrupt level = 8
-	// s: FIFO fill start condition = reserved
-	// ff=1: enable FIFO fill
-	// fe=1: enable FIFO function
-
-	// From RFM01 command #9 C081 (4. receiver setting command)
-	// d1 d0 g1 g0 r2 r1 r0 en
-	//  1  0  0  0  0  0  0  1
-	// d: VDI source = clock recovery lock output
-	// g: LNA gain = 0 dBm
-	// r: DRSSI threshold = -103 dBm
-	// en=1: enable receiver <--- only diff from command #7
-
-	// From RFM01 command #10 C200 (7. Low Batt Detector & MCU Clock Div)
-	// d2 d1 d0 t4 t3 t2 t1 t0
-	//  0  0  0  0  0  0  0  0
-	// d: frequency of CLK pin = 1MHz
-	// t: low batt detection theshold = 2.2+0 V
-
-	// From RFM01 command #11 A618 (3. frequency setting command)
-	// Fc = 433.9MHz
-
-	// From RFM01 command #12 CE89 (11. output and FIFO mode) (gangliontwitch has CE88)
-	// f3 f2 f1 f0 s1 s0 ff fe
-	//  1  0  0  0  1  0  0  1
-	// f: FIFO interrupt level = 8
-	// s: FIFO fill start condition = reserved
-	// ff=0: disable FIFO fill
-	// fe=1: enable FIFO function
-
-	// From RFM01 command #14 CE8B (11. output and FIFO mode)
-	// f3 f2 f1 f0 s1 s0 ff fe
-	//  1  0  0  0  1  0  1  1
-	// f: FIFO interrupt level = 8
-	// s: FIFO fill start condition = reserved
-	// ff=1: enable FIFO fill
-	// fe=1: enable FIFO function
-
-	// Reset Mode Command is not set so it defaults to DA00
-	// (do not disable highly sensitive reset)
-
-	/***************************
-	 * BEGIN RFM12b COMMANDS...
-	 ***************************/
-
-	spi::transfer_word(0x0000);
-
-	// 2. configuration setting command
-	// 1 0 0 0 0 0 0 0 el ef b1 b0 x3 x2 x1 x0
-	// el: enable TX register
-	// ef: enable RX FIFO register
-	// b: select band. 01 = 433MHz
-	// x: load capacitor.
-	//    0010 (0x2)=9.5pF (from CC RFM01)
-	//    0111 (0x7)=12.0pF (from jeelib)
-	//
-	//                           ee
-	//                   10000000lfbbxxxx
-	spi::transfer_word(0b1000000001010111);
-
-	// 3. Power Management Command
-	// 1 0 0 0   0 0 1 0  er ebb et es ex eb ew dc
-	// er : enable whole receiver chain (automatically turns on crystal,
-	//      synth, baseband and RF front end)
-	// ebb: enable RX baseband circuit (missing on RFM01)
-	// et : enable TX (PLL & PA)
-	// es : enable synthesiser (must be on to enable baseband circuits)
-	// ex : enable crystal oscillator
-	// eb : enable low batt detector
-	// ew : enable wake-up timer
-	// dc : disable clock output of CLK pin
-	//                           eeeeeeed
-	//                           rbtsxbwc
-	spi::transfer_word(0b1000001011011001);
-
-	// 4. Frequency setting command
-	// 1 0 1 0 F
-	// F  = 1560 decimal = 0x618
-	// Fc = 10 x 1 x (43 + F/4000) MHz = 433.9 MHz
-	//
-	spi::transfer_word(0xA618); // 433.9MHz
-
-	// 5. Data Rate command
-	// 1 1 0 0   0 1 1 0   cs  r...
-	// r  = 10 decimal
-	// cs = 1
-	// BitRate = 10000 / 29 / (R+1) / (1 + 7) = 3.918 kbps (from CCRFM01)
-	spi::transfer_word(0xC68A);
 
 
-	// 6 Receiver control command
-	// 1 0 0 1 0 P16 d1 d0 i2 i1 i0 g1 g0 r2 r1 r0
-	//
-	// p16: function of pin16. 1 = VDI output
-	// d: VDI response time. 00=fast, 01=med, 10=slow, 11=always on
-	// i: baseband bandwidth. 110=67kHz (CCRFM01=67kHz)
-	// g: LNA gain. 00=0dB.
-	// r: RSSI detector threshold. 000 = -103 dBm
-	//
-	//                   10010Pddiiiggrrr
-	spi::transfer_word(0b1001010011000000);
-
-	// 7. Digital filter command
-	// 1 1 0 0 0 0 1 0 al ml 1 s 1 f2 f1 f0
-	//
-	// al: clock recovery (CR) auto lock control
-	//     1=auto, 0=manual (set by ml).
-	//     CCRFM01=0.
-	// ml: enable clock recovery fast mode. CCRFM01=1
-	// s :  data filter. 0=digital filter. (default & CCRFM01)=0
-	// f : DQD threshold. CCRFM01=2; but RFM12b manual recommends >4
-	//                           am
-	//                   11000010ll1s1fff
-	spi::transfer_word(0b1100001001101100);
-
-
-	// 13 PLL setting
-	// spi::spi_transfer_word(0xCC77);
-
-	// 8. FIFO and Reset Mode Command
-	// 1 1 0 0 1 0 1 0 f3 f2 f1 f0 sp al ff dr
-	//
-	// f: FIFO interrupt level = 8 (RFM01 & default)
-	// sp: length of synchron pattern (not on RFM01!!!)
-	// al: FIFO fill start condition. Default = sync-word.
-	//     0=synchron pattern
-	//     1=always fill
-	// ff: enable FIFO fill
-	// dr: disable hi sensitivity reset mode
-	//
-	//                               safd
-	//                   11001010ffffplfr
-	spi::transfer_word(0b1100101010000001);
-
-	// 8. FIFO and Reset Mode Command
-	// 1 1 0 0 1 0 1 0 f3 f2 f1 f0 sp al ff dr
-	//
-	// f: FIFO interrupt level = 8 (RFM01 & default)
-	// sp: length of synchron pattern (not on RFM01!!!)
-	// al: FIFO fill start condition. Default = sync-word.
-	//     0=synchron pattern
-	//     1=always fill
-	// ff: enable FIFO fill
-	// dr: disable hi sensitivity reset mode
-	//
-	//                               safd
-	//                   11001010ffffplfr
-	spi::transfer_word(0b1100101010000011);
-
-	// 9 Synchron pattern command
-	// spi::spi_transfer_word(0xCE55);
-
-
-	// 11. AFC Command
-	// 1 1 0 0 0 1 0 0 a1 a0 rl1 rl0 st fi oe en
-	// 1 1 0 0 0 1 0 0  1  0   0   1  1  1  1  1
-	// a: AFC auto-mode= keep offset when VDI hi (RFM01 and default)
-	// rl: range limit= +15/-16 (433band: 2.5kHz)
-	// st=1 st goes hi will store offset into output register
-	// fi=1 Enable AFC hi accuracy mode (RFM01)
-	// oe=1 Enable AFC output register
-	// en=1 Enable AFC function
-	spi::transfer_word(0xC49F);
-
-	// 12. TX config
-	// spi::spi_transfer_word(0x9850); // !mp,9810=30kHz,MAX OUT
-
-	// 15. wake-up timer command
-	spi::transfer_word(0xE000); // NOT USE
-
-	// 16. Low duty cycle
-	spi::transfer_word(0xC80E); // NOT USE (last bit is 0 -> disable lower duty cycle mode)
-
-	// 17. low battery detector and micro controller clock div
-	spi::transfer_word(0xC000); // 1.0MHz,2.2V
-
-	Serial.println("attaching interrupt");
-	attachInterrupt(0, interrupt_handler, LOW);
-
-	Serial.println("Done init.");
-	return;
-}
-
-void Rfm12b::init_edf () {
+void Rfm12b::init () {
 	Serial.println("Starting rf12_initialize_edf() ");
 
 	spi::init();
@@ -488,7 +250,7 @@ void Rfm12b::init_edf () {
 	// R=0, M=0 (i.e. Twakeup = 0ms, the minimum)
 	spi::transfer_word(0xE000);
 
-	// 16. Low Duty-Cycle disabled
+	// 16. Low Duty-Cycle   disabled
 	spi::transfer_word(0xC800);
 
 	// 17. Low Batt Detector and Microcontroller Clock Div
@@ -509,7 +271,7 @@ void Rfm12b::print_if_data_available() // TODO: is this function required any mo
 	}
 }
 
-void Rfm12b::poll_edf_iam(const uint32_t& uid)
+void Rfm12b::poll_cc_trx(const uint32_t& uid)
 {
 	uint8_t tx_data[] = {0x46, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x50, 0x53, 0x00, 0x00, 0x4F};
@@ -524,7 +286,7 @@ void Rfm12b::poll_edf_iam(const uint32_t& uid)
 	enable_tx();
 }
 
-void Rfm12b::mimick_cc_ct()
+void Rfm12b::mimick_cc_tx()
 {
 	const uint8_t tx_data[] = {0x55, 0x55, 0x65, 0xA6, 0x95, 0x55, 0x55,
 			0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55};

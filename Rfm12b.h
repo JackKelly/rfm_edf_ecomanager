@@ -10,15 +10,9 @@ public:
 	static void enable_tx();
 
 	/**
-	 * Initialise RMF12b using commands translated from
-	 * Current Cost EnviR RFM01 commands.
-	 */
-	static void init_cc ();
-
-	/**
 	 * Init the RFM12b using commands sniffed from an EcoManager.
 	 */
-	static void init_edf ();
+	static void init ();
 
 	/**
 	 * If data has been received (and hence rx_packet_buffer is not
@@ -29,17 +23,16 @@ public:
 	static void print_if_data_available();
 
 	/**
-	 * Ping an EDF Wireless Transmitter Plug to ask for
-	 * the latest wattage reading.  At the moment the
-	 * EDF IAM's ID is hard-coded.
+	 * Poll a CurrentCost transceiver (TRX), e.g. an EDF Wireless Transmitter Plug,
+	 * to ask for the latest wattage reading.
 	 */
-	static void poll_edf_iam(const uint32_t& uid);
+	static void poll_cc_trx(const uint32_t& uid);
 
 	/**
-	 * Mimick a Current Cost CT clamp.
+	 * Mimick a CurrentCost "transmitter only".
 	 * At the moment the packet is hard-coded.
 	 */
-	static void mimick_cc_ct();
+	static void mimick_cc_tx();
 
 	static PacketBuffer rx_packet_buffer; // TODO: volatile?
 
