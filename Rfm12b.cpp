@@ -6,6 +6,7 @@
 
 #include "Rfm12b.h"
 #include "spi.h"
+#include "debug.h"
 
 Rfm12b::State Rfm12b::state;
 TXPacket Rfm12b::tx_packet;
@@ -105,7 +106,7 @@ void Rfm12b::interrupt_handler()
 
 
 void Rfm12b::init () {
-	Serial.println("Starting rf12_initialize_edf() ");
+	debug(INFO, "Starting rf12_initialize_edf()");
 
 	spi::init();
 
@@ -114,7 +115,7 @@ void Rfm12b::init () {
 
 	delay(2000); // give RFM time to start up
 
-	Serial.println("RFM12b finished power-up reset.  Starting init...");
+	debug(INFO, "RFM12b finished power-up reset.  Starting init...");
 
 	/***************************
 	 * BEGIN RFM12b COMMANDS...
@@ -258,7 +259,7 @@ void Rfm12b::init () {
 	// Clock pin freq = 1.0Mhz (lowest poss)
 	spi::transfer_word(0xC000);
 
-	Serial.println("attaching interrupt");
+	debug(INFO, "attaching interrupt");
 	delay(500);
 	attachInterrupt(0, interrupt_handler, LOW);
 	return;
@@ -271,16 +272,18 @@ void Rfm12b::print_if_data_available() // TODO: is this function required any mo
 	}
 }
 
-void Rfm12b::poll_cc_trx(const uint32_t& uid)
+void Rfm12b::poll_cc_trx(const uint32_t& id)
 {
+    debug(INFO, "Polling CC TRX %lu", id);
+
 	uint8_t tx_data[] = {0x46, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x50, 0x53, 0x00, 0x00, 0x4F};
 
 	// convert 32-bit uid into single bytes
-	tx_data[1] = (uid & 0xFF000000) >> 24;
-	tx_data[2] = (uid & 0x00FF0000) >> 16;
-	tx_data[3] = (uid & 0x0000FF00) >>  8;
-	tx_data[4] = (uid & 0x000000FF);
+	tx_data[1] = (id & 0xFF000000) >> 24;
+	tx_data[2] = (id & 0x00FF0000) >> 16;
+	tx_data[3] = (id & 0x0000FF00) >>  8;
+	tx_data[4] = (id & 0x000000FF);
 
 	tx_packet.assemble(tx_data, 11, true);
 	enable_tx();

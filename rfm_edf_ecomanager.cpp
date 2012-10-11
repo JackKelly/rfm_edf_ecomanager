@@ -24,15 +24,17 @@
 #endif
 
 #include "Manager.h"
+#include "debug.h"
 
 Manager manager;
 
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("EDF EcoManager Receiver");
+
+    debug(INFO, "EDF EcoManager Receiver");
     manager.init();
-    Serial.println("Finished init");
+    debug(INFO, "Finished init");
 }
 
 void loop()

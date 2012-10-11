@@ -11,6 +11,7 @@
 
 #include "Manager.h"
 #include "consts.h"
+#include "debug.h"
 
 Manager::Manager()
 : p_next_cc_tx(cc_txs), i_next_cc_trx(0), retries(0), timecode_polled_first_cc_trx(0)
@@ -63,9 +64,6 @@ void Manager::poll_next_cc_trx()
 		}
 	}
 
-	Serial.print(millis());
-	Serial.print(" polling CC TRX ");
-	Serial.println(id_next_cc_trx);
 	rfm.poll_cc_trx(id_next_cc_trx);
 
 	// wait for response
@@ -101,11 +99,7 @@ void Manager::wait_for_cc_tx()
 	// TODO handle roll-over over millis().
 
 	// listen for WHOLE_HOUSE_TX for defined period.
-	Serial.print(millis());
-	Serial.print(" Window open! Expecting ");
-	Serial.print(p_next_cc_tx->get_id());
-	Serial.print(" at ");
-	Serial.println(p_next_cc_tx->get_eta());
+	debug(INFO, "Window open! Expecting %lu at %lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
 	bool success = false;
 	while (millis() < (start_time+CC_TX_WINDOW) && !success) {
 		if (rfm.rx_packet_buffer.valid_data_is_available() &&
@@ -114,9 +108,7 @@ void Manager::wait_for_cc_tx()
 		}
 	}
 
-	Serial.print(millis());
-	Serial.print(" window closed. success=");
-	Serial.println(success);
+	debug(INFO, "Window closed. success=%d", success);
 
 	if (!success) {
 		// tell whole-house TX it missed its slot
@@ -171,16 +163,15 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
                     packet->print_uid_and_watts(); // send data over serial
 				} else if (id_is_cc_trx(id)) {
 				    // Received ID is a CC_TRX id we know about
+				    // TODO don't transmit both packets?
 				    packet->print_uid_and_watts(); // send data over serial
 				} else { // TODO: handle pair requests and EDF IAM manual mode changes
-	                Serial.print(millis());
-	                Serial.print(" Unknown ID! ");
+	                debug(INFO, "Unknown ID: ");
 	                packet->print_uid_and_watts(); // send data over serial
 				}
 
 			} else {
-				Serial.print(millis());
-				Serial.println(" Broken packet received.");
+				debug(INFO, "Broken packet received.");
 			}
 		}
 	}
@@ -208,9 +199,5 @@ void Manager::find_next_expected_cc_tx()
 			p_next_cc_tx = &cc_txs[i];
 		}
 	}
-	Serial.print(millis());
-	Serial.print(" Next expected tx has uid = ");
-	Serial.print(p_next_cc_tx->get_id());
-	Serial.print(" eta=");
-	Serial.println(p_next_cc_tx->get_eta());
+	debug(INFO, "Next expected tx has uid=%lu, eta=%lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
 }

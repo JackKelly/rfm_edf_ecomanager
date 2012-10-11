@@ -26,7 +26,7 @@ public:
 	 * Poll a CurrentCost transceiver (TRX), e.g. an EDF Wireless Transmitter Plug,
 	 * to ask for the latest wattage reading.
 	 */
-	static void poll_cc_trx(const uint32_t& uid);
+	static void poll_cc_trx(const uint32_t& id);
 
 	/**
 	 * Mimick a CurrentCost "transmitter only".

@@ -4,6 +4,7 @@
 
 #include "Packet.h"
 #include "consts.h"
+#include "debug.h"
 
 /**********************************************
  * Packet
@@ -316,7 +317,7 @@ const bool PacketBuffer::add(const uint8_t& value)
 
 	if (packets[current_packet].done()) {
 		if (current_packet >= NUM_PACKETS) {
-			Serial.println("NO MORE BUFFERS!");
+			debug(ERROR, "NO MORE BUFFERS!");
 		} else {
 			current_packet++;
 		}
@@ -347,8 +348,7 @@ void PacketBuffer::reset_all()
 	}
 
 	if (packets[current_packet].get_byte_index() > 0) {
-		Serial.print(millis());
-		Serial.println(" WARNING: LOSING DATA!");
+		debug(ERROR, "LOSING DATA!");
 	}
 
 	current_packet = 0;
