@@ -1,9 +1,4 @@
-#ifdef ARDUINO
-#include <inttypes.h>
-#else
 #include <Arduino.h>
-#endif
-
 #include "debug.h"
 
 void debug(const DebugLevel debug_level, const char *__fmt, ...)
@@ -28,6 +23,6 @@ void debug(const DebugLevel debug_level, const char *__fmt, ...)
     va_end(vl);
 
     Serial.println(buf);
-
-#endif
+    
+#endif // DEBUG
 }
