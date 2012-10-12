@@ -1,10 +1,7 @@
-//#ifdef ARDUINO
 #include <inttypes.h>
-//#endif
-
 #include "Packet.h"
 #include "consts.h"
-#include "debug.h"
+#include "Logger.h"
 
 /**********************************************
  * Packet
@@ -148,8 +145,7 @@ void RXPacket::append(const uint8_t& value)
 
 void RXPacket::print_id_and_watts() const
 {
-	Serial.print(millis());
-	Serial.print(" {id: ");
+	Serial.print("{id: ");
 	Serial.print(id);
 	Serial.print(", t: ");
 	Serial.print(timecode);
@@ -326,7 +322,7 @@ const bool PacketBuffer::append(const uint8_t& value)
 	        }
 	    }
 	    if (!successfully_found_empty_slot) {
-	        debug(ERROR, "NO MORE BUFFERS!");
+	        log(ERROR, "NO MORE BUFFERS!");
 	    }
 
 		return true;

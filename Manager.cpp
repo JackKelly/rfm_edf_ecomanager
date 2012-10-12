@@ -11,7 +11,7 @@
 
 #include "Manager.h"
 #include "consts.h"
-#include "debug.h"
+#include "Logger.h"
 #include "utils.h"
 
 Manager::Manager()
@@ -69,6 +69,14 @@ void Manager::run()
                 Serial.println(pair_with);
             }
             break;
+        case 'v':
+            Serial.println("ACK Please enter log level: ");
+            print_log_levels();
+            Logger::log_threshold = (Level)utils::read_uint32_from_serial();
+            Serial.print("ACK Log level set to '");
+            print_log_level(Logger::log_threshold);
+            Serial.println("'");
+            break;
         case '\r': break; // ignore carriage returns
         default:
             Serial.print("NAK unrecognised command '");
@@ -77,7 +85,6 @@ void Manager::run()
             break;
         }
     }
-
 }
 
 
@@ -115,11 +122,11 @@ void Manager::poll_next_cc_trx()
 	} else {
 	    // We didn't get a reply from the TRX we polled
 		if (retries < MAX_RETRIES) {
-            debug(INFO, "No response from TRX %lu, retries=%d. Retrying...", id_next_cc_trx, retries);
+            log(DEBUG, "No response from TRX %lu, retries=%d. Retrying...", id_next_cc_trx, retries);
 			retries++;
 		} else {
 			increment_i_of_next_cc_trx();
-			debug(INFO, "No response from TRX %lu. Giving up.", id_next_cc_trx);
+			log(INFO, "No response from TRX %lu after retrying. Giving up.", id_next_cc_trx);
 		}
 	}
 }
@@ -132,7 +139,7 @@ void Manager::wait_for_cc_tx()
 	// TODO handle roll-over over millis().
 
 	// listen for WHOLE_HOUSE_TX for defined period.
-	debug(INFO, "Window open! Expecting %lu at %lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
+	log(DEBUG, "Window open! Expecting %lu at %lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
 	bool success = false;
 	while (millis() < (start_time+CC_TX_WINDOW) && !success) {
 		if (process_rx_pack_buf_and_find_id(p_next_cc_tx->get_id())) {
@@ -140,7 +147,7 @@ void Manager::wait_for_cc_tx()
 		}
 	}
 
-	debug(INFO, "Window closed. success=%d", success);
+	log(DEBUG, "Window closed. success=%d", success);
 
 	if (!success) {
 		// tell whole-house TX it missed its slot
@@ -220,7 +227,7 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 				        packet->print_id_and_watts(); // send data over serial
 	                    find_next_expected_cc_tx();
 				    } else {
-	                    debug(INFO, "Unknown CC_TX ID: ");
+	                    log(INFO, "Unknown TX: ");
 	                    packet->print_id_and_watts(); // send data over serial
 				    }
 				}
@@ -234,13 +241,15 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 				}
 				//********* UNKNOWN ID ****************************
 				else {
-	                debug(INFO, "Unknown ID: ");
+	                log(INFO, "Unknown TRX: ");
 	                packet->print_id_and_watts(); // send data over serial
 				}
 
 			} else {
-				debug(INFO, "Broken packet received.");
-				packet->print_bytes();
+				log(INFO, "Broken packet received.");
+				if (Logger::log_threshold <= INFO) {
+				    packet->print_bytes();
+				}
 			}
 	        packet->reset();
 		}
@@ -274,16 +283,16 @@ void Manager::pair(const bool is_cc_tx)
 const bool Manager::append_to_cc_txs(const uint32_t& id)
 {
     if (find_cc_tx(id)) {
-        debug(INFO, "Instructed to add CC TX %lu but it's already in list.", id);
+        log(DEBUG, "Instructed to add CC TX %lu but it's already in list.", id);
         return false;
     }
 
     if (num_cc_txs < MAX_CC_TXS) {
         cc_txs[num_cc_txs++].set_id(id);
-        debug(INFO, "Added CC TX id = %lu", cc_txs[num_cc_txs-1].get_id());
+        log(DEBUG, "Added CC TX id = %lu", cc_txs[num_cc_txs-1].get_id());
         return true;
     } else {
-        debug(WARN, "Tried to add CC TX %lu but no more space.", id);
+        log(ERROR, "Tried to add CC TX %lu but no more space.", id);
         return false;
     }
 }
@@ -292,16 +301,16 @@ const bool Manager::append_to_cc_txs(const uint32_t& id)
 const bool Manager::append_to_cc_trx_ids(const uint32_t& id)
 {
     if (id_is_cc_trx(id)) {
-        debug(INFO, "Instructed to add CC TX %lu but it's already in list.", id);
+        log(DEBUG, "Instructed to add CC TX %lu but it's already in list.", id);
         return false;
     }
 
     if (num_cc_trxs < MAX_CC_TRXS) {
         cc_trx_ids[num_cc_trxs++] = id;
-        debug(INFO, "Added CC TRX id = %lu", cc_trx_ids[num_cc_trxs-1]);
+        log(DEBUG, "Added CC TRX id = %lu", cc_trx_ids[num_cc_trxs-1]);
         return true;
     } else {
-        debug(WARN, "Tried to add CC TRX %lu but no more space.", id);
+        log(ERROR, "Tried to add CC TRX %lu but no more space.", id);
         return false;
     }
 }
@@ -325,5 +334,5 @@ void Manager::find_next_expected_cc_tx()
 			p_next_cc_tx = &cc_txs[i];
 		}
 	}
-	debug(INFO, "Next expected CC_TX has ID=%lu, ETA=%lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
+	log(DEBUG, "Next expected CC_TX has ID=%lu, ETA=%lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
 }

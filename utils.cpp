@@ -9,10 +9,13 @@ void utils::read_cstring_from_serial(char* str, const uint8_t& length)
     do {
         if (Serial.available()) {
             str[i++] = Serial.read();
+            Serial.print(str[i-1]); // echo
             if (i == length-1) break;
         }
     } while (str[i-1] != '\r');
 
+    Serial.println("");
+    Serial.flush();
     str[i] = '\0';
 }
 

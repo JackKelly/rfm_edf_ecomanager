@@ -6,7 +6,7 @@
 
 #include "Rfm12b.h"
 #include "spi.h"
-#include "debug.h"
+#include "Logger.h"
 
 Rfm12b::State Rfm12b::state;
 TXPacket Rfm12b::tx_packet;
@@ -106,7 +106,7 @@ void Rfm12b::interrupt_handler()
 
 
 void Rfm12b::init () {
-	debug(INFO, "Starting rf12_initialize_edf()");
+	log(INFO, "Starting rf12_initialize_edf()");
 
 	spi::init();
 
@@ -115,7 +115,7 @@ void Rfm12b::init () {
 
 	delay(2000); // give RFM time to start up
 
-	debug(INFO, "RFM12b finished power-up reset.  Starting init...");
+	log(INFO, "RFM12b finished power-up reset.  Starting init...");
 
 	/***************************
 	 * BEGIN RFM12b COMMANDS...
@@ -259,7 +259,7 @@ void Rfm12b::init () {
 	// Clock pin freq = 1.0Mhz (lowest poss)
 	spi::transfer_word(0xC000);
 
-	debug(INFO, "attaching interrupt");
+	log(INFO, "attaching interrupt");
 	delay(500);
 	attachInterrupt(0, interrupt_handler, LOW);
 	return;
@@ -268,7 +268,7 @@ void Rfm12b::init () {
 
 void Rfm12b::poll_cc_trx(const uint32_t& id)
 {
-    debug(INFO, "Polling CC TRX %lu", id);
+    log(INFO, "Polling CC TRX %lu", id);
 
 	send_command_to_trx(0x50, 0x53, id);
 }
@@ -276,7 +276,7 @@ void Rfm12b::poll_cc_trx(const uint32_t& id)
 
 void Rfm12b::ack_cc_trx(const uint32_t& id)
 {
-    debug(INFO, "ACK CC TRX %lu", id);
+    log(INFO, "ACK CC TRX %lu", id);
     send_command_to_trx(0x41, 0x4B, id);
 }
 

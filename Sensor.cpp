@@ -1,6 +1,6 @@
 #include "Sensor.h"
 #include "consts.h"
-#include "debug.h"
+#include "Logger.h"
 
 Sensor::Sensor()
 :eta(0xFFFFFFFF), id(ID_INVALID), sample_period(SAMPLE_PERIOD),
@@ -13,7 +13,7 @@ void Sensor::update(const RXPacket& packet)
         // update sample period for this Sensor
         // (seems to vary a little between sensors)
         // TODO: take an average for the sample period
-        debug(INFO, "CC_TX ID=%lu, old sample_period=%u", id, sample_period);
+        log(DEBUG, "CC_TX ID=%lu, old sample_period=%u", id, sample_period);
 
         sample_period = (packet.get_timecode() - time_last_seen) / num_periods;
 
@@ -22,7 +22,7 @@ void Sensor::update(const RXPacket& packet)
             sample_period = SAMPLE_PERIOD;
         }
 
-        debug(INFO, "CC_TX ID=%lu, new sample_period=%u", id, sample_period);
+        log(DEBUG, "CC_TX ID=%lu, new sample_period=%u", id, sample_period);
     }
 	eta = packet.get_timecode() + sample_period;
 	num_periods = 1;
@@ -43,7 +43,7 @@ void Sensor::missing()
 	eta += sample_period;
 	num_periods++;
 
-	debug(INFO, "id:%lu is missing. New ETA=%lu, num_periods missed=%u", id, eta, num_periods);
+	log(INFO, "id:%lu is missing. New ETA=%lu, num_periods missed=%u", id, eta, num_periods);
 }
 
 void Sensor::set_id(const uint32_t& _id)
