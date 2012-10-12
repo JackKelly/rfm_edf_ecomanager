@@ -12,6 +12,7 @@
 #include "Manager.h"
 #include "consts.h"
 #include "debug.h"
+#include "utils.h"
 
 Manager::Manager()
 : auto_pair(true), pair_with(ID_INVALID), p_next_cc_tx(cc_txs), i_next_cc_trx(0),
@@ -53,13 +54,24 @@ void Manager::run()
     }
 
     //************* HANDLE SERIAL COMMANDS **************************
-    if (Serial.available() > 0) {
+    if (Serial.available()) {
         char incomming_byte = Serial.read();
         switch (incomming_byte) {
-        case 'a': auto_pair = true;  Serial.println("auto_pair mode on"); break;
-        case 'm': auto_pair = false; Serial.println("auto_pair mode off"); break;
+        case 'a': auto_pair = true;  Serial.println("ACK auto_pair mode on"); break;
+        case 'm': auto_pair = false; Serial.println("ACK audo_pair mode off"); break;
+        case 'p':
+            if (auto_pair) {
+                Serial.println("NAK Please enable manual pairing mode ('m') before issuing 'p' command.");
+            } else {
+                Serial.println("ACK Please enter ID followed by carriage return:");
+                pair_with = utils::read_uint32_from_serial();
+                Serial.print("ACK pair_with set to ");
+                Serial.println(pair_with);
+            }
+            break;
+        case '\r': break; // ignore carriage returns
         default:
-            Serial.print("unrecognised command '");
+            Serial.print("NAK unrecognised command '");
             Serial.print(incomming_byte);
             Serial.println("'");
             break;
@@ -182,16 +194,22 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 
 				//******** PAIRING REQUEST **********************
 				if (packet->is_pairing_request()) {
-				    if (pair_with == id) {
+				    if (packet->is_cc_tx() && find_cc_tx(id)) {
+				        // ignore pair request from CC_TX we're already paired with
+				    } else if (!packet->is_cc_tx() && id_is_cc_trx(id)) {
+				        // ignore pair request from CC_TRX we're already paired with
+				    } else if (auto_pair) {
+				        // Auto pair mode. Go ahead and pair.
+				        pair_with = id;
 				        pair(packet->is_cc_tx());
-				    } else {
-				        Serial.print("{PR: ");
-				        Serial.print(id);
-				        Serial.println("}");
-				        if (auto_pair) {
-				            pair_with = id;
-				            pair(packet->is_cc_tx());
-				        }
+                    } else if (pair_with == id) {
+                        // Manual pair mode and pair_with has already been set so pair.
+                        pair(packet->is_cc_tx());
+			        } else {
+			            // Manual pair mode. Tell user about pair request.
+			            Serial.print("{PR: ");
+			            Serial.print(id);
+			            Serial.println("}");
 				    }
 				}
 				//********* CC TX (transmit-only sensor) ********
@@ -244,8 +262,9 @@ void Manager::pair(const bool is_cc_tx)
     }
 
     if (success) {
-        Serial.print("Successfully paired with ");
-        Serial.println(pair_with);
+        Serial.print("{pw: ");
+        Serial.print(pair_with);
+        Serial.println(" }");
     }
 
     pair_with = ID_INVALID;
@@ -254,19 +273,38 @@ void Manager::pair(const bool is_cc_tx)
 
 const bool Manager::append_to_cc_txs(const uint32_t& id)
 {
-    // find slot
-    // if slot found then add and return true else return false
-    return true; // TODO: stub!
+    if (find_cc_tx(id)) {
+        debug(INFO, "Instructed to add CC TX %lu but it's already in list.", id);
+        return false;
+    }
+
+    if (num_cc_txs < MAX_CC_TXS) {
+        cc_txs[num_cc_txs++].set_id(id);
+        debug(INFO, "Added CC TX id = %lu", cc_txs[num_cc_txs-1].get_id());
+        return true;
+    } else {
+        debug(WARN, "Tried to add CC TX %lu but no more space.", id);
+        return false;
+    }
 }
 
 
 const bool Manager::append_to_cc_trx_ids(const uint32_t& id)
 {
-    // find slot
-    // if slot found then add and return true else return false
-    return true; // TODO: stub!
-}
+    if (id_is_cc_trx(id)) {
+        debug(INFO, "Instructed to add CC TX %lu but it's already in list.", id);
+        return false;
+    }
 
+    if (num_cc_trxs < MAX_CC_TRXS) {
+        cc_trx_ids[num_cc_trxs++] = id;
+        debug(INFO, "Added CC TRX id = %lu", cc_trx_ids[num_cc_trxs-1]);
+        return true;
+    } else {
+        debug(WARN, "Tried to add CC TRX %lu but no more space.", id);
+        return false;
+    }
+}
 
 
 const bool Manager::id_is_cc_trx(const uint32_t& id) const
