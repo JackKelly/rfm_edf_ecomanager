@@ -89,7 +89,9 @@ const uint8_t TXPacket::get_next_byte()
 }
 
 
-void TXPacket::assemble(const uint8_t payload[], const uint8_t& payload_length,
+void TXPacket::assemble(
+        const uint8_t payload[],
+        const uint8_t& payload_length,
 		const bool add_checksum)
 {
 	const uint8_t HEADER[] = {

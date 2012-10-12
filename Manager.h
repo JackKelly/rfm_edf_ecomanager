@@ -21,7 +21,10 @@ public:
 	void run();
 private:
     Rfm12b rfm;
+
     bool auto_pair; /* auto_pair mode on or off? */
+    uint32_t pair_with; /* radio ID to pair with */
+
 
 	/*****************************************
 	 * CC TX (e.g. whole-house transmitters) *
@@ -80,6 +83,16 @@ private:
 	 * @return true if a packet corresponding to id is found
 	 */
 	const bool process_rx_pack_buf_and_find_id(const uint32_t& id);
+
+	/**
+	 * If pair_with != ID_INVALID then pair with pair_with.
+	 */
+	void pair(const bool is_cc_tx);
+
+	const bool append_to_cc_txs(const uint32_t& id);
+
+	const bool append_to_cc_trx_ids(const uint32_t& id);
+
 };
 
 #endif /* MANAGER_H_ */

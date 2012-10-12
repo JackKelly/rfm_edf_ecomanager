@@ -21,6 +21,11 @@ public:
 	static void poll_cc_trx(const uint32_t& id);
 
 	/**
+	 * Send acknowledgment to complete pairing.
+	 */
+	static void ack_cc_trx(const uint32_t& id);
+
+	/**
 	 * Mimick a CurrentCost "transmitter only".
 	 * At the moment the packet is hard-coded.
 	 */
@@ -50,6 +55,8 @@ private:
 	 * This must handle interrupts associated with both RX and TX.
 	 */
 	static void interrupt_handler();
+
+	static void send_command_to_trx(const uint8_t& cmd1, const uint8_t& cmd2, const uint32_t& id);
 
 };
 

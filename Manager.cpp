@@ -14,7 +14,7 @@
 #include "debug.h"
 
 Manager::Manager()
-: auto_pair(true), p_next_cc_tx(cc_txs), i_next_cc_trx(0),
+: auto_pair(true), pair_with(ID_INVALID), p_next_cc_tx(cc_txs), i_next_cc_trx(0),
   retries(0), timecode_polled_first_cc_trx(0)
 {
 	// TODO: this stuff needs to be programmed over serial not hard-coded.
@@ -23,7 +23,7 @@ Manager::Manager()
 	cc_txs[1].set_id(28);
 
 	num_cc_trxs = 1;
-	cc_trx_ids[0] = 0x55100003;
+	cc_trx_ids[0] = 1078409828;// 1215004802// 0x55100003;
 	id_next_cc_trx = cc_trx_ids[0];
 }
 
@@ -72,10 +72,11 @@ void Manager::run()
 void Manager::poll_next_cc_trx()
 {
 	// don't continually poll TRXs;
-    // instead wait SAMPLE_PERIOD between polling the first TRX.
+    // instead wait SAMPLE_PERIOD between polling the first TRX and polling it again
 	if (i_next_cc_trx==0) {
 		if (millis() < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
-		    // Receive any unexpected packets and return
+		    // We've finished polling all TRXs for this SAMPLE_PERIOD.
+		    // Receive any unexpected packets and return.
 		    process_rx_pack_buf_and_find_id(0);
 			return;
 		} else {
@@ -102,9 +103,11 @@ void Manager::poll_next_cc_trx()
 	} else {
 	    // We didn't get a reply from the TRX we polled
 		if (retries < MAX_RETRIES) {
+            debug(INFO, "No response from TRX %lu, retries=%d. Retrying...", id_next_cc_trx, retries);
 			retries++;
 		} else {
 			increment_i_of_next_cc_trx();
+			debug(INFO, "No response from TRX %lu. Giving up.", id_next_cc_trx);
 		}
 	}
 }
@@ -179,9 +182,17 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 
 				//******** PAIRING REQUEST **********************
 				if (packet->is_pairing_request()) {
-				    Serial.print("{PR: ");
-				    Serial.print(id);
-				    Serial.println("}");
+				    if (pair_with == id) {
+				        pair(packet->is_cc_tx());
+				    } else {
+				        Serial.print("{PR: ");
+				        Serial.print(id);
+				        Serial.println("}");
+				        if (auto_pair) {
+				            pair_with = id;
+				            pair(packet->is_cc_tx());
+				        }
+				    }
 				}
 				//********* CC TX (transmit-only sensor) ********
 				else if (packet->is_cc_tx()) {
@@ -219,6 +230,43 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 
 	return success;
 }
+
+
+void Manager::pair(const bool is_cc_tx)
+{
+    bool success = false;
+
+    if (is_cc_tx) {
+        success = append_to_cc_txs(pair_with);
+    } else { // transceiver. So we need to ACK.
+        rfm.ack_cc_trx(pair_with);
+        success = append_to_cc_trx_ids(pair_with);
+    }
+
+    if (success) {
+        Serial.print("Successfully paired with ");
+        Serial.println(pair_with);
+    }
+
+    pair_with = ID_INVALID;
+}
+
+
+const bool Manager::append_to_cc_txs(const uint32_t& id)
+{
+    // find slot
+    // if slot found then add and return true else return false
+    return true; // TODO: stub!
+}
+
+
+const bool Manager::append_to_cc_trx_ids(const uint32_t& id)
+{
+    // find slot
+    // if slot found then add and return true else return false
+    return true; // TODO: stub!
+}
+
 
 
 const bool Manager::id_is_cc_trx(const uint32_t& id) const

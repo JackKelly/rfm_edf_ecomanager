@@ -270,18 +270,37 @@ void Rfm12b::poll_cc_trx(const uint32_t& id)
 {
     debug(INFO, "Polling CC TRX %lu", id);
 
-	uint8_t tx_data[] = {0x46, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x50, 0x53, 0x00, 0x00, 0x4F};
-
-	// convert 32-bit id into single bytes
-	tx_data[1] = (id & 0xFF000000) >> 24;
-	tx_data[2] = (id & 0x00FF0000) >> 16;
-	tx_data[3] = (id & 0x0000FF00) >>  8;
-	tx_data[4] = (id & 0x000000FF);
-
-	tx_packet.assemble(tx_data, 11, true);
-	enable_tx();
+	send_command_to_trx(0x50, 0x53, id);
 }
+
+
+void Rfm12b::ack_cc_trx(const uint32_t& id)
+{
+    debug(INFO, "ACK CC TRX %lu", id);
+    send_command_to_trx(0x41, 0x4B, id);
+}
+
+
+void Rfm12b::send_command_to_trx(const uint8_t& cmd1,
+        const uint8_t& cmd2, const uint32_t& id)
+{
+    uint8_t tx_data[] = {0x46, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x41, 0x4B, 0x00, 0x00, 0x4F};
+
+    // convert 32-bit id into single bytes
+    tx_data[1] = (id & 0xFF000000) >> 24;
+    tx_data[2] = (id & 0x00FF0000) >> 16;
+    tx_data[3] = (id & 0x0000FF00) >>  8;
+    tx_data[4] = (id & 0x000000FF);
+
+    // add command byte pair
+    tx_data[6] = cmd1;
+    tx_data[7] = cmd2;
+
+    tx_packet.assemble(tx_data, 11, true);
+    enable_tx();
+}
+
 
 void Rfm12b::mimick_cc_tx()
 {
