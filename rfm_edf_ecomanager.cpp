@@ -32,7 +32,7 @@ void setup()
 {
     Serial.begin(115200);
 
-    log(INFO, "EDF EcoManager Receiver");
+    log(INFO, "EDF IAM Receiver");
     manager.init();
     log(INFO, "Finished init");
 }

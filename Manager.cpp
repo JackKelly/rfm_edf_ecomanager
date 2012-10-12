@@ -15,7 +15,8 @@
 #include "utils.h"
 
 Manager::Manager()
-: auto_pair(true), pair_with(ID_INVALID), p_next_cc_tx(cc_txs), num_cc_txs(0),
+: auto_pair(true), pair_with(ID_INVALID), print_packets(ALL_VALID),
+  p_next_cc_tx(cc_txs), num_cc_txs(0),
   i_next_cc_trx(0), num_cc_trxs(0), retries(0), timecode_polled_first_cc_trx(0)
 {}
 
@@ -64,13 +65,16 @@ void Manager::run()
             }
             break;
         case 'v':
-            Serial.println("ACK Please enter log level: ");
+            Serial.println("ACK enter log level:");
             print_log_levels();
             Logger::log_threshold = (Level)utils::read_uint32_from_serial();
-            Serial.print("ACK Log level set to '");
+            Serial.print("ACK Log level set to ");
             print_log_level(Logger::log_threshold);
-            Serial.println("'");
+            Serial.println("");
             break;
+        case 'k': print_packets = ONLY_KNOWN; Serial.println("ACK only print data from known transmitters"); break;
+        case 'u': print_packets = ALL_VALID; Serial.println("ACK print all valid packets"); break;
+        case 'b': print_packets = ALL; Serial.println("ACK print all"); break;
         case '\r': break; // ignore carriage returns
         default:
             Serial.print("NAK unrecognised command '");
@@ -220,27 +224,28 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 				        packet->print_id_and_watts(); // send data over serial
 	                    find_next_expected_cc_tx();
 				    } else {
-	                    log(INFO, "Unknown TX: ");
-	                    packet->print_id_and_watts(); // send data over serial
+	                    log(INFO, "Received CC_TX packet with unknown ID %lu", id);
+	                    if (print_packets >= ALL_VALID) {
+	                        packet->print_id_and_watts(); // send data over serial
+	                    }
 				    }
 				}
 				//****** CC TRX (transceiver; e.g. EDF IAM) ******
 				else if (id_is_cc_trx(id)) {
 				    // Received ID is a CC_TRX id we know about
                     packet->print_id_and_watts(); // send data over serial
-
-				    // TODO: handle pair requests and EDF IAM manual mode changes
-				    // TODO: don't transmit both packets?
 				}
-				//********* UNKNOWN ID ****************************
+				//********* UNKNOWN TRX ID *************************
 				else {
-	                log(INFO, "Unknown TRX: ");
-	                packet->print_id_and_watts(); // send data over serial
+                    log(INFO, "Received CC_TRX packet with unknown ID %lu", id);
+                    if (print_packets >= ALL_VALID) {
+                        packet->print_id_and_watts(); // send data over serial
+                    }
 				}
 
 			} else {
-				log(INFO, "Broken packet received.");
-				if (Logger::log_threshold <= INFO) {
+				log(INFO, "Broken packet");
+				if (print_packets == ALL) {
 				    packet->print_bytes();
 				}
 			}
@@ -276,7 +281,7 @@ void Manager::pair(const bool is_cc_tx)
 const bool Manager::append_to_cc_txs(const uint32_t& id)
 {
     if (find_cc_tx(id)) {
-        log(DEBUG, "Instructed to add CC TX %lu but it's already in list.", id);
+        log(DEBUG, "CC TX %lu is already in list", id);
         return false;
     }
 
@@ -285,7 +290,7 @@ const bool Manager::append_to_cc_txs(const uint32_t& id)
         log(DEBUG, "Added CC TX id = %lu", cc_txs[num_cc_txs-1].get_id());
         return true;
     } else {
-        log(ERROR, "Tried to add CC TX %lu but no more space.", id);
+        log(ERROR, "no more space for CC TX %lu", id);
         return false;
     }
 }
@@ -294,7 +299,7 @@ const bool Manager::append_to_cc_txs(const uint32_t& id)
 const bool Manager::append_to_cc_trx_ids(const uint32_t& id)
 {
     if (id_is_cc_trx(id)) {
-        log(DEBUG, "Instructed to add CC TX %lu but it's already in list.", id);
+        log(DEBUG, "CC TRX %lu is already in list", id);
         return false;
     }
 
@@ -303,7 +308,7 @@ const bool Manager::append_to_cc_trx_ids(const uint32_t& id)
         log(DEBUG, "Added CC TRX id = %lu", cc_trx_ids[num_cc_trxs-1]);
         return true;
     } else {
-        log(ERROR, "Tried to add CC TRX %lu but no more space.", id);
+        log(ERROR, "No more space for CC TRX %lu", id);
         return false;
     }
 }
@@ -327,5 +332,5 @@ void Manager::find_next_expected_cc_tx()
 			p_next_cc_tx = &cc_txs[i];
 		}
 	}
-	log(DEBUG, "Next expected CC_TX has ID=%lu, ETA=%lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
+	log(DEBUG, "Next expected CC_TX: ID=%lu, ETA=%lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
 }

@@ -25,12 +25,6 @@ public:
 	 */
 	static void ack_cc_trx(const uint32_t& id);
 
-	/**
-	 * Mimick a CurrentCost "transmitter only".
-	 * At the moment the packet is hard-coded.
-	 */
-	static void mimick_cc_tx();
-
 	static PacketBuffer rx_packet_buffer; // TODO: volatile?
 
 private:

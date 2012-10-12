@@ -106,16 +106,11 @@ void Rfm12b::interrupt_handler()
 
 
 void Rfm12b::init () {
-	log(INFO, "Starting rf12_initialize_edf()");
-
 	spi::init();
 
 	spi::transfer_word(0x0000);
-	// TODO: do we need a software reset here?
 
 	delay(2000); // give RFM time to start up
-
-	log(INFO, "RFM12b finished power-up reset.  Starting init...");
 
 	/***************************
 	 * BEGIN RFM12b COMMANDS...
@@ -301,11 +296,3 @@ void Rfm12b::send_command_to_trx(const uint8_t& cmd1,
     enable_tx();
 }
 
-
-void Rfm12b::mimick_cc_tx()
-{
-	const uint8_t tx_data[] = {0x55, 0x55, 0x65, 0xA6, 0x95, 0x55, 0x55,
-			0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55};
-	tx_packet.assemble(tx_data, 16);
-	enable_tx();
-}

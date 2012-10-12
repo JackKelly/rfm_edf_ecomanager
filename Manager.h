@@ -25,6 +25,7 @@ private:
     bool auto_pair; /* auto_pair mode on or off? */
     uint32_t pair_with; /* radio ID to pair with */
 
+    enum {ONLY_KNOWN, ALL_VALID, ALL} print_packets;
 
 	/*****************************************
 	 * CC TX (e.g. whole-house transmitters) *
@@ -43,7 +44,7 @@ private:
     /*****************************************
      * CC TRX (e.g. EDF IAMs)                *
      *****************************************/
-    static const uint8_t  MAX_CC_TRXS = 35;   /* number of CC TRXs (e.g. EDF IAMs) */
+    static const uint8_t  MAX_CC_TRXS = 5;   /* number of CC TRXs (e.g. EDF IAMs) */
 	static const uint32_t CC_TRX_TIMEOUT = 100; // milliseconds to wait for reply
     uint32_t cc_trx_ids[MAX_CC_TRXS];
     uint8_t  i_next_cc_trx; // index into cc_trx_ids
