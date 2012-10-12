@@ -273,6 +273,8 @@ void Rfm12b::ack_cc_trx(const uint32_t& id)
 {
     log(INFO, "ACK CC TRX %lu", id);
     send_command_to_trx(0x41, 0x4B, id);
+    delay(50);
+    send_command_to_trx(0x41, 0x4B, id);
 }
 
 
