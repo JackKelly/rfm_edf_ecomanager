@@ -21,6 +21,7 @@ public:
 	void run();
 private:
     Rfm12b rfm;
+    bool auto_pair; /* auto_pair mode on or off? */
 
 	/*****************************************
 	 * CC TX (e.g. whole-house transmitters) *

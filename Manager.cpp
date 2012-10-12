@@ -14,7 +14,8 @@
 #include "debug.h"
 
 Manager::Manager()
-: p_next_cc_tx(cc_txs), i_next_cc_trx(0), retries(0), timecode_polled_first_cc_trx(0)
+: auto_pair(true), p_next_cc_tx(cc_txs), i_next_cc_trx(0),
+  retries(0), timecode_polled_first_cc_trx(0)
 {
 	// TODO: this stuff needs to be programmed over serial not hard-coded.
 	num_cc_txs = 2;
@@ -37,6 +38,7 @@ void Manager::init()
 
 void Manager::run()
 {
+    //************* HANDLE TRANSMITTERS AND TRANSCEIVERS ***********
     if (num_cc_txs == 0) {
         // There are no CC TXs so all we have to do it poll TRXs
         poll_next_cc_trx();
@@ -49,6 +51,21 @@ void Manager::run()
             wait_for_cc_tx();
         }
     }
+
+    //************* HANDLE SERIAL COMMANDS **************************
+    if (Serial.available() > 0) {
+        char incomming_byte = Serial.read();
+        switch (incomming_byte) {
+        case 'a': auto_pair = true;  Serial.println("auto_pair mode on"); break;
+        case 'm': auto_pair = false; Serial.println("auto_pair mode off"); break;
+        default:
+            Serial.print("unrecognised command '");
+            Serial.print(incomming_byte);
+            Serial.println("'");
+            break;
+        }
+    }
+
 }
 
 
