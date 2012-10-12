@@ -47,7 +47,6 @@ private:
 	static const uint32_t CC_TRX_TIMEOUT = 100; // milliseconds to wait for reply
     uint32_t cc_trx_ids[MAX_CC_TRXS];
     uint8_t  i_next_cc_trx; // index into cc_trx_ids
-	uint32_t id_next_cc_trx;// actual id (i.e. a copy of a cc_trx_ids[i_next_cc_trx])
 	uint8_t num_cc_trxs;
 
 	uint8_t retries; // for polling CC TRXs

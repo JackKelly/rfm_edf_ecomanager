@@ -15,18 +15,9 @@
 #include "utils.h"
 
 Manager::Manager()
-: auto_pair(true), pair_with(ID_INVALID), p_next_cc_tx(cc_txs), i_next_cc_trx(0),
-  retries(0), timecode_polled_first_cc_trx(0)
-{
-	// TODO: this stuff needs to be programmed over serial not hard-coded.
-	num_cc_txs = 2;
-	cc_txs[0].set_id(895);
-	cc_txs[1].set_id(28);
-
-	num_cc_trxs = 1;
-	cc_trx_ids[0] = 1078409828;// 1215004802// 0x55100003;
-	id_next_cc_trx = cc_trx_ids[0];
-}
+: auto_pair(true), pair_with(ID_INVALID), p_next_cc_tx(cc_txs), num_cc_txs(0),
+  i_next_cc_trx(0), num_cc_trxs(0), retries(0), timecode_polled_first_cc_trx(0)
+{}
 
 
 void Manager::init()
@@ -52,6 +43,9 @@ void Manager::run()
             wait_for_cc_tx();
         }
     }
+
+    // Make sure we always check for RX packets
+    process_rx_pack_buf_and_find_id(0);
 
     //************* HANDLE SERIAL COMMANDS **************************
     if (Serial.available()) {
@@ -90,26 +84,26 @@ void Manager::run()
 
 void Manager::poll_next_cc_trx()
 {
+    if (num_cc_trxs == 0) return;
+
 	// don't continually poll TRXs;
     // instead wait SAMPLE_PERIOD between polling the first TRX and polling it again
 	if (i_next_cc_trx==0) {
 		if (millis() < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
 		    // We've finished polling all TRXs for this SAMPLE_PERIOD.
-		    // Receive any unexpected packets and return.
-		    process_rx_pack_buf_and_find_id(0);
 			return;
 		} else {
 			timecode_polled_first_cc_trx = millis();
 		}
 	}
 
-	rfm.poll_cc_trx(id_next_cc_trx);
+	rfm.poll_cc_trx(cc_trx_ids[i_next_cc_trx]);
 
 	// wait for response
 	const uint32_t start_time = millis();
 	bool success = false;
 	while (millis() < start_time+CC_TRX_TIMEOUT) {
-		if (process_rx_pack_buf_and_find_id(id_next_cc_trx)) {
+		if (process_rx_pack_buf_and_find_id(cc_trx_ids[i_next_cc_trx])) {
 	        // We got a reply from the TRX we polled
 			success = true;
 			break;
@@ -122,11 +116,11 @@ void Manager::poll_next_cc_trx()
 	} else {
 	    // We didn't get a reply from the TRX we polled
 		if (retries < MAX_RETRIES) {
-            log(DEBUG, "No response from TRX %lu, retries=%d. Retrying...", id_next_cc_trx, retries);
+            log(DEBUG, "No response from TRX %lu, retries=%d. Retrying...", cc_trx_ids[i_next_cc_trx], retries);
 			retries++;
 		} else {
 			increment_i_of_next_cc_trx();
-			log(INFO, "No response from TRX %lu after retrying. Giving up.", id_next_cc_trx);
+			log(INFO, "No response from TRX %lu after retrying. Giving up.", cc_trx_ids[i_next_cc_trx]);
 		}
 	}
 }
@@ -162,7 +156,6 @@ void Manager::increment_i_of_next_cc_trx()
     if (i_next_cc_trx >= num_cc_trxs) {
         i_next_cc_trx=0;
     }
-    id_next_cc_trx = cc_trx_ids[i_next_cc_trx];
 
     retries = 0;
 }

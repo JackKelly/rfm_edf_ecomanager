@@ -19,7 +19,6 @@ void log(const Level& level, const char *__fmt, ...)
         va_end(vl);
 
         Serial.println(buf);
-        // Serial.flush();
     }
 }
 
