@@ -22,10 +22,9 @@ void log(const Level& level, const char *__fmt, ...)
         // Serial.flush();
     }
 }
-/* TODO: remove if I can't figure out how to make this work without crashing.
- * Very wierdly, just defining this function (even if it isn't called)
- * seems to make the Nanode intermittently believe that it's receiving
- * garbage characters on Serial and then crash. */
+
+
+
 void print_log_level(const Level& level)
 {
     Serial.print(level);
