@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "Logger.h"
 
-Level Logger::log_threshold = INFO;
+Level Logger::log_threshold = WARN;
 
 void log(const Level& level, const char *__fmt, ...)
 {

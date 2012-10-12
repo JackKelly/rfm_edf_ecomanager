@@ -158,6 +158,16 @@ void RXPacket::print_id_and_watts() const
 			Serial.print(watts[i]);
 		}
 	}
+
+	if (!cc_tx) {
+	    Serial.print(", state: ");
+	    if (packet[10]==0x53) {
+	        Serial.print("on");
+	    } else {
+	        Serial.print("off");
+	    }
+	}
+
 	Serial.println("}");
 }
 
