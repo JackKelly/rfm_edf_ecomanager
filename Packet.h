@@ -34,7 +34,9 @@ public:
 	const uint8_t get_byte_index() const;
 
 protected:
-	const static uint8_t MAX_PACKET_LENGTH = 22;
+	/* Longest packet = 1B preamble + 2B sync + 12B EDF IAM + 2B tail
+	 *  If you want to mimick CC_TX packets then this needs to be set to 21!  */
+	const static uint8_t MAX_PACKET_LENGTH = 17;
 
 	/****************************************************
 	 * Member variables used within ISR and outside ISR *

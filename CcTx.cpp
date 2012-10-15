@@ -52,3 +52,75 @@ void CcTx::missing()
 
 	log(INFO, "id:%lu is missing. New ETA=%lu, num_periods missed=%u", id, eta, num_periods);
 }
+
+/******************************
+ * CcArray                    *
+ ******************************/
+
+const bool CcArray::append(const uint32_t id)
+{
+    log(DEBUG, "CcArray::append(%lu). n=%d", id, n);
+
+    if (find(id)) {
+        log(DEBUG, "%s %lu already in list", name, id);
+        return false;
+    }
+
+    if (n < length) {
+        cc_array[n++].id = id;
+        log(DEBUG, "Added %s id %lu", name, cc_array[n-1].id);
+        return true;
+    } else {
+        log(ERROR, "no space for %s %lu", name, id);
+        return false;
+    }
+}
+
+CcTrx* CcArray::find(const uint32_t& id)
+{
+    for (uint8_t il=0; il<n; il++) {
+        if (cc_array[il].id == id) {
+            return &cc_array[i];
+        }
+    }
+    return NULL;
+}
+
+
+/******************************
+ * CcTxArray                    *
+ ******************************/
+
+CcTx* CcTxArray::current()
+{
+    if (n==0) return NULL;
+
+    return (CcTx*)&cc_array[i];
+}
+
+void CcTxArray::next()
+{
+    for (uint8_t il=0; il<n; il++) {
+        if (((CcTx*)cc_array)[il].get_eta() < current()->get_eta()) {
+            i = il;
+        }
+    }
+    log(DEBUG, "Next expected CC_TX: ID=%lu, ETA=%lu", current()->id, current()->get_eta());
+}
+
+/******************************
+ * CcTrxArray                    *
+ ******************************/
+
+CcTrx* CcTrxArray::current()
+{
+    if (n==0) return NULL;
+
+    return (CcTrx*)&cc_array[i];
+}
+
+void CcTrxArray::next()
+{
+    i++;
+    if (i==n) i=0;
+}

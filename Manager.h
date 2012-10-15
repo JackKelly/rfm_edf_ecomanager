@@ -30,25 +30,23 @@ private:
 	/*****************************************
 	 * CC TX (e.g. whole-house transmitters) *
 	 *****************************************/
-	static const uint8_t MAX_CC_TXS = 5;
+    static const uint8_t MAX_CC_TXS = 5;
+    CcTx cc_tx_array[MAX_CC_TXS];
+    CcTxArray cc_txs;
 
 	/* length of time we're willing to wait
 	 * for a CC TX.  We'll open the window
 	 * half of WINDOW before CC TX's ETA. */
 	static const uint16_t CC_TX_WINDOW = 1000;
 
-    CcTx cc_txs[MAX_CC_TXS];
-    CcTx* p_next_cc_tx; // The next expected CC TX
-    uint8_t num_cc_txs;
-
     /*****************************************
      * CC TRX (e.g. EDF IAMs)                *
      *****************************************/
-    static const uint8_t  MAX_CC_TRXS = 5;   /* number of CC TRXs (e.g. EDF IAMs) */
-	static const uint32_t CC_TRX_TIMEOUT = 100; // milliseconds to wait for reply
-    uint32_t cc_trx_ids[MAX_CC_TRXS];
-    uint8_t  i_next_cc_trx; // index into cc_trx_ids
-	uint8_t num_cc_trxs;
+    static const uint8_t  MAX_CC_TRXS = 35;   /* number of CC TRXs (e.g. EDF IAMs) */
+    CcTrx cc_trx_array[MAX_CC_TRXS];
+    CcTrxArray cc_trxs;
+
+    static const uint32_t CC_TRX_TIMEOUT = 100; // milliseconds to wait for reply
 
 	uint8_t retries; // for polling CC TRXs
 	static const uint8_t MAX_RETRIES = 5; // for polling CC TRXs
@@ -65,18 +63,6 @@ private:
 
 	void wait_for_cc_tx();
 
-	void find_next_expected_cc_tx();
-
-	/* Loop through the cc_txs array and return a pointer
-	 * to the Sensor with the appropriate id.
-	 * If no Sensor is found then returns NULL.
-	 */
-	CcTx* find_cc_tx(const uint32_t& id);
-
-	const bool id_is_cc_trx(const uint32_t& id) const;
-
-	void increment_i_of_next_cc_trx();
-
 	/**
 	 * Process every packet in rx_packet_buffer appropriately
 	 *
@@ -88,10 +74,6 @@ private:
 	 * If pair_with != ID_INVALID then pair with pair_with.
 	 */
 	void pair(const bool is_cc_tx);
-
-	const bool append_to_cc_txs(const uint32_t& id);
-
-	const bool append_to_cc_trx_ids(const uint32_t& id);
 
 };
 
