@@ -137,10 +137,10 @@ void Manager::wait_for_cc_tx()
 	// TODO handle roll-over over millis().
 
 	// listen for WHOLE_HOUSE_TX for defined period.
-	log(DEBUG, "Window open! Expecting %lu at %lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
+	log(DEBUG, "Window open! Expecting %lu at %lu", p_next_cc_tx->id, p_next_cc_tx->get_eta());
 	bool success = false;
 	while (millis() < (start_time+CC_TX_WINDOW) && !success) {
-		if (process_rx_pack_buf_and_find_id(p_next_cc_tx->get_id())) {
+		if (process_rx_pack_buf_and_find_id(p_next_cc_tx->id)) {
 			success = true;
 		}
 	}
@@ -165,10 +165,10 @@ void Manager::increment_i_of_next_cc_trx()
 }
 
 
-Sensor* Manager::find_cc_tx(const uint32_t& id)
+CcTx* Manager::find_cc_tx(const uint32_t& id)
 {
     for (uint8_t i=0; i<num_cc_txs; i++) {
-        if (cc_txs[i].get_id() == id) {
+        if (cc_txs[i].id == id) {
             return &cc_txs[i];
         }
     }
@@ -181,7 +181,7 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 	bool success = false;
 	uint32_t id;
 	RXPacket* packet = NULL; // just using this pointer to make code more readable
-	Sensor* cc_tx = NULL;
+	CcTx* cc_tx = NULL;
 
 	/* Loop through every packet in packet buffer. If it's done then post-process it
 	 * and then check if it's valid.  If so then handle the different types of
@@ -286,8 +286,8 @@ const bool Manager::append_to_cc_txs(const uint32_t& id)
     }
 
     if (num_cc_txs < MAX_CC_TXS) {
-        cc_txs[num_cc_txs++].set_id(id);
-        log(DEBUG, "Added CC TX id = %lu", cc_txs[num_cc_txs-1].get_id());
+        cc_txs[num_cc_txs++].id = id;
+        log(DEBUG, "Added CC TX id = %lu", cc_txs[num_cc_txs-1].id);
         return true;
     } else {
         log(ERROR, "no more space for CC TX %lu", id);
@@ -332,5 +332,5 @@ void Manager::find_next_expected_cc_tx()
 			p_next_cc_tx = &cc_txs[i];
 		}
 	}
-	log(DEBUG, "Next expected CC_TX: ID=%lu, ETA=%lu", p_next_cc_tx->get_id(), p_next_cc_tx->get_eta());
+	log(DEBUG, "Next expected CC_TX: ID=%lu, ETA=%lu", p_next_cc_tx->id, p_next_cc_tx->get_eta());
 }

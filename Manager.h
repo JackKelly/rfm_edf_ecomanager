@@ -12,7 +12,7 @@
 #include "consts.h"
 #include "Rfm12b.h"
 #include "Packet.h"
-#include "Sensor.h"
+#include "CcTx.h"
 
 class Manager {
 public:
@@ -37,8 +37,8 @@ private:
 	 * half of WINDOW before CC TX's ETA. */
 	static const uint16_t CC_TX_WINDOW = 1000;
 
-    Sensor cc_txs[MAX_CC_TXS];
-    Sensor* p_next_cc_tx; // The next expected CC TX
+    CcTx cc_txs[MAX_CC_TXS];
+    CcTx* p_next_cc_tx; // The next expected CC TX
     uint8_t num_cc_txs;
 
     /*****************************************
@@ -71,7 +71,7 @@ private:
 	 * to the Sensor with the appropriate id.
 	 * If no Sensor is found then returns NULL.
 	 */
-	Sensor* find_cc_tx(const uint32_t& id);
+	CcTx* find_cc_tx(const uint32_t& id);
 
 	const bool id_is_cc_trx(const uint32_t& id) const;
 

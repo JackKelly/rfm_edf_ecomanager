@@ -32,9 +32,9 @@ void setup()
 {
     Serial.begin(115200);
 
-    log(INFO, "EDF IAM Receiver");
+    Serial.println("EDF IAM Receiver");
     manager.init();
-    log(INFO, "Finished init");
+    Serial.println("Finished init");
 }
 
 void loop()

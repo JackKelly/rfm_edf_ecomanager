@@ -1,13 +1,18 @@
-#include "Sensor.h"
+#include "CcTx.h"
 #include "consts.h"
 #include "Logger.h"
 
-Sensor::Sensor()
-:eta(0xFFFFFFFF), id(ID_INVALID), sample_period(SAMPLE_PERIOD),
+CcTrx::CcTrx()
+: id(ID_INVALID)
+{}
+
+CcTx::CcTx()
+:CcTrx(), eta(0xFFFFFFFF), sample_period(SAMPLE_PERIOD),
  num_periods(0), time_last_seen(0)
 {}
 
-void Sensor::update(const RXPacket& packet)
+
+void CcTx::update(const RXPacket& packet)
 {
     if (time_last_seen != 0) {
         // update sample period for this Sensor
@@ -29,7 +34,8 @@ void Sensor::update(const RXPacket& packet)
 	time_last_seen = packet.get_timecode();
 }
 
-const uint32_t& Sensor::get_eta()
+
+const uint32_t& CcTx::get_eta()
 {
     // Sanity-check ETA to make sure it's in the future.
     if (eta < millis()) {
@@ -38,20 +44,11 @@ const uint32_t& Sensor::get_eta()
 	return eta;
 }
 
-void Sensor::missing()
+
+void CcTx::missing()
 {
 	eta += sample_period;
 	num_periods++;
 
 	log(INFO, "id:%lu is missing. New ETA=%lu, num_periods missed=%u", id, eta, num_periods);
-}
-
-void Sensor::set_id(const uint32_t& _id)
-{
-	id = _id;
-}
-
-const uint32_t& Sensor::get_id() const
-{
-	return id;
 }
