@@ -36,8 +36,8 @@ void Manager::init()
 void Manager::run()
 {
     //************* HANDLE TRANSMITTERS AND TRANSCEIVERS ***********
-    if (cc_txs.get_i() == 0) {
-        // There are no CC TXs so all we have to do it poll TRXs
+    if (cc_txs.get_n() == 0) {
+        // There are no CC TXs so all we have to do is poll TRXs
         poll_next_cc_trx();
     } else {
         if (millis() < (cc_txs.current()->get_eta() - (CC_TX_WINDOW/2) )) {

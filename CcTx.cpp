@@ -80,7 +80,7 @@ CcTrx* CcArray::find(const uint32_t& id)
 {
     for (uint8_t il=0; il<n; il++) {
         if (cc_array[il].id == id) {
-            return &cc_array[i];
+            return &cc_array[il];
         }
     }
     return NULL;

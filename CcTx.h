@@ -3,6 +3,21 @@
 
 #include "Packet.h"
 
+/*
+void * operator new[](size_t size)
+{
+    return malloc(size);
+}
+
+void operator delete[](void * ptr)
+{
+    free(ptr);
+}
+*/
+
+//TODO: try this on Windows Arduino IDE
+//TODO: install avr-gcc 4.7.2
+
 /**
  * Class for Current Cost / EDF Transceiver (TRX) units
  */
@@ -11,7 +26,7 @@ public:
     CcTrx();
     uint32_t id; /* Deliberately public */
 
-    void update(const RXPacket& packet) {}
+    void update(const RXPacket& packet) {int * a = new int[10];}
     void missing() {};
     const uint32_t& get_eta() {return 0;}
 };
@@ -32,6 +47,8 @@ protected:
 	uint8_t  num_periods;
 	uint32_t time_last_seen;
 };
+
+// TODO: re-write this using template so it does the right thing for find etc.
 
 /**
  * Class for storing multiple CcTrxs or CcTxs
