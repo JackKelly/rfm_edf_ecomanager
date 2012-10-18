@@ -9,6 +9,7 @@
 #include <inttypes.h>
 #endif
 
+#include "new.h"
 #include "Manager.h"
 #include "consts.h"
 #include "Logger.h"

@@ -1,6 +1,8 @@
 #ifndef SENSOR_H
 #define SENSOR_H
 
+#include <Arduino.h>
+#include "new.h"
 #include "Packet.h"
 #include "DynamicArray.h"
 
