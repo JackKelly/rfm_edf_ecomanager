@@ -267,6 +267,9 @@ public:
         Serial.println("s:");
 
         for (index_t i=0; i<size; i++) {
+            if (i > 0) {
+                Serial.print(",");
+            }
             data[i].print();
         }
 
