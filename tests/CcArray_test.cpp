@@ -47,30 +47,6 @@ BOOST_AUTO_TEST_CASE(testNullData)
     }
 }
 
-BOOST_AUTO_TEST_CASE(testAppend)
-{
-    std::cout << "Appending CC TXs and printing IDs..." << std::endl;
-
-    CcTxArray cc_txs = make_cc_tx_array();
-    cc_txs.print();
-
-    id_t first_array[] = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100};
-
-    for (uint8_t i=0; i<20; i++) {
-        BOOST_CHECK(cc_txs[i].id == first_array[i]);
-    }
-
-    std::cout << "Appending 41 and printing..." << std::endl;
-
-    cc_txs.append(41);
-    cc_txs.print();
-
-    id_t second_array[] = {5, 10, 15, 20, 25, 30, 35, 40, 41, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100};
-
-    for (uint8_t i=0; i<21; i++) {
-        BOOST_CHECK(cc_txs[i].id == second_array[i]);
-    }
-}
 
 
 BOOST_AUTO_TEST_CASE(find)
@@ -84,6 +60,10 @@ BOOST_AUTO_TEST_CASE(find)
 
     BOOST_CHECK(cc_txs.find(10, &index));
     BOOST_CHECK(index == 0);
+
+    BOOST_CHECK(!cc_txs.find(9));
+    BOOST_CHECK(cc_txs.find(10));
+    BOOST_CHECK(!cc_txs.find(11));
 
     BOOST_CHECK(!cc_txs.find(50, &index));
     BOOST_CHECK(index == 1);
@@ -116,6 +96,31 @@ BOOST_AUTO_TEST_CASE(find)
 
 }
 
+BOOST_AUTO_TEST_CASE(testAppend)
+{
+    std::cout << "Appending CC TXs and printing IDs..." << std::endl;
+
+    CcTxArray cc_txs = make_cc_tx_array();
+    cc_txs.print();
+
+    id_t first_array[] = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100};
+
+    for (uint8_t i=0; i<20; i++) {
+        BOOST_CHECK(cc_txs[i].id == first_array[i]);
+    }
+
+    std::cout << "Appending 41 and printing..." << std::endl;
+
+    cc_txs.append(41);
+    cc_txs.print();
+
+    id_t second_array[] = {5, 10, 15, 20, 25, 30, 35, 40, 41, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100};
+
+    for (uint8_t i=0; i<21; i++) {
+        BOOST_CHECK(cc_txs[i].id == second_array[i]);
+    }
+}
+
 
 BOOST_AUTO_TEST_CASE(copyConstructor)
 {
@@ -129,3 +134,60 @@ BOOST_AUTO_TEST_CASE(copyConstructor)
     }
 
 }
+
+//todo: test with more realistic set of IDs
+BOOST_AUTO_TEST_CASE(realisticIDs)
+{
+    CcTxArray cc_txs;
+    index_t index;
+
+    BOOST_CHECK( cc_txs.append(0x000000FF));
+    BOOST_CHECK( cc_txs.find(0x000000FF, &index) );
+    BOOST_CHECK( index == 0);
+
+    BOOST_CHECK( !cc_txs.find(0x0000000F, &index) );
+    BOOST_CHECK( index == 0);
+
+    BOOST_CHECK( !cc_txs.find(0x00000FFF, &index) );
+    BOOST_CHECK( index == 1);
+
+    BOOST_CHECK( cc_txs.append(0xABCDEFAB));
+    BOOST_CHECK( cc_txs.find(0x000000FF, &index) );
+    BOOST_CHECK( index == 0);
+
+    BOOST_CHECK( !cc_txs.find(0x0000000F, &index) );
+    BOOST_CHECK( index == 0);
+
+    BOOST_CHECK( !cc_txs.find(0x00000FFF, &index) );
+    BOOST_CHECK( index == 1);
+
+    BOOST_CHECK( cc_txs.find(0xABCDEFAB, &index) );
+    BOOST_CHECK( index == 1);
+
+    BOOST_CHECK( !cc_txs.find(0xABCDEFFF, &index) );
+    BOOST_CHECK( index == 2);
+
+    BOOST_CHECK( cc_txs.append(0xAABBCCDD));
+    BOOST_CHECK( cc_txs.find(0x000000FF, &index) );
+    BOOST_CHECK( index == 0);
+    BOOST_CHECK( cc_txs.find(0xAABBCCDD, &index) );
+    BOOST_CHECK( index == 1);
+    BOOST_CHECK( cc_txs.find(0xABCDEFAB, &index) );
+    BOOST_CHECK( index == 2);
+
+
+    BOOST_CHECK( cc_txs.append(0x00112233));
+    BOOST_CHECK( cc_txs.find(0x000000FF, &index) );
+    BOOST_CHECK( index == 0);
+    BOOST_CHECK( cc_txs.find(0x00112233, &index) );
+    BOOST_CHECK( index == 1);
+
+    BOOST_CHECK( cc_txs.find(0xAABBCCDD, &index) );
+    BOOST_CHECK( index == 2);
+    BOOST_CHECK( cc_txs.find(0xABCDEFAB, &index) );
+    BOOST_CHECK( index == 3);
+
+
+}
+
+//TODO test current()

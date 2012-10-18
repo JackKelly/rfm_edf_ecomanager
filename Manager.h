@@ -30,10 +30,6 @@ private:
 	/*****************************************
 	 * CC TX (e.g. whole-house transmitters) *
 	 *****************************************/
-    //static const uint8_t MAX_CC_TXS = 5;
-    //CcTx cc_tx_array[MAX_CC_TXS];
-    //CcTxArray cc_txs;
-
     CcTxArray cc_txs;
 
 	/* length of time we're willing to wait
@@ -44,9 +40,6 @@ private:
     /*****************************************
      * CC TRX (e.g. EDF IAMs)                *
      *****************************************/
-    //static const uint8_t  MAX_CC_TRXS = 35;   /* number of CC TRXs (e.g. EDF IAMs) */
-    //CcTrx cc_trx_array[MAX_CC_TRXS];
-    //CcTrxArray cc_trxs;
 	CcTrxArray cc_trxs;
 
     static const uint32_t CC_TRX_TIMEOUT = 100; // milliseconds to wait for reply

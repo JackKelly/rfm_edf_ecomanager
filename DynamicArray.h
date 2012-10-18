@@ -22,7 +22,6 @@
 
 // TODO: add remove() function to remove ID
 // TODO: implement a way to batch-add a specific number of items
-// TODO: remove commented-out calls to log()
 // TODO: should be initialised to some size, then populated, then grown only if size limit is reached.
 
 /**
@@ -102,7 +101,6 @@ public:
     }
 
 
-
     const index_t get_size() const { return size; }
 
     const index_t get_i() const { return i; }
@@ -132,8 +130,6 @@ public:
     bool append(const id_t& id)
     {
         index_t upper_bound = 0;
-
-        // log(DEBUG, "DynamicArray<>::append(%lu)", id);
 
         if (find(id, &upper_bound)) {
             log(DEBUG, "%lu is already in data.", id);
@@ -180,61 +176,72 @@ public:
     }
 
 
+    const bool find(const id_t& target_id) const
+    {
+        index_t index = 0;
+        return find(target_id, &index);
+    }
+
+
+    /* Entry point to find() */
     const bool find(const id_t& target_id, index_t* index) const
     {
+        index_t upper_bound = size, lower_bound = 0;
+
+        if (size == 0) {
+            *index = 0;
+            return false;
+        } else if (size == 1) {
+            if (target_id == operator[](0).id) {
+                *index = 0;
+                return true;
+            } else if (target_id < operator[](0).id) {
+                *index = 0;
+                return false;
+            } else if (target_id > operator[](0).id) {
+                *index = 1;
+                return false;
+            }
+        } else { // size > 1
+            if (target_id > max_id) {
+                *index = size;
+                return false;
+            } else if (target_id < min_id) {
+                *index = 0;
+                return false;
+            } else {
+                // Try to guess the candidate item position by looking at the size of target_id
+                // relative to difference of max - min.
+                float diff = max_id - min_id;
+                index_t candidate_i = ((target_id - min_id) / diff) * (size-1);
+                return find_helper(target_id, index, lower_bound, upper_bound, candidate_i);
+            }
+        }
     }
+
 
     /** Attempts to find target ID in data.
      *  If target can't be found then returns false and index == upper_bound nearest target.
      *  Note that if we search for an ID that's above the largest ID in index will be
-     *  equal to size */
-    //TODO: break this into multiple functions
+     *  equal to size. */
     const bool find(const id_t& target_id, index_t* index,
-            const index_t lower_bound = 0, index_t upper_bound = INDEX_MAX) const
+            const index_t lower_bound, index_t upper_bound) const
     {
-        index_t candidate_i;
-
-        if (upper_bound == INDEX_MAX) { // UINT8_MAX is default so this is the initial call, not recursive call
-            upper_bound = size;
-
-            // Try to guess the candidate item position by looking at the size of target_id
-            // relative to difference of max - min.
-            id_t diff = max_id - min_id;
-            if (diff == 0) { // avoid div by zero error
-                if (size == 1) {
-                    if (target_id == operator[](0).id) {
-                        *index = 0;
-                        return true;
-                    } else if (target_id < operator[](0).id) {
-                        *index = 0;
-                        return false;
-                    } else if (target_id > operator[](0).id) {
-                        *index = 1;
-                        return false;
-                    }
-                } else {
-                    return find(target_id, index, lower_bound, upper_bound);
-                }
-            } else {
-                if (target_id > max_id) {
-                    *index = size;
-                    return false;
-                } else if (target_id < min_id) {
-                    *index = 0;
-                    return false;
-                }
-                candidate_i = ((target_id - min_id) / (float)diff) * (size-1);
-            }
-
-        } else { // This is a recursive call so look half way between upper_bound and lower_bound
-            const index_t window = upper_bound - lower_bound;
-            if (window <= 1) { // target can't be found
-                (*index) = upper_bound;
-                return false;
-            }
-            candidate_i = (window / 2) + lower_bound;
+        // Look half way between upper_bound and lower_bound
+        const index_t window = upper_bound - lower_bound;
+        if (window <= 1) { // target can't be found
+            *index = upper_bound;
+            return false;
         }
+        index_t candidate_i = (window / 2) + lower_bound;
 
+        return find_helper(target_id, index, lower_bound, upper_bound, candidate_i);
+    }
+
+
+    const bool find_helper(const id_t& target_id, index_t* index,
+            const index_t lower_bound, index_t upper_bound, const index_t candidate_i) const
+    {
         // TODO: replace operator[] call with data[] when fully debugged
         const id_t candidate_id = operator[](candidate_i).id;
 
@@ -246,13 +253,6 @@ public:
         } else {
             return find(target_id, index, candidate_i, upper_bound);
         }
-    }
-
-    /* Entry point to find() when using just target_id */
-    const bool find(const id_t& target_id) const
-    {
-        index_t index;
-        return find(target_id, &index);
     }
 
 

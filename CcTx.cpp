@@ -68,43 +68,8 @@ void CcTx::missing()
 }
 
 /******************************
- * CcArray                    *
+ * CcTxArray                  *
  ******************************/
-/* TODO: remove if not needed
-const bool CcArray::append(const uint32_t id)
-{
-    log(DEBUG, "CcArray::append(%lu). n=%d", id, n);
-
-    if (find(id)) {
-        log(DEBUG, "%s %lu already in list", name, id);
-        return false;
-    }
-
-    if (n < length) {
-        cc_array[n++].id = id;
-        log(DEBUG, "Added %s id %lu", name, cc_array[n-1].id);
-        return true;
-    } else {
-        log(ERROR, "no space for %s %lu", name, id);
-        return false;
-    }
-}
-
-CcTrx* CcArray::find(const uint32_t& id)
-{
-    for (uint8_t il=0; il<n; il++) {
-        if (cc_array[il].id == id) {
-            return &cc_array[il];
-        }
-    }
-    return NULL;
-}
-*/
-
-/******************************
- * CcTxArray                    *
- ******************************/
-
 
 void CcTxArray::next()
 {
@@ -118,9 +83,8 @@ void CcTxArray::next()
 }
 
 /******************************
- * CcTrxArray                    *
+ * CcTrxArray                 *
  ******************************/
-
 
 void CcTrxArray::next()
 {

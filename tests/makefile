@@ -15,7 +15,7 @@ CcArray_test: CcTx.o CcArray_test.o Packet.o FakeArduino.o
 CcTx.o: ../CcTx.cpp ../CcTx.h ../consts.h ../DynamicArray.h
 	 $(compile) ../CcTx.cpp
 	
-CcArray_test.o: CcArray_test.cpp ../CcTx.h
+CcArray_test.o: CcArray_test.cpp ../CcTx.h ../DynamicArray.h
 	$(compile) CcArray_test.cpp
 	
 Packet.o: ../Packet.h ../Packet.cpp

@@ -94,10 +94,12 @@ void Manager::poll_next_cc_trx()
 {
     if (cc_trxs.get_size() == 0) return;
 
+    const millis_t start_time = millis();
+
 	// don't continually poll TRXs;
     // instead wait SAMPLE_PERIOD between polling the first TRX and polling it again
 	if (cc_trxs.get_i()==0) {
-		if (millis() < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
+		if (start_time < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
 		    // We've finished polling all TRXs for this SAMPLE_PERIOD.
 			return;
 		} else {
@@ -108,7 +110,6 @@ void Manager::poll_next_cc_trx()
 	rfm.poll_cc_trx(cc_trxs.current().id);
 
 	// wait for response
-	const uint32_t start_time = millis();
 	bool success = false;
 	while (millis() < start_time+CC_TRX_TIMEOUT) {
 		if (process_rx_pack_buf_and_find_id(cc_trxs.current().id)) {
@@ -121,6 +122,7 @@ void Manager::poll_next_cc_trx()
 	if (success) {
         // We got a reply from the TRX we polled
 		cc_trxs.next();
+		retries = 0;
 	} else {
 	    // We didn't get a reply from the TRX we polled
 		if (retries < MAX_RETRIES) {
@@ -129,6 +131,7 @@ void Manager::poll_next_cc_trx()
 		} else {
 			cc_trxs.next();
 			log(INFO, "No response from TRX %lu after retrying. Giving up.", cc_trxs.current().id);
+			retries = 0;
 		}
 	}
 }
