@@ -261,13 +261,16 @@ public:
 
     void print() const
     {
-        Serial.print("ACK listing all");
+        Serial.println("ACK");
+        Serial.print("{");
         print_name();
         Serial.println("s:");
 
         for (index_t i=0; i<size; i++) {
             data[i].print();
         }
+
+        Serial.println("}");
     }
 
 };
