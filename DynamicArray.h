@@ -19,6 +19,7 @@
 #endif
 
 #include "consts.h"
+#include "utils.h"
 
 // TODO: add remove() function to remove ID
 // TODO: implement a way to batch-add a specific number of items
@@ -40,7 +41,8 @@ protected:
     id_t    min_id, max_id;
 
 public:
-    DynamicArray(): data(0), size(0), i(0), min_id(0x0000), max_id(0x0000) {}
+    DynamicArray()
+    : data(0), size(0), i(0), min_id(0x0000), max_id(0x0000) {}
 
 
     ~DynamicArray()
@@ -109,6 +111,7 @@ public:
 
     const id_t get_id(const index_t index) { return operator[](index).id; }
 
+    virtual void print_name() = 0;
 /*
     bool grow(const index_t new_size)
     {
@@ -263,6 +266,21 @@ public:
             Serial.print(" ");
         }
         Serial.println(" ");
+    }
+
+
+    void get_id_from_serial()
+    {
+        Serial.print("ACK enter ");
+        print_name();
+        Serial.println(" ID to add:");
+        bool success;
+        id_t id = utils::read_uint32_from_serial();
+        success = append( id );
+        Serial.print(success ? "ACK" : "NAK not");
+        Serial.print(" added");
+        print_name();
+        Serial.println(id);
     }
 };
 

@@ -61,6 +61,8 @@ private:
 
 	const bool wait_for_response(const id_t& id, const millis_t& wait_duration);
 
+	void handle_serial_commands();
+
 	/**
 	 * Process every packet in rx_packet_buffer appropriately
 	 *

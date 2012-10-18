@@ -46,46 +46,46 @@ void Manager::run()
     // Make sure we always check for RX packets
     process_rx_pack_buf_and_find_id(0);
 
-    //************* HANDLE SERIAL COMMANDS **************************
     if (Serial.available()) {
-        char incomming_byte = Serial.read();
-        switch (incomming_byte) {
-        case 'a': auto_pair = true;  Serial.println("ACK auto_pair mode on"); break;
-        case 'm': auto_pair = false; Serial.println("ACK audo_pair mode off"); break;
-        case 'p':
-            if (auto_pair) {
-                Serial.println("NAK Please enable manual pairing mode ('m') before issuing 'p' command.");
-            } else {
-                Serial.println("ACK Please enter ID followed by carriage return:");
-                pair_with = utils::read_uint32_from_serial();
-                Serial.print("ACK pair_with set to ");
-                Serial.println(pair_with);
-            }
-            break;
-        case 'v':
-            Serial.println("ACK enter log level:");
-            print_log_levels();
-            Logger::log_threshold = (Level)utils::read_uint32_from_serial();
-            Serial.print("ACK Log level set to ");
-            print_log_level(Logger::log_threshold);
-            Serial.println("");
-            break;
-        case 'k': print_packets = ONLY_KNOWN; Serial.println("ACK only print data from known transmitters"); break;
-        case 'u': print_packets = ALL_VALID; Serial.println("ACK print all valid packets"); break;
-        case 'b': print_packets = ALL; Serial.println("ACK print all"); break;
-        case 'n':
-            Serial.println("ACK enter CC_TX ID to add:");
-            bool success;
-            success = cc_txs.append( utils::read_uint32_from_serial() );
-            Serial.println(success ? "ACK added" : "NAK not added");
-            break;
-        case '\r': break; // ignore carriage returns
-        default:
-            Serial.print("NAK unrecognised command '");
-            Serial.print(incomming_byte);
-            Serial.println("'");
-            break;
+        handle_serial_commands();
+    }
+}
+
+void Manager::handle_serial_commands()
+{
+    char incomming_byte = Serial.read();
+    switch (incomming_byte) {
+    case 'a': auto_pair = true;  Serial.println("ACK auto_pair mode on"); break;
+    case 'm': auto_pair = false; Serial.println("ACK audo_pair mode off"); break;
+    case 'p':
+        if (auto_pair) {
+            Serial.println("NAK Please enable manual pairing mode ('m') before issuing 'p' command.");
+        } else {
+            Serial.println("ACK Please enter ID followed by carriage return:");
+            pair_with = utils::read_uint32_from_serial();
+            Serial.print("ACK pair_with set to ");
+            Serial.println(pair_with);
         }
+        break;
+    case 'v':
+        Serial.println("ACK enter log level:");
+        print_log_levels();
+        Logger::log_threshold = (Level)utils::read_uint32_from_serial();
+        Serial.print("ACK Log level set to ");
+        print_log_level(Logger::log_threshold);
+        Serial.println("");
+        break;
+    case 'k': print_packets = ONLY_KNOWN; Serial.println("ACK only print data from known transmitters"); break;
+    case 'u': print_packets = ALL_VALID; Serial.println("ACK print all valid packets"); break;
+    case 'b': print_packets = ALL; Serial.println("ACK print all"); break;
+    case 'n': cc_txs.get_id_from_serial();  break;
+    case 'N': cc_trxs.get_id_from_serial(); break;
+    case '\r': break; // ignore carriage returns
+    default:
+        Serial.print("NAK unrecognised command '");
+        Serial.print(incomming_byte);
+        Serial.println("'");
+        break;
     }
 }
 

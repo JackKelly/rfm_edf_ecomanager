@@ -82,6 +82,11 @@ void CcTxArray::next()
             current().id, current().get_eta());
 }
 
+void CcTxArray::print_name()
+{
+    Serial.print(" CC_TX ");
+}
+
 /******************************
  * CcTrxArray                 *
  ******************************/
@@ -90,4 +95,9 @@ void CcTrxArray::next()
 {
     i++;
     if (i==size) i=0;
+}
+
+void CcTrxArray::print_name()
+{
+    Serial.print(" CC_TRX ");
 }

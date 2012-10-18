@@ -39,11 +39,13 @@ protected:
 class CcTxArray : public DynamicArray<CcTx> {
 public:
     void next();
+    void print_name();
 };
 
 class CcTrxArray : public DynamicArray<CcTrx> {
 public:
     void next();
+    void print_name();
 };
 
 #endif /* SENSOR_H */
