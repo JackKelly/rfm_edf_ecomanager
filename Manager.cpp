@@ -210,7 +210,7 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 				else if (packet->is_cc_tx()) {
 				    bool found;
 				    index_t cc_tx_i;
-				    found = cc_txs.find(id, &cc_tx_i);
+				    found = cc_txs.find(id, cc_tx_i);
 				    if (found) { // received ID is a CC_TX id we know about
 				        cc_txs[cc_tx_i].update(*packet);
 				        packet->print_id_and_watts(); // send data over serial

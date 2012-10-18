@@ -48,7 +48,7 @@ void CcTx::print() const
     Serial.print(id);
     Serial.print(", time_last_seen: ");
     Serial.print(time_last_seen);
-    Serial.print(", num_periods missed: ");
+    Serial.print(", num_periods_missed: ");
     Serial.print(num_periods);
     Serial.print(", eta: ");
     Serial.print(eta);

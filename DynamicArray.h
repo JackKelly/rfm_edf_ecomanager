@@ -132,9 +132,8 @@ public:
     {
         index_t upper_bound = 0;
 
-        if (find(id, &upper_bound)) {
+        if (find(id, upper_bound)) {
             log(DEBUG, "%lu is already in data.", id);
-            print();
             return false;
         }
 
@@ -180,44 +179,7 @@ public:
     const bool find(const id_t& target_id) const
     {
         index_t index = 0;
-        return find(target_id, &index);
-    }
-
-
-    /* Entry point to find() */
-    const bool find(const id_t& target_id, index_t* index) const
-    {
-        index_t upper_bound = size, lower_bound = 0;
-
-        if (size == 0) {
-            *index = 0;
-            return false;
-        } else if (size == 1) {
-            if (target_id == operator[](0).id) {
-                *index = 0;
-                return true;
-            } else if (target_id < operator[](0).id) {
-                *index = 0;
-                return false;
-            } else if (target_id > operator[](0).id) {
-                *index = 1;
-                return false;
-            }
-        } else { // size > 1
-            if (target_id > max_id) {
-                *index = size;
-                return false;
-            } else if (target_id < min_id) {
-                *index = 0;
-                return false;
-            } else {
-                // Try to guess the candidate item position by looking at the size of target_id
-                // relative to difference of max - min.
-                float diff = max_id - min_id;
-                index_t candidate_i = ((target_id - min_id) / diff) * (size-1);
-                return find_helper(target_id, index, lower_bound, upper_bound, candidate_i);
-            }
-        }
+        return find(target_id, index);
     }
 
 
@@ -225,38 +187,46 @@ public:
      *  If target can't be found then returns false and index == upper_bound nearest target.
      *  Note that if we search for an ID that's above the largest ID in index will be
      *  equal to size. */
-    const bool find(const id_t& target_id, index_t* index,
-            const index_t lower_bound, index_t upper_bound) const
+    const bool find(const id_t& target_id, index_t& index) const
     {
-        // Look half way between upper_bound and lower_bound
-        const index_t window = upper_bound - lower_bound;
-        if (window <= 1) { // target can't be found
-            *index = upper_bound;
+
+        if (target_id < min_id) {
+            index = 0;
+            return false;
+        } else if (target_id > max_id) {
+            index = size;
             return false;
         }
-        index_t candidate_i = (window / 2) + lower_bound;
+        else if (size > 1) {
+            // Try to guess the candidate item position by looking at the size of target_id
+            // relative to difference of max - min.  This will give us an educated guess and
+            // then we search backwards or forwards from that starting guess.
+            float diff = max_id - min_id;
+            index = ((target_id - min_id) / diff) * (size-1);
 
-        return find_helper(target_id, index, lower_bound, upper_bound, candidate_i);
-    }
+            if (index >= size) index = size;
 
+            // Search backwards
+            for (; index > 0 && data[index].id > target_id; index--)
+                ;
 
-    const bool find_helper(const id_t& target_id, index_t* index,
-            const index_t lower_bound, index_t upper_bound, const index_t candidate_i) const
-    {
-        // TODO: replace operator[] call with data[] when fully debugged
-        const id_t candidate_id = operator[](candidate_i).id;
+            // Search forwards
+            for (; index < size && data[index].id < target_id; index++)
+                ;
 
-        if (target_id == candidate_id) {
-            *index = candidate_i;
-            return true;
-        } else if (target_id < candidate_id) {
-            return find(target_id, index, lower_bound, candidate_i);
-        } else {
-            return find(target_id, index, candidate_i, upper_bound);
+            return data[index].id == target_id;
         }
+        else if (size == 1) {
+            if (target_id == operator[](0).id) {
+                index = 0;
+                return true;
+            }
+        }
+        return false; // should never get here (this is just to keep the compiler happy)
     }
 
 
+#ifndef TESTING
     void get_id_from_serial()
     {
         Serial.print("ACK enter ");
@@ -276,7 +246,7 @@ public:
         print_name();
         Serial.println(id);
     }
-
+#endif // TESTING
 
     void delete_all()
     {
