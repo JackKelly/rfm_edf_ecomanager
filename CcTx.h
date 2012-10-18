@@ -12,7 +12,10 @@
 class CcTrx {
 public:
     CcTrx();
-    CcTrx(const uint32_t& _id);
+    CcTrx(const id_t& _id);
+    virtual ~CcTrx();
+    virtual void print() const;
+
     id_t id; /* Deliberately public */
 };
 
@@ -22,30 +25,32 @@ public:
 class CcTx : public CcTrx {
 public:
 	CcTx();
-	CcTx(const uint32_t& _id);
+	CcTx(const id_t& _id);
+	~CcTx();
 	void update(const RXPacket& packet);
 	void missing();
 	const uint32_t& get_eta();
+	void print() const;
 
 protected:
 	void init(); // called from constructors
-	uint32_t eta; // estimated time of arrival in milliseconds since power-on
+	millis_t eta; // estimated time of arrival in milliseconds since power-on
 	uint16_t sample_period;
 	uint8_t  num_periods;
-	uint32_t time_last_seen;
+	millis_t time_last_seen;
 };
 
 
 class CcTxArray : public DynamicArray<CcTx> {
 public:
     void next();
-    void print_name();
+    void print_name() const;
 };
 
 class CcTrxArray : public DynamicArray<CcTrx> {
 public:
     void next();
-    void print_name();
+    void print_name() const;
 };
 
 #endif /* SENSOR_H */

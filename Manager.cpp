@@ -55,31 +55,39 @@ void Manager::handle_serial_commands()
 {
     char incomming_byte = Serial.read();
     switch (incomming_byte) {
-    case 'a': auto_pair = true;  Serial.println("ACK auto_pair mode on"); break;
-    case 'm': auto_pair = false; Serial.println("ACK audo_pair mode off"); break;
+    case 'a': auto_pair = true;  Serial.println("ACK auto_pair on"); break;
+    case 'm': auto_pair = false; Serial.println("ACK audo_pair off"); break;
     case 'p':
         if (auto_pair) {
-            Serial.println("NAK Please enable manual pairing mode ('m') before issuing 'p' command.");
+            Serial.println("NAK Enable manual pairing before 'p' cmd.");
         } else {
-            Serial.println("ACK Please enter ID followed by carriage return:");
+            Serial.println("ACK Enter ID:");
             pair_with = utils::read_uint32_from_serial();
             Serial.print("ACK pair_with set to ");
             Serial.println(pair_with);
         }
         break;
     case 'v':
+#ifdef DEBUG
         Serial.println("ACK enter log level:");
         print_log_levels();
         Logger::log_threshold = (Level)utils::read_uint32_from_serial();
         Serial.print("ACK Log level set to ");
         print_log_level(Logger::log_threshold);
         Serial.println("");
+#else
+        Serial.println("NAK debugging disabled!");
+#endif // DEBUG
         break;
     case 'k': print_packets = ONLY_KNOWN; Serial.println("ACK only print data from known transmitters"); break;
     case 'u': print_packets = ALL_VALID; Serial.println("ACK print all valid packets"); break;
     case 'b': print_packets = ALL; Serial.println("ACK print all"); break;
     case 'n': cc_txs.get_id_from_serial();  break;
     case 'N': cc_trxs.get_id_from_serial(); break;
+    case 'd': cc_txs.delete_all();  break;
+    case 'D': cc_trxs.delete_all(); break;
+    case 'l': cc_txs.print();  break;
+    case 'L': cc_trxs.print(); break;
     case '\r': break; // ignore carriage returns
     default:
         Serial.print("NAK unrecognised command '");
@@ -114,11 +122,11 @@ void Manager::poll_next_cc_trx()
 	} else {
 	    // We didn't get a reply from the TRX we polled
 		if (retries < MAX_RETRIES) {
-            log(DEBUG, "No response from TRX %lu, retries=%d. Retrying...", cc_trxs.current().id, retries);
+            log(DEBUG, "Missing TRX %lu, retries=%d", cc_trxs.current().id, retries);
 			retries++;
 		} else {
 			cc_trxs.next();
-			log(INFO, "No response from TRX %lu after retrying. Giving up.", cc_trxs.current().id);
+			log(INFO, "Missing TRX %lu. Giving up.", cc_trxs.current().id);
 			retries = 0;
 		}
 	}

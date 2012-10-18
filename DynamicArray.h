@@ -42,10 +42,10 @@ protected:
 
 public:
     DynamicArray()
-    : data(0), size(0), i(0), min_id(0x0000), max_id(0x0000) {}
+    : data(0), size(0), i(0), min_id(0), max_id(0) {}
 
 
-    ~DynamicArray()
+    virtual ~DynamicArray()
     {
         delete[] data; // TODO: test that this doesn't blow up if data = NULL
     }
@@ -109,9 +109,7 @@ public:
 
     item_t& current() { return data[i]; }
 
-    const id_t get_id(const index_t index) { return operator[](index).id; }
-
-    virtual void print_name() = 0;
+    virtual void print_name() const = 0;
 /*
     bool grow(const index_t new_size)
     {
@@ -259,29 +257,49 @@ public:
     }
 
 
-    void print() const
-    {
-        for (index_t i=0; i<size; i++) {
-            Serial.print(data[i].id);
-            Serial.print(" ");
-        }
-        Serial.println(" ");
-    }
-
-
     void get_id_from_serial()
     {
         Serial.print("ACK enter ");
         print_name();
         Serial.println(" ID to add:");
-        bool success;
+
         id_t id = utils::read_uint32_from_serial();
+
+        bool success;
         success = append( id );
-        Serial.print(success ? "ACK" : "NAK not");
+        if (success)
+            Serial.print("ACK");
+        else
+            Serial.print("NAK not");
+
         Serial.print(" added");
         print_name();
         Serial.println(id);
     }
+
+
+    void delete_all()
+    {
+        size = i = 0;
+        min_id = max_id = 0;
+        delete [] data;
+        data = 0;
+        Serial.print("ACK deleted all");
+        print_name();
+        Serial.println("s");
+    }
+
+    void print() const
+    {
+        Serial.print("ACK listing all");
+        print_name();
+        Serial.println("s:");
+
+        for (index_t i=0; i<size; i++) {
+            data[i].print();
+        }
+    }
+
 };
 
 #endif /* DYNAMICARRAY_H_ */

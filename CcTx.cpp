@@ -2,17 +2,31 @@
 #include "Logger.h"
 #include "CcTx.h"
 
+/**************************
+ * CcTrx                  *
+ **************************/
+
 CcTrx::CcTrx(): id(ID_INVALID) {}
 
+CcTrx::CcTrx(const id_t& _id): id(_id) {}
 
-CcTrx::CcTrx(const uint32_t& _id): id(_id) {}
+CcTrx::~CcTrx() {}
 
+void CcTrx::print() const
+{
+    Serial.print("{id: ");
+    Serial.print(id);
+    Serial.println("}");
+}
+
+
+/*************************
+ * CcTx                  *
+ *************************/
 
 CcTx::CcTx():CcTrx() { init(); }
 
-
-CcTx::CcTx(const uint32_t& _id): CcTrx(_id) { init(); }
-
+CcTx::CcTx(const id_t& _id): CcTrx(_id) { init(); }
 
 void CcTx::init()
 {
@@ -24,6 +38,23 @@ void CcTx::init()
     sample_period = SAMPLE_PERIOD;
     num_periods = 0;
     time_last_seen = 0;
+}
+
+CcTx::~CcTx() {}
+
+void CcTx::print() const
+{
+    Serial.print("{id: ");
+    Serial.print(id);
+    Serial.print(", time_last_seen: ");
+    Serial.print(time_last_seen);
+    Serial.print(", num_periods missed: ");
+    Serial.print(num_periods);
+    Serial.print(", eta: ");
+    Serial.print(eta);
+    Serial.print(", sample_period: ");
+    Serial.print(sample_period);
+    Serial.println("}");
 }
 
 void CcTx::update(const RXPacket& packet)
@@ -48,7 +79,6 @@ void CcTx::update(const RXPacket& packet)
 	time_last_seen = packet.get_timecode();
 }
 
-
 const uint32_t& CcTx::get_eta()
 {
     // Sanity-check ETA to make sure it's in the future.
@@ -58,7 +88,6 @@ const uint32_t& CcTx::get_eta()
 	return eta;
 }
 
-
 void CcTx::missing()
 {
 	eta += sample_period;
@@ -66,6 +95,7 @@ void CcTx::missing()
 
 	log(INFO, "id:%lu is missing. New ETA=%lu, num_periods missed=%u", id, eta, num_periods);
 }
+
 
 /******************************
  * CcTxArray                  *
@@ -82,10 +112,11 @@ void CcTxArray::next()
             current().id, current().get_eta());
 }
 
-void CcTxArray::print_name()
+void CcTxArray::print_name() const
 {
-    Serial.print(" CC_TX ");
+    Serial.print(" CC_TX");
 }
+
 
 /******************************
  * CcTrxArray                 *
@@ -97,7 +128,7 @@ void CcTrxArray::next()
     if (i==size) i=0;
 }
 
-void CcTrxArray::print_name()
+void CcTrxArray::print_name() const
 {
-    Serial.print(" CC_TRX ");
+    Serial.print(" CC_TRX");
 }
