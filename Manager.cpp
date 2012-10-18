@@ -249,15 +249,18 @@ void Manager::pair(const bool is_cc_tx)
         success = cc_txs.append(pair_with);
     } else { // transceiver. So we need to ACK.
         rfm.ack_cc_trx(pair_with);
-
-        success = cc_trxs.append(pair_with);
+        if ( wait_for_response(pair_with, CC_TRX_TIMEOUT) ) {
+            // Only append if we get a response.
+            // If we don't get a response then we'll try to pair again
+            // when the TRX next sends a pair request.
+            success = cc_trxs.append(pair_with);
+        }
     }
 
     if (success) {
         Serial.print("{pw: ");
         Serial.print(pair_with);
         Serial.println(" }");
+        pair_with = ID_INVALID;
     }
-
-    pair_with = ID_INVALID;
 }
