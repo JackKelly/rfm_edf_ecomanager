@@ -31,15 +31,14 @@ void log(const Level& level, const char *__fmt, ...)
 }
 
 
-
 void print_log_level(const Level& level)
 {
     std::cout << level;
 
     switch (level) {
     case DEBUG: std::cout << "(DEBUG)"; break;
-    case INFO: std::cout << "(INFO)"; break;
-    case WARN: std::cout << "(WARN)"; break;
+    case INFO:  std::cout << "(INFO)"; break;
+    case WARN:  std::cout << "(WARN)"; break;
     case ERROR: std::cout << "(ERROR)"; break;
     case FATAL: std::cout << "(FATAL)"; break;
     }
@@ -58,17 +57,35 @@ void print_log_levels()
 }
 
 
-void FakeSerial::print(const char* str)
+void FakeSerial::print(const char* str, const PrintFormat print_format)
 {
+    format(print_format);
     std::cout << str;
 }
 
-void FakeSerial::print(const int str)
+void FakeSerial::print(const int str, const PrintFormat print_format)
 {
+    format(print_format);
     std::cout << str;
 }
 
-void FakeSerial::println(const char* str)
+void FakeSerial::println(const char* str, const PrintFormat print_format)
 {
+    format(print_format);
     std::cout << str << std::endl;
+}
+
+void FakeSerial::format(const PrintFormat print_format)
+{
+    switch (print_format) {
+    case DEC: std::cout << std::dec; break;
+    case HEX: std::cout << std::hex; break;
+    }
+}
+
+
+const millis_t millis()
+{
+    //TODO: stub
+    return 0;
 }

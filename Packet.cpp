@@ -1,7 +1,13 @@
-#include <inttypes.h>
-#include "Packet.h"
+
+#ifdef TESTING
+#include "tests/FakeArduino.h"
+#else
+#include <Arduino.h>
+#endif
+
 #include "consts.h"
 #include "Logger.h"
+#include "Packet.h"
 
 /**********************************************
  * Packet

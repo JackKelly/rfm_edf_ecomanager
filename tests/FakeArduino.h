@@ -9,6 +9,9 @@
 #define FAKEARDUINO_H_
 
 #include <inttypes.h>
+#include "../consts.h"
+
+enum PrintFormat {DEC, HEX};
 
 enum Level {DEBUG, INFO, WARN, ERROR, FATAL};
 void print_log_level(const Level& level);
@@ -23,12 +26,16 @@ public:
 
 class FakeSerial {
 public:
-    static void print(const char* str);
-    static void print(const int str);
+    static void print(const char* str, const PrintFormat print_format = DEC);
+    static void print(const int str, const PrintFormat print_format = DEC);
 
-    static void println(const char* str);
+    static void println(const char* str, const PrintFormat print_format = DEC);
+private:
+    static void format(const PrintFormat print_format);
 };
 
 extern FakeSerial Serial;
+
+const millis_t millis();
 
 #endif /* FAKEARDUINO_H_ */

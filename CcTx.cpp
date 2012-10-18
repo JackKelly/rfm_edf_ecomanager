@@ -1,16 +1,30 @@
-#include "CcTx.h"
 #include "consts.h"
 #include "Logger.h"
+#include "CcTx.h"
 
-CcTrx::CcTrx()
-: id(ID_INVALID)
-{}
+CcTrx::CcTrx(): id(ID_INVALID) {}
 
-CcTx::CcTx()
-:CcTrx(), eta(0xFFFFFFFF), sample_period(SAMPLE_PERIOD),
- num_periods(0), time_last_seen(0)
-{}
 
+CcTrx::CcTrx(const uint32_t& _id): id(_id) {}
+
+
+CcTx::CcTx():CcTrx() { init(); }
+
+
+CcTx::CcTx(const uint32_t& _id): CcTrx(_id) { init(); }
+
+
+void CcTx::init()
+{
+    // use of this init() function could be avoided if
+    // we use C++11, but I can't think of any way to
+    // force the Arduino IDE to use C++11.
+    // http://stackoverflow.com/questions/308276/c-call-constructor-from-constructor
+    eta = 0xFFFFFFFF;
+    sample_period = SAMPLE_PERIOD;
+    num_periods = 0;
+    time_last_seen = 0;
+}
 
 void CcTx::update(const RXPacket& packet)
 {
@@ -56,7 +70,7 @@ void CcTx::missing()
 /******************************
  * CcArray                    *
  ******************************/
-
+/* TODO: remove if not needed
 const bool CcArray::append(const uint32_t id)
 {
     log(DEBUG, "CcArray::append(%lu). n=%d", id, n);
@@ -85,42 +99,31 @@ CcTrx* CcArray::find(const uint32_t& id)
     }
     return NULL;
 }
-
+*/
 
 /******************************
  * CcTxArray                    *
  ******************************/
 
-CcTx* CcTxArray::current()
-{
-    if (n==0) return NULL;
-
-    return (CcTx*)&cc_array[i];
-}
 
 void CcTxArray::next()
 {
-    for (uint8_t il=0; il<n; il++) {
-        if (((CcTx*)cc_array)[il].get_eta() < current()->get_eta()) {
-            i = il;
+    for (uint8_t j=0; j<size; j++) {
+        if (data[j].get_eta() < current().get_eta()) {
+            i = j;
         }
     }
-    log(DEBUG, "Next expected CC_TX: ID=%lu, ETA=%lu", current()->id, current()->get_eta());
+    log(DEBUG, "Next expected CC_TX: ID=%lu, ETA=%lu",
+            current().id, current().get_eta());
 }
 
 /******************************
  * CcTrxArray                    *
  ******************************/
 
-CcTrx* CcTrxArray::current()
-{
-    if (n==0) return NULL;
-
-    return (CcTrx*)&cc_array[i];
-}
 
 void CcTrxArray::next()
 {
     i++;
-    if (i==n) i=0;
+    if (i==size) i=0;
 }

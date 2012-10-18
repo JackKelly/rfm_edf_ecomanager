@@ -12,131 +12,222 @@
 #include "tests/FakeArduino.h"
 #else
 #include <Arduino.h>
+#undef max // Arduino pollutes the namespace with these min and max macros which breaks compilation
+#undef min //
 #include "Logger.h"
+#include "new.h"
 #endif
 
-
-#ifndef UINT8_MAX
-#define UINT8_MAX 255
-#endif
+#include "consts.h"
 
 // TODO: add remove() function to remove ID
+// TODO: implement a way to batch-add a specific number of items
 // TODO: remove commented-out calls to log()
+// TODO: should be initialised to some size, then populated, then grown only if size limit is reached.
 
+/**
+ * A DynamicArray template for storing multiple CcTx and CcTrx objects.
+ * Keeps objects in order of ID to make searching for IDs fast (because
+ * searching happens very frequently).
+ * Appending items to the list happens very rarely so it's OK to make
+ * append operations quite costly.
+ */
 template <class item_t>
 class DynamicArray {
-private:
+protected:
     item_t * data;
-    uint8_t size;
-    item_t min, max;
+    index_t size;
+    index_t i; // index to the "current" item
+    id_t    min_id, max_id;
 
 public:
-    DynamicArray(): size(0), min(0), max(0)
-    {
-        data = new item_t[size];
-    }
+    DynamicArray(): data(0), size(0), i(0), min_id(0x0000), max_id(0x0000) {}
 
 
     ~DynamicArray()
     {
-        delete[] data;
+        delete[] data; // TODO: test that this doesn't blow up if data = NULL
     }
 
 
     // Copy Constructor (compile with -fno-elide-constructors to see this in action)
-    DynamicArray(const DynamicArray& src): size(src.size), min(src.min), max(src.max)
+    DynamicArray(const DynamicArray& src)
+    : size(src.size), i(src.size), min_id(src.min_id), max_id(src.max_id)
     {
-        std::cout << "copy constructor DynamicArray(const DynamicArray& src)" << std::endl;
         data = new item_t[size];
-        src.copy(data, 0, 0, size);
+        if (data) {
+            src.copy(data, 0, 0, size);
+        } else {
+            log(ERROR, "OUT OF MEMORY");
+        }
     }
 
-
-    item_t& operator[](const uint8_t& index)
+    DynamicArray<item_t>& operator=(const DynamicArray& src)
     {
-        if (index < size) {
+        if (data) { // check if we're overwriting some old data
+            delete [] data;
+        }
+
+        size = src.size;
+        i = src.i;
+        min_id = src.min_id;
+        max_id = src.max_id;
+
+        data = new item_t[size];
+        if (data) {
+            src.copy(data, 0, 0, size);
+        } else {
+            log(ERROR, "OUT OF MEMORY");
+        }
+        return *this;
+    }
+
+    item_t& operator[](const index_t& index)
+    {
+        if (data && index < size) {
             return data[index];
         } else {
             log(WARN, "DYNAMIC ARRAY OUT OF RANGE ERROR");
-            return data[0];
         }
     }
 
 
-    bool append(const item_t item)
+    const item_t& operator[](const index_t& index) const
     {
-        uint8_t upper_bound = 0;
+        if (data && index < size) {
+            return data[index];
+        } else {
+            log(WARN, "DYNAMIC ARRAY OUT OF RANGE ERROR");
+        }
+    }
 
-        if (find(item, &upper_bound)) {
-            log(DEBUG, "%lu is already in data.", item);
+
+
+    const index_t get_size() const { return size; }
+
+    const index_t get_i() const { return i; }
+
+    item_t& current() { return data[i]; }
+
+    const id_t get_id(const index_t index) { return operator[](index).id; }
+
+/*
+    bool grow(const index_t new_size)
+    {
+        if (size==0) {
+            data = new item_t[new_size];
+            if (data) {
+                size = new_size;
+                return true;
+            } else {
+                log(WARN, "DYNAMIC ARRAY OUT OF MEMORY");
+                return false;
+            }
+        } else {
+            // TODO
+        }
+    }
+*/
+
+    bool append(const id_t& id)
+    {
+        index_t upper_bound = 0;
+
+        // log(DEBUG, "DynamicArray<>::append(%lu)", id);
+
+        if (find(id, &upper_bound)) {
+            log(DEBUG, "%lu is already in data.", id);
             print();
             return false;
         }
 
         item_t * new_data = new item_t[size+1];
+        if (new_data == 0) {
+            log(ERROR, "OUT OF MEMORY");
+            return false;
+        }
 
         copy(new_data, 0, 0, upper_bound);
-        new_data[upper_bound] = item;
+        new_data[upper_bound] = item_t(id);
         copy(new_data, upper_bound, upper_bound+1, size-upper_bound);
 
         delete[] data;
         data = new_data;
         size++;
 
-        // Update min and max if necessary
+        // Update min_id and max if necessary
         if (size==1) {
-            min = max = item;
+            min_id = max_id = id;
         } else {
-            if (item > max) {
-                max = item;
-            } else if (item < min) {
-                min = item;
+            if (id > max_id) {
+                max_id = id;
+            } else if (id < min_id) {
+                min_id = id;
             }
         }
+
+        return true;
     }
 
+
     /* copy data from this.data to dst */
-    void copy(item_t * dst, const uint8_t src_start,
-            const uint8_t dst_start, const uint8_t length) const
+    void copy(item_t * dst, const index_t src_start,
+            const index_t dst_start, const index_t length) const
     {
-        for (uint8_t i=0; i<length; i++) {
+        for (index_t i=0; i<length; i++) {
             dst[i+dst_start] = data[i+src_start];
         }
     }
 
 
-    /** Attempts to find target in data.  If target can't be
-     *  found then returns false and index == upper_bound nearest target. */
-    const bool find(const item_t& target, uint8_t* index,
-            const uint8_t lower_bound = 0, uint8_t upper_bound = UINT8_MAX) const
+    const bool find(const id_t& target_id, index_t* index) const
     {
-        //log(DEBUG, "find(target=%lu, index=%d, lower_bound=%d, upper_bound=%d) size=%d",
-        //        target, *index, lower_bound, upper_bound, size);
+    }
 
-        uint8_t candidate_i;
+    /** Attempts to find target ID in data.
+     *  If target can't be found then returns false and index == upper_bound nearest target.
+     *  Note that if we search for an ID that's above the largest ID in index will be
+     *  equal to size */
+    //TODO: break this into multiple functions
+    const bool find(const id_t& target_id, index_t* index,
+            const index_t lower_bound = 0, index_t upper_bound = INDEX_MAX) const
+    {
+        index_t candidate_i;
 
-        if (upper_bound == UINT8_MAX) { // UINT8_MAX is default so this is the initial call, not recursive call
+        if (upper_bound == INDEX_MAX) { // UINT8_MAX is default so this is the initial call, not recursive call
             upper_bound = size;
 
-            // Try to guess the candidate item position by looking at the size of target
+            // Try to guess the candidate item position by looking at the size of target_id
             // relative to difference of max - min.
-            item_t diff = max - min;
+            id_t diff = max_id - min_id;
             if (diff == 0) { // avoid div by zero error
-                return find(target, index, lower_bound, upper_bound);
+                if (size == 1) {
+                    if (target_id == operator[](0).id) {
+                        *index = 0;
+                        return true;
+                    } else if (target_id < operator[](0).id) {
+                        *index = 0;
+                        return false;
+                    } else if (target_id > operator[](0).id) {
+                        *index = 1;
+                        return false;
+                    }
+                } else {
+                    return find(target_id, index, lower_bound, upper_bound);
+                }
             } else {
-                if (target > max || target < min) {
-                    *index = upper_bound;
+                if (target_id > max_id) {
+                    *index = size;
+                    return false;
+                } else if (target_id < min_id) {
+                    *index = 0;
                     return false;
                 }
-                candidate_i = ((target - min) / (float)diff) * (size-1);
-                //log(DEBUG, "initial call.  candidate i=%d, min=%lu,"
-                //        " max=%lu, diff=%lu, size=%d",
-                //        candidate_i, min, max, diff, size);
+                candidate_i = ((target_id - min_id) / (float)diff) * (size-1);
             }
 
         } else { // This is a recursive call so look half way between upper_bound and lower_bound
-            const uint8_t window = upper_bound - lower_bound;
-            //log(DEBUG, " window=%d", window);
+            const index_t window = upper_bound - lower_bound;
             if (window <= 1) { // target can't be found
                 (*index) = upper_bound;
                 return false;
@@ -144,29 +235,35 @@ public:
             candidate_i = (window / 2) + lower_bound;
         }
 
-        item_t candidate = data[candidate_i];
+        // TODO: replace operator[] call with data[] when fully debugged
+        const id_t candidate_id = operator[](candidate_i).id;
 
-        if (target == candidate) {
+        if (target_id == candidate_id) {
             *index = candidate_i;
-            //log(DEBUG, "Target found. Target=%lu, candidate=%lu, index=%d", target, candidate, *index);
             return true;
-        } else if (target < candidate) {
-            return find(target, index, lower_bound, candidate_i);
+        } else if (target_id < candidate_id) {
+            return find(target_id, index, lower_bound, candidate_i);
         } else {
-            return find(target, index, candidate_i, upper_bound);
+            return find(target_id, index, candidate_i, upper_bound);
         }
+    }
+
+    /* Entry point to find() when using just target_id */
+    const bool find(const id_t& target_id) const
+    {
+        index_t index;
+        return find(target_id, &index);
     }
 
 
     void print() const
     {
-        for (uint8_t i=0; i<size; i++) {
-            Serial.print(data[i]);
+        for (index_t i=0; i<size; i++) {
+            Serial.print(data[i].id);
             Serial.print(" ");
         }
         Serial.println(" ");
     }
 };
-
 
 #endif /* DYNAMICARRAY_H_ */

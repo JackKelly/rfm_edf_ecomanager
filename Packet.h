@@ -1,7 +1,7 @@
 #ifndef PACKET_H_
 #define PACKET_H_
 
-#include <Arduino.h>
+#include <stdint.h>
 
 /**
  * Simple base class for representing a packet of consecutive bytes.

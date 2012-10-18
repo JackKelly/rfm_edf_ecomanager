@@ -8,11 +8,20 @@
 #ifndef CONSTS_H_
 #define CONSTS_H_
 
-// Values denoting invalid status
-const uint16_t WATTS_INVALID   = 0xFFFF;
-const uint32_t ID_INVALID      = 0xFFFFFFFF;
+#include <inttypes.h>
 
-const uint16_t SAMPLE_PERIOD   = 6000; /* miliseconds    */
-const uint8_t  INVALID_INDEX   = 0xFF;
+typedef uint32_t id_t;     // type for storing IDs
+typedef uint32_t millis_t; // type for storing times in milliseconds
+typedef uint16_t watts_t;  // type for storing watts
+typedef uint8_t  index_t;  // type for storing indices
+
+#define INDEX_MAX 255
+
+// Values denoting invalid status
+const watts_t WATTS_INVALID   = 0xFFFF;
+const id_t    ID_INVALID      = 0xFFFFFFFF;
+
+const millis_t  SAMPLE_PERIOD   = 6000; /* miliseconds    */
+const index_t INVALID_INDEX   = 0xFF;
 
 #endif /* CONSTS_H_ */

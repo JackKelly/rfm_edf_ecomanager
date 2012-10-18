@@ -17,13 +17,7 @@
 Manager::Manager()
 : auto_pair(true), pair_with(ID_INVALID), print_packets(ALL_VALID),
   retries(0), timecode_polled_first_cc_trx(0)
-{
-    cc_txs.set_length(MAX_CC_TXS);
-    cc_txs.cc_array = cc_tx_array;
-
-    cc_trxs.set_length(MAX_CC_TRXS);
-    cc_trxs.cc_array = cc_trx_array;
-}
+{}
 
 
 void Manager::init()
@@ -36,11 +30,11 @@ void Manager::init()
 void Manager::run()
 {
     //************* HANDLE TRANSMITTERS AND TRANSCEIVERS ***********
-    if (cc_txs.get_n() == 0) {
+    if (cc_txs.get_size() == 0) {
         // There are no CC TXs so all we have to do is poll TRXs
         poll_next_cc_trx();
     } else {
-        if (millis() < (cc_txs.current()->get_eta() - (CC_TX_WINDOW/2) )) {
+        if (millis() < (cc_txs.current().get_eta() - (CC_TX_WINDOW/2) )) {
             // We're far enough away from the next expected CC TX transmission
             // to mean that we have time to poll TRXs
             poll_next_cc_trx();
@@ -98,7 +92,7 @@ void Manager::run()
 
 void Manager::poll_next_cc_trx()
 {
-    if (cc_trxs.get_n() == 0) return;
+    if (cc_trxs.get_size() == 0) return;
 
 	// don't continually poll TRXs;
     // instead wait SAMPLE_PERIOD between polling the first TRX and polling it again
@@ -111,13 +105,13 @@ void Manager::poll_next_cc_trx()
 		}
 	}
 
-	rfm.poll_cc_trx(cc_trxs.current()->id);
+	rfm.poll_cc_trx(cc_trxs.current().id);
 
 	// wait for response
 	const uint32_t start_time = millis();
 	bool success = false;
 	while (millis() < start_time+CC_TRX_TIMEOUT) {
-		if (process_rx_pack_buf_and_find_id(cc_trxs.current()->id)) {
+		if (process_rx_pack_buf_and_find_id(cc_trxs.current().id)) {
 	        // We got a reply from the TRX we polled
 			success = true;
 			break;
@@ -130,11 +124,11 @@ void Manager::poll_next_cc_trx()
 	} else {
 	    // We didn't get a reply from the TRX we polled
 		if (retries < MAX_RETRIES) {
-            log(DEBUG, "No response from TRX %lu, retries=%d. Retrying...", cc_trxs.current()->id, retries);
+            log(DEBUG, "No response from TRX %lu, retries=%d. Retrying...", cc_trxs.current().id, retries);
 			retries++;
 		} else {
 			cc_trxs.next();
-			log(INFO, "No response from TRX %lu after retrying. Giving up.", cc_trxs.current()->id);
+			log(INFO, "No response from TRX %lu after retrying. Giving up.", cc_trxs.current().id);
 		}
 	}
 }
@@ -147,10 +141,10 @@ void Manager::wait_for_cc_tx()
 	// TODO handle roll-over over millis().
 
 	// listen for WHOLE_HOUSE_TX for defined period.
-	log(DEBUG, "Window open! Expecting %lu at %lu", cc_txs.current()->id, cc_txs.current()->get_eta());
+	log(DEBUG, "Window open! Expecting %lu at %lu", cc_txs.current().id, cc_txs.current().get_eta());
 	bool success = false;
 	while (millis() < (start_time+CC_TX_WINDOW) && !success) {
-		if (process_rx_pack_buf_and_find_id(cc_txs.current()->id)) {
+		if (process_rx_pack_buf_and_find_id(cc_txs.current().id)) {
 			success = true;
 		}
 	}
@@ -159,7 +153,7 @@ void Manager::wait_for_cc_tx()
 
 	if (!success) {
 		// tell whole-house TX it missed its slot
-		cc_txs.current()->missing();
+		cc_txs.current().missing();
 	}
 }
 
@@ -169,7 +163,6 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 	bool success = false;
 	uint32_t id;
 	RXPacket* packet = NULL; // just using this pointer to make code more readable
-	CcTx* cc_tx = NULL;
 
 	/* Loop through every packet in packet buffer. If it's done then post-process it
 	 * and then check if it's valid.  If so then handle the different types of
@@ -206,9 +199,11 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 				}
 				//********* CC TX (transmit-only sensor) ********
 				else if (packet->is_cc_tx()) {
-				    cc_tx = (CcTx*)cc_txs.find(id);
-				    if (cc_tx) { // Is received ID is a CC_TX id we know about?
-				        cc_tx->update(*packet);
+				    bool found;
+				    index_t cc_tx_i;
+				    found = cc_txs.find(id, &cc_tx_i);
+				    if (found) { // received ID is a CC_TX id we know about
+				        cc_txs[cc_tx_i].update(*packet);
 				        packet->print_id_and_watts(); // send data over serial
 	                    cc_txs.next();
 				    } else {
