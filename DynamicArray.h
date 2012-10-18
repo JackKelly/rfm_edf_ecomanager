@@ -264,7 +264,7 @@ public:
         Serial.println("ACK");
         Serial.print("{");
         print_name();
-        Serial.println("s:");
+        Serial.println("s: [");
 
         for (index_t i=0; i<size; i++) {
             if (i > 0) {
@@ -273,7 +273,7 @@ public:
             data[i].print();
         }
 
-        Serial.println("}");
+        Serial.println("]}");
     }
 
 };

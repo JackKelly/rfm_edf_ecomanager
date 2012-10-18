@@ -14,9 +14,7 @@ CcTrx::~CcTrx() {}
 
 void CcTrx::print() const
 {
-    Serial.print("{id: ");
     Serial.print(id);
-    Serial.println("}");
 }
 
 
