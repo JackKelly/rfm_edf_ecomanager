@@ -94,30 +94,18 @@ void Manager::poll_next_cc_trx()
 {
     if (cc_trxs.get_size() == 0) return;
 
-    const millis_t start_time = millis();
-
 	// don't continually poll TRXs;
     // instead wait SAMPLE_PERIOD between polling the first TRX and polling it again
 	if (cc_trxs.get_i()==0) {
-		if (start_time < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
-		    // We've finished polling all TRXs for this SAMPLE_PERIOD.
-			return;
+		if (millis() < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
+			return; // We've finished polling all TRXs for this SAMPLE_PERIOD.
 		} else {
 			timecode_polled_first_cc_trx = millis();
 		}
 	}
 
 	rfm.poll_cc_trx(cc_trxs.current().id);
-
-	// wait for response
-	bool success = false;
-	while (millis() < start_time+CC_TRX_TIMEOUT) {
-		if (process_rx_pack_buf_and_find_id(cc_trxs.current().id)) {
-	        // We got a reply from the TRX we polled
-			success = true;
-			break;
-		}
-	}
+	const bool success = wait_for_response(cc_trxs.current().id, CC_TRX_TIMEOUT);
 
 	if (success) {
         // We got a reply from the TRX we polled
@@ -139,25 +127,35 @@ void Manager::poll_next_cc_trx()
 
 void Manager::wait_for_cc_tx()
 {
-	const uint32_t start_time = millis();
+    // TODO handle roll-over over millis().
 
-	// TODO handle roll-over over millis().
+    // listen for TX for defined period.
+    log(DEBUG, "Window open! Expecting %lu at %lu", cc_txs.current().id, cc_txs.current().get_eta());
+    bool success = wait_for_response(cc_txs.current().id, CC_TX_WINDOW);
+    log(DEBUG, "Window closed. success=%d", success);
 
-	// listen for WHOLE_HOUSE_TX for defined period.
-	log(DEBUG, "Window open! Expecting %lu at %lu", cc_txs.current().id, cc_txs.current().get_eta());
-	bool success = false;
-	while (millis() < (start_time+CC_TX_WINDOW) && !success) {
-		if (process_rx_pack_buf_and_find_id(cc_txs.current().id)) {
-			success = true;
-		}
-	}
+    if (!success) {
+        // tell whole-house TX it missed its slot
+        cc_txs.current().missing();
+    }
+}
 
-	log(DEBUG, "Window closed. success=%d", success);
 
-	if (!success) {
-		// tell whole-house TX it missed its slot
-		cc_txs.current().missing();
-	}
+const bool Manager::wait_for_response(const id_t& id, const millis_t& wait_duration)
+{
+    // wait for response
+    const millis_t start_time = millis();
+    const millis_t end_time   = start_time + wait_duration;
+    bool success = false;
+
+    while (millis() < end_time) {
+        if (process_rx_pack_buf_and_find_id(id)) {
+            // We got a reply from the TRX we polled
+            success = true;
+            break;
+        }
+    }
+    return success;
 }
 
 
@@ -251,6 +249,7 @@ void Manager::pair(const bool is_cc_tx)
         success = cc_txs.append(pair_with);
     } else { // transceiver. So we need to ACK.
         rfm.ack_cc_trx(pair_with);
+
         success = cc_trxs.append(pair_with);
     }
 
@@ -262,6 +261,3 @@ void Manager::pair(const bool is_cc_tx)
 
     pair_with = ID_INVALID;
 }
-
-
-

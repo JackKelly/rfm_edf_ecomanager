@@ -42,12 +42,12 @@ private:
      *****************************************/
 	CcTrxArray cc_trxs;
 
-    static const uint32_t CC_TRX_TIMEOUT = 100; // milliseconds to wait for reply
+    static const uint8_t CC_TRX_TIMEOUT = 100; // milliseconds to wait for reply
 
 	uint8_t retries; // for polling CC TRXs
 	static const uint8_t MAX_RETRIES = 5; // for polling CC TRXs
 
-	uint32_t timecode_polled_first_cc_trx;
+	millis_t timecode_polled_first_cc_trx;
 
 	/***************************
 	 * Private methods
@@ -58,6 +58,8 @@ private:
 	void poll_next_cc_trx();
 
 	void wait_for_cc_tx();
+
+	const bool wait_for_response(const id_t& id, const millis_t& wait_duration);
 
 	/**
 	 * Process every packet in rx_packet_buffer appropriately
