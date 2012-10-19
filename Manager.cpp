@@ -157,6 +157,7 @@ const bool Manager::wait_for_response(const id_t& id, const millis_t& wait_durat
     const millis_t end_time   = start_time + wait_duration;
     bool success = false;
 
+    log(DEBUG, "Waiting %lu ms for ID %lu", wait_duration, id);
     while (millis() < end_time) {
         if (process_rx_pack_buf_and_find_id(id)) {
             // We got a reply from the TRX we polled
@@ -170,7 +171,8 @@ const bool Manager::wait_for_response(const id_t& id, const millis_t& wait_durat
 
 const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 {
-	bool success = false;
+    bool success = false;
+    enum {TRX, TX} tx_type;
 	uint32_t id;
 	RXPacket* packet = NULL; // just using this pointer to make code more readable
 
@@ -185,30 +187,34 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 		    packet->post_process();
 			if (packet->is_ok()) {
 				id = packet->get_id();
-				success = (id == target_id); // Was this the packet we were looking for?
+				success |= (id == target_id); // Was this the packet we were looking for?
+				tx_type = packet->is_cc_tx() ? TX : TRX;
 
 				//******** PAIRING REQUEST **********************
 				if (packet->is_pairing_request()) {
-				    if (packet->is_cc_tx() && cc_txs.find(id)) {
+				    log(DEBUG, "Pair req from %lu", id);
+				    packet->reset();
+				    if (tx_type==TX && cc_txs.find(id)) {
 				        // ignore pair request from CC_TX we're already paired with
-				    } else if (!packet->is_cc_tx() && cc_trxs.find(id)) {
+				    } else if (tx_type==TRX && cc_trxs.find(id)) {
 				        // ignore pair request from CC_TRX we're already paired with
 				    } else if (auto_pair) {
 				        // Auto pair mode. Go ahead and pair.
 				        pair_with = id;
-				        pair(packet->is_cc_tx());
+				        pair(tx_type);
                     } else if (pair_with == id) {
                         // Manual pair mode and pair_with has already been set so pair.
-                        pair(packet->is_cc_tx());
+                        pair(packet);
 			        } else {
 			            // Manual pair mode. Tell user about pair request.
 			            Serial.print("{PR: ");
 			            Serial.print(id);
 			            Serial.println("}");
 				    }
+				    break;
 				}
 				//********* CC TX (transmit-only sensor) ********
-				else if (packet->is_cc_tx()) {
+				else if (tx_type==TX) {
 				    bool found;
 				    index_t cc_tx_i;
 				    found = cc_txs.find(id, cc_tx_i);
@@ -258,7 +264,9 @@ void Manager::pair(const bool is_cc_tx)
         success = cc_txs.append(pair_with);
     } else { // transceiver. So we need to ACK.
         rfm.ack_cc_trx(pair_with);
-        if ( wait_for_response(pair_with, CC_TRX_TIMEOUT) ) {
+        rfm.poll_cc_trx(pair_with);
+        bool got_response = wait_for_response(pair_with, CC_TRX_TIMEOUT);
+        if (got_response) {
             // Only append if we get a response.
             // If we don't get a response then we'll try to pair again
             // when the TRX next sends a pair request.
@@ -270,6 +278,7 @@ void Manager::pair(const bool is_cc_tx)
         Serial.print("{pw: ");
         Serial.print(pair_with);
         Serial.println(" }");
-        pair_with = ID_INVALID;
     }
+
+    pair_with = ID_INVALID; // reset
 }
