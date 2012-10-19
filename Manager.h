@@ -73,7 +73,7 @@ private:
 	/**
 	 * If pair_with != ID_INVALID then pair with pair_with.
 	 */
-	void pair(const bool is_cc_tx);
+	void pair(const TxType& tx_type);
 
 };
 

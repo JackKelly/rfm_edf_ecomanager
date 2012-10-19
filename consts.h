@@ -17,11 +17,17 @@ typedef uint8_t  index_t;  // type for storing indices
 
 #define INDEX_MAX 255
 
+enum TxType {TRX, TX};
+
 // Values denoting invalid status
 const watts_t WATTS_INVALID   = 0xFFFF;
 const id_t    ID_INVALID      = 0xFFFFFFFF;
+const index_t  INVALID_INDEX  = 0xFF;
 
-const millis_t  SAMPLE_PERIOD   = 6000; /* miliseconds    */
-const index_t INVALID_INDEX   = 0xFF;
+// Consts defining behaviour of system
+const millis_t SAMPLE_PERIOD  = 6000; /* miliseconds    */
+
+
+
 
 #endif /* CONSTS_H_ */

@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #endif
 
-#include "consts.h"
 #include "Logger.h"
 #include "Packet.h"
 
@@ -85,10 +84,11 @@ const uint8_t Packet::get_byte_index() const
 
 const uint8_t TXPacket::get_next_byte()
 {
-	if (!done()) {
+	if (done()) {
+	    return 0;
+	} else {
 		return packet[byte_index++];
 	}
-	return 0;
 }
 
 
@@ -127,8 +127,7 @@ void TXPacket::assemble(
  **********************************************/
 
 RXPacket::RXPacket()
-:Packet(), timecode(0), packet_ok(false), id(ID_INVALID)
-{}
+:Packet(), tx_type(TX), timecode(0), health(NOT_CHECKED), id(ID_INVALID) {}
 
 
 void RXPacket::append(const uint8_t& value)
@@ -137,10 +136,10 @@ void RXPacket::append(const uint8_t& value)
 		if (byte_index==0) { // first byte
 			timecode = millis(); // record timecode that first byte received
 			if (value==0x52) { // this packet is from a CC_TRX
-                cc_tx = false;
+                tx_type = TRX;
                 packet_length  = CC_TRX_PACKET_LENGTH;
 			} else {
-                cc_tx = true;
+                tx_type = TX;
                 packet_length  = CC_TX_PACKET_LENGTH;
 			}
 		}
@@ -165,7 +164,7 @@ void RXPacket::print_id_and_watts() const
 		}
 	}
 
-	if (!cc_tx) {
+	if (tx_type == TRX) {
 	    Serial.print(", state: ");
 	    if (packet[10]==0x53) {
 	        Serial.print("on");
@@ -178,31 +177,46 @@ void RXPacket::print_id_and_watts() const
 }
 
 
-const bool RXPacket::verify_checksum() const
+const RXPacket::Health RXPacket::verify_checksum() const
 {
 	const uint8_t calculated_checksum = modular_sum(packet, packet_length-1);
-	return (calculated_checksum == packet[packet_length-1]);
+	return (calculated_checksum == packet[packet_length-1]) ? OK : BAD;
+}
+
+
+void RXPacket::reset()
+{
+    byte_index = 0;
+    health = NOT_CHECKED;
+}
+
+const bool RXPacket::is_ok()
+{
+    if (health == NOT_CHECKED) {
+        post_process();
+    }
+
+    return (health == OK);
 }
 
 
 void RXPacket::post_process()
 {
-	if (cc_tx) { // this is a whole-house TX packet
-		packet_ok = de_manchesterise();
-	} else {
-		packet_ok = verify_checksum();
+    switch (tx_type) {
+    case TX:  health = de_manchesterise(); break;
+    case TRX: health = verify_checksum(); break;
 	}
 
-	if (packet_ok) {
+	if (health == OK) {
 		decode_wattage();
 		decode_id();
 	}
 }
 
 
-const bool RXPacket::is_cc_tx() const
+const volatile TxType& RXPacket::get_tx_type() const
 {
-    return cc_tx;
+    return tx_type;
 }
 
 
@@ -210,11 +224,14 @@ void RXPacket::decode_wattage()
 {
 	uint8_t msb;
 
+	// Reset
 	for (uint8_t sensor=0; sensor<3; sensor++) {
 		watts[sensor] = WATTS_INVALID; // "not valid" value
 	}
 
-	if (cc_tx) {
+	// Decode wattage (TXs and TRXs use different encodings)
+	switch (tx_type) {
+	case TX:
 		for (uint8_t sensor=0; sensor<3; sensor++) {
 			if (packet[2+(sensor*2)] & 0x80) { // plugged in
 				msb            = packet[2+(sensor*2)];
@@ -223,11 +240,12 @@ void RXPacket::decode_wattage()
 				watts[sensor] |= packet[3+(sensor*2)];
 			}
 		}
-	} else {
+		break;
+	case TRX:
 		watts[0]  = packet[9] << 8;
 		watts[0] |= packet[8];
+		break;
 	}
-
 }
 
 
@@ -235,29 +253,30 @@ void RXPacket::decode_id()
 {
 	id=0;
 
-	if (cc_tx) { // this packet is from a CC transmit-only sensor
+	switch (tx_type) {
+	case TX: // this packet is from a CC transmit-only sensor
 		id |= (packet[0] & 0x0F) << 8; // get nibble from first byte
 		id |= packet[1];
-	} else { // this packet is from a CC transceiver (e.g. an EDF IAM)
+		break;
+	case TRX: // this packet is from a CC transceiver (e.g. an EDF IAM)
 		id |= (uint32_t)packet[1] << 24;
 		id |= (uint32_t)packet[2] << 16;
 		id |= (uint16_t)packet[3] <<  8;
 		id |= packet[4];
+		break;
 	}
 }
 
 
 const bool RXPacket::is_pairing_request() const
 {
-    if (cc_tx) {
-        return packet[0] & 0b10000000;
-    } else {
-        return packet[6]==0x43 && packet[7]==0x4F;
-    }
+    return tx_type == TX ?
+            packet[0] & 0b10000000 : // TX
+            packet[6]==0x43 && packet[7]==0x4F; // TRX
 }
 
 
-const bool RXPacket::de_manchesterise()
+const RXPacket::Health RXPacket::de_manchesterise()
 {
 	const uint8_t ONE  = 0b10000000;
 	const uint8_t ZERO = 0b01000000;
@@ -289,29 +308,26 @@ const bool RXPacket::de_manchesterise()
 	}
 
 	packet_length /= 2;
-	return success;
+
+	return success ? OK : BAD;
 }
 
 
-const bool RXPacket::is_ok() const
-{
-	return packet_ok;
-}
 
 
-const uint32_t& RXPacket::get_id() const
+const id_t& RXPacket::get_id() const
 {
 	return id;
 }
 
 
-const uint16_t* RXPacket::get_watts() const
+const watts_t* RXPacket::get_watts() const
 {
 	return watts;
 }
 
 
-volatile const unsigned long& RXPacket::get_timecode() const
+volatile const millis_t& RXPacket::get_timecode() const
 {
 	return timecode;
 }

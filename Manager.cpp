@@ -172,7 +172,7 @@ const bool Manager::wait_for_response(const id_t& id, const millis_t& wait_durat
 const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 {
     bool success = false;
-    enum {TRX, TX} tx_type;
+    TxType tx_type;
 	uint32_t id;
 	RXPacket* packet = NULL; // just using this pointer to make code more readable
 
@@ -184,11 +184,10 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 
 		packet = &rfm.rx_packet_buffer.packets[packet_i];
 		if (packet->done()) {
-		    packet->post_process();
 			if (packet->is_ok()) {
 				id = packet->get_id();
 				success |= (id == target_id); // Was this the packet we were looking for?
-				tx_type = packet->is_cc_tx() ? TX : TRX;
+				tx_type = packet->get_tx_type();
 
 				//******** PAIRING REQUEST **********************
 				if (packet->is_pairing_request()) {
@@ -204,7 +203,7 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 				        pair(tx_type);
                     } else if (pair_with == id) {
                         // Manual pair mode and pair_with has already been set so pair.
-                        pair(packet);
+                        pair(tx_type);
 			        } else {
 			            // Manual pair mode. Tell user about pair request.
 			            Serial.print("{PR: ");
@@ -256,13 +255,13 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 }
 
 
-void Manager::pair(const bool is_cc_tx)
+void Manager::pair(const TxType& tx_type)
 {
     bool success = false;
 
-    if (is_cc_tx) {
-        success = cc_txs.append(pair_with);
-    } else { // transceiver. So we need to ACK.
+    switch (tx_type) {
+    case TX: success = cc_txs.append(pair_with); break;
+    case TRX: // transceiver. So we need to ACK.
         rfm.ack_cc_trx(pair_with);
         rfm.poll_cc_trx(pair_with);
         bool got_response = wait_for_response(pair_with, CC_TRX_TIMEOUT);
@@ -272,6 +271,7 @@ void Manager::pair(const bool is_cc_tx)
             // when the TRX next sends a pair request.
             success = cc_trxs.append(pair_with);
         }
+        break;
     }
 
     if (success) {

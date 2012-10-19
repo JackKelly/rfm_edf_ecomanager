@@ -2,6 +2,7 @@
 #define PACKET_H_
 
 #include <stdint.h>
+#include "consts.h"
 
 /**
  * Simple base class for representing a packet of consecutive bytes.
@@ -24,7 +25,7 @@ public:
 	/**
 	 * Reset the byte_index to point to the first byte in this packet.
 	 */
-	void reset();
+	virtual void reset();
 
 	/**
 	 * Returns true if we've reached the end of the packet.
@@ -70,26 +71,19 @@ public:
 
 	void append(const uint8_t& value); // override
 
-	/**
-	 * Run this after packet has been received fully to
-	 * set packet_ok, watts and id.
-	 */
-	void post_process();
-
-	/*
-	 * @return contents of packet_ok
-	 */
-	const bool is_ok() const;
+	const bool is_ok();
 
 	const bool is_pairing_request() const;
 
-    const bool is_cc_tx() const;
+    const volatile TxType& get_tx_type() const;
 
-	const uint32_t& get_id() const;
+	const id_t& get_id() const;
 
-	const uint16_t* get_watts() const;
+	const watts_t* get_watts() const;
 
-	volatile const unsigned long& get_timecode() const;
+	void reset();
+
+	volatile const millis_t& get_timecode() const;
 
 private:
 	/********************
@@ -101,23 +95,30 @@ private:
 	/****************************************************
 	 * Member variables used within ISR and outside ISR *
 	 ****************************************************/
-	volatile bool cc_tx; // is this packet from a transmit-only sensor (as opposed to a transceiver)?
-	volatile unsigned long timecode;
+	volatile TxType tx_type; // is this packet from a transmit-only sensor (as opposed to a transceiver)?
+	volatile millis_t timecode;
 
 	/******************************************
 	 * Member variables never used within ISR *
 	 ******************************************/
-	bool packet_ok; // does the checksum or de-manchesterisation check out?
-	uint16_t watts[3]; // the decoded reading from sensors
-	uint32_t id; // the sensor radio ID
+	enum Health {NOT_CHECKED, OK, BAD} health; // does the checksum or de-manchesterisation check out?
+	watts_t watts[3]; // the decoded reading from sensors
+	id_t id; // the sensor radio ID
 
 	/********************************************
 	 * Private methods                          *
 	 ********************************************/
+
+    /**
+     * Run this after packet has been received fully to
+     * set packet_ok, watts and id.
+     */
+    void post_process();
+
 	/**
 	 * @ return true if checksum in packet matches calculated checksum
 	 */
-	const bool verify_checksum() const;
+	const Health verify_checksum() const;
 
 	/**
 	 * sets watts
@@ -130,7 +131,7 @@ private:
 	 * DeManchesterise this packet
 	 * @return true if de-manchesterisation went OK.
 	 */
-	const bool de_manchesterise();
+	const Health de_manchesterise();
 
 };
 
