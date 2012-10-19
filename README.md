@@ -1,7 +1,8 @@
 Code for communicating wirelessly with [Current Cost home energy monitors](http://www.currentcost.com/products.html)
 and [EDF EcoManager](http://www.edfenergy.com/products-services/for-your-home/ecomanager/) monitors.  The main planned aim of this code is the
 robust gathering of data from an arbitrary number of EDF EcoManager
-[Wireless Transmitter Plugs](https://shop.edfenergy.com/Item.aspx?id=540&CategoryID=1) for tracking the state of the majority of appliances
+[Wireless Transmitter Plugs](https://shop.edfenergy.com/Item.aspx?id=540&CategoryID=1) and a small number of
+Current Cost transmitters (IAMs and whole-house transmitters) for tracking the state of the majority of appliances
 in a building.
 
 Current status
@@ -32,8 +33,9 @@ Usage
  - Then watch the serial port.  On Linux this can be achieved with
    the command: `screen /dev/ttyUSB0 115200`
 
- - You should see each RF packet displayed on your screen (each byte
-   displayed as hex).
+ - You should see data from all Current Cost and EDF transmitters displayed as soon as it arrives.
+ 
+ - Please see the [user manual](https://github.com/JackKelly/rfm_edf_ecomanager/wiki) for more info.
 
 
 Acknowledgements & further reading
