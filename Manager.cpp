@@ -191,58 +191,45 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 
 				//******** PAIRING REQUEST **********************
 				if (packet->is_pairing_request()) {
-				    log(DEBUG, "Pair req from %lu", id);
-				    if (tx_type==TX && cc_txs.find(id)) {
-				        // ignore pair request from CC_TX we're already paired with
-				    } else if (tx_type==TRX && cc_trxs.find(id)) {
-				        // pair request from CC_TRX we previously attempted to pair with
-				        // this means our ACK response failed so try again
-				        pair_with = id;
-				        pair(tx_type);
-				    } else if (auto_pair) {
-				        // Auto pair mode. Go ahead and pair.
-				        pair_with = id;
-				        pair(tx_type);
-                    } else if (pair_with == id) {
-                        // Manual pair mode and pair_with has already been set so pair.
-                        pair(tx_type);
-			        } else {
-			            // Manual pair mode. Tell user about pair request.
-			            Serial.print("{PR: ");
-			            Serial.print(id);
-			            Serial.println("}");
-				    }
+				    packet->reset();
+				    handle_pair_request(tx_type, id);
+				    break;
 				}
+
 				//********* CC TX (transmit-only sensor) ********
-				else if (tx_type==TX) {
+				switch (tx_type) {
+				case TX:
 				    bool found;
 				    index_t cc_tx_i;
 				    found = cc_txs.find(id, cc_tx_i);
 				    if (found) { // received ID is a CC_TX id we know about
 				        cc_txs[cc_tx_i].update(*packet);
 				        packet->print_id_and_watts(); // send data over serial
-	                    cc_txs.next();
+				        cc_txs.next();
 				    } else {
-	                    log(INFO, "Rx'd CC_TX packet with unknown ID %lu", id);
-	                    if (print_packets >= ALL_VALID) {
-	                        packet->print_id_and_watts(); // send data over serial
-	                    }
+				        log(INFO, "Rx'd CC_TX packet with unknown ID %lu", id);
+				        if (print_packets >= ALL_VALID) {
+				            packet->print_id_and_watts(); // send data over serial
+				        }
 				    }
-				}
-				//****** CC TRX (transceiver; e.g. EDF IAM) ******
-				else if (cc_trxs.find(id)) {
-				    // Received ID is a CC_TRX id we know about
-                    packet->print_id_and_watts(); // send data over serial
-				}
-				//********* UNKNOWN TRX ID *************************
-				else {
-                    log(INFO, "Rx'd CC_TRX packet with unknown ID %lu", id);
-                    if (print_packets >= ALL_VALID) {
-                        packet->print_id_and_watts(); // send data over serial
-                    }
+				    break;
+				case TRX:
+				    //****** CC TRX (transceiver; e.g. EDF IAM) ******
+				    if (cc_trxs.find(id)) {
+				        // Received ID is a CC_TRX id we know about
+				        packet->print_id_and_watts(); // send data over serial
+				    }
+				    //********* UNKNOWN TRX ID *************************
+				    else {
+				        log(INFO, "Rx'd CC_TRX packet with unknown ID %lu", id);
+				        if (print_packets >= ALL_VALID) {
+				            packet->print_id_and_watts(); // send data over serial
+				        }
+				    }
+				    break;
 				}
 
-			} else {
+			} else { // packet is not OK
 				log(INFO, "Rx'd broken packet");
 				if (print_packets == ALL) {
 				    packet->print_bytes();
@@ -253,6 +240,32 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 	}
 
 	return success;
+}
+
+
+void Manager::handle_pair_request(const TxType& tx_type, const id_t& id)
+{
+    log(DEBUG, "Pair req from %lu", id);
+    if (tx_type==TX && cc_txs.find(id)) {
+        // ignore pair request from CC_TX we're already paired with
+    } else if (tx_type==TRX && cc_trxs.find(id)) {
+        // pair request from CC_TRX we previously attempted to pair with
+        // this means our ACK response failed so try again
+        pair_with = id;
+        pair(tx_type);
+    } else if (auto_pair) {
+        // Auto pair mode. Go ahead and pair.
+        pair_with = id;
+        pair(tx_type);
+    } else if (pair_with == id) {
+        // Manual pair mode and pair_with has already been set so pair.
+        pair(tx_type);
+    } else {
+        // Manual pair mode. Tell user about pair request.
+        Serial.print("{PR: ");
+        Serial.print(id);
+        Serial.println("}");
+    }
 }
 
 
