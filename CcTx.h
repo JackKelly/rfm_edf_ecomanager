@@ -43,7 +43,7 @@ protected:
 	millis_t eta; // estimated time of arrival in milliseconds since power-on
 	RollingAv sample_period;
 	uint8_t  num_periods;
-	millis_t time_last_seen;
+	millis_t last_seen;
 };
 
 

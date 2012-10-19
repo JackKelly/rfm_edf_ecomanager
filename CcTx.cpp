@@ -34,7 +34,7 @@ void CcTx::init()
     // http://stackoverflow.com/questions/308276/c-call-constructor-from-constructor
     eta = 0xFFFFFFFF;
     num_periods = 0;
-    time_last_seen = 0;
+    last_seen = 0;
 }
 
 CcTx::~CcTx() {}
@@ -43,27 +43,27 @@ void CcTx::print()
 {
     Serial.print("{id: ");
     Serial.print(id);
-    Serial.print(", time_last_seen: ");
-    Serial.print(time_last_seen);
+    Serial.print(", last_seen: ");
+    Serial.print(last_seen);
     Serial.print(", num_periods_missed: ");
     Serial.print(num_periods);
     Serial.print(", eta: ");
     Serial.print(eta);
     Serial.print(", sample_period: ");
     Serial.print(sample_period.get_av());
-    Serial.println("}");
+    Serial.print("}");
 }
 
 void CcTx::update(const RXPacket& packet)
 {
-    if (time_last_seen != 0) {
+    if (last_seen != 0) {
         uint16_t new_sample_period;
 
         // update sample period for this Sensor
         // (seems to vary a little between sensors)
         log(DEBUG, "CC_TX ID=%lu, old sample_period=%u", id, sample_period.get_av());
 
-        new_sample_period = (packet.get_timecode() - time_last_seen) / num_periods;
+        new_sample_period = (packet.get_timecode() - last_seen) / num_periods;
 
         // Check the new sample_period is sane
         if (new_sample_period > 5700 && new_sample_period < 6300) {
@@ -75,7 +75,7 @@ void CcTx::update(const RXPacket& packet)
     }
 	eta = packet.get_timecode() + sample_period.get_av();
 	num_periods = 1;
-	time_last_seen = packet.get_timecode();
+	last_seen = packet.get_timecode();
 }
 
 const id_t& CcTx::get_eta()
