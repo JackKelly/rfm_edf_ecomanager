@@ -192,11 +192,13 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 				//******** PAIRING REQUEST **********************
 				if (packet->is_pairing_request()) {
 				    log(DEBUG, "Pair req from %lu", id);
-				    packet->reset();
 				    if (tx_type==TX && cc_txs.find(id)) {
 				        // ignore pair request from CC_TX we're already paired with
 				    } else if (tx_type==TRX && cc_trxs.find(id)) {
-				        // ignore pair request from CC_TRX we're already paired with
+				        // pair request from CC_TRX we previously attempted to pair with
+				        // this means our ACK response failed so try again
+				        pair_with = id;
+				        pair(tx_type);
 				    } else if (auto_pair) {
 				        // Auto pair mode. Go ahead and pair.
 				        pair_with = id;
@@ -210,7 +212,6 @@ const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
 			            Serial.print(id);
 			            Serial.println("}");
 				    }
-				    break;
 				}
 				//********* CC TX (transmit-only sensor) ********
 				else if (tx_type==TX) {
@@ -260,17 +261,14 @@ void Manager::pair(const TxType& tx_type)
     bool success = false;
 
     switch (tx_type) {
-    case TX: success = cc_txs.append(pair_with); break;
+    case TX:
+        success = cc_txs.append(pair_with);
+        break;
     case TRX: // transceiver. So we need to ACK.
         rfm.ack_cc_trx(pair_with);
-        rfm.poll_cc_trx(pair_with);
-        bool got_response = wait_for_response(pair_with, CC_TRX_TIMEOUT);
-        if (got_response) {
-            // Only append if we get a response.
-            // If we don't get a response then we'll try to pair again
-            // when the TRX next sends a pair request.
-            success = cc_trxs.append(pair_with);
-        }
+        success = cc_trxs.append(pair_with);
+        // Note that this may be a re-try to ACK a TRX we
+        // previously added if our first ACK failed.
         break;
     }
 
