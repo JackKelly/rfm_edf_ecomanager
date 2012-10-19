@@ -11,11 +11,11 @@ class Packet {
 public:
 	Packet();
 
-	void set_packet_length(const uint8_t& _packet_length);
+	void set_packet_length(const index_t& _packet_length);
 
-	void append(const uint8_t& value);
+	void append(const byte& value);
 
-	void append(const uint8_t* bytes, const uint8_t& length);
+	void append(const byte* bytes, const index_t& length);
 
 	/**
 	 * Print contents of packet to Serial port.
@@ -32,22 +32,22 @@ public:
 	 */
 	const bool done() const;
 
-	const uint8_t get_byte_index() const;
+	const volatile index_t& get_byte_index() const;
 
 protected:
 	/* Longest packet = 1B preamble + 2B sync + 12B EDF IAM + 2B tail
 	 *  If you want to mimick CC_TX packets then this needs to be set to 21!  */
-	const static uint8_t MAX_PACKET_LENGTH = 17;
+	const static index_t MAX_PACKET_LENGTH = 17;
 
 	/****************************************************
 	 * Member variables used within ISR and outside ISR *
 	 ****************************************************/
-	volatile uint8_t packet_length; // number of bytes in this packet
-	volatile uint8_t byte_index;    // index of next byte to write/read
+	volatile index_t packet_length; // number of bytes in this packet
+	volatile index_t byte_index;    // index of next byte to write/read
 	// we can't use new() on the
 	// arduino (not easily, anyway) so let's just have a statically declared
 	// array of length MAX_PACKET_LENGTH.
-	volatile uint8_t packet[MAX_PACKET_LENGTH];
+	volatile byte packet[MAX_PACKET_LENGTH];
 
 	/********************************************
 	 * Private methods                          *
@@ -56,9 +56,9 @@ protected:
 	 * @returns the modular sum (the checksum algorithm used in the
 	 *           EDF EcoManager protocol) given the payload.
 	 */
-	static const uint8_t modular_sum(
-			const volatile uint8_t payload[],
-			const uint8_t& length);
+	static const byte modular_sum(
+			const volatile byte payload[],
+			const index_t& length);
 
 };
 
@@ -69,7 +69,7 @@ public:
 
 	void print_id_and_watts() const;
 
-	void append(const uint8_t& value); // override
+	void append(const byte& value); // override
 
 	const bool is_ok();
 
@@ -89,8 +89,8 @@ private:
 	/********************
 	 * Consts           *
 	 * ******************/
-	const static uint8_t CC_TRX_PACKET_LENGTH = 12;
-	const static uint8_t CC_TX_PACKET_LENGTH  = 16;
+	const static index_t CC_TRX_PACKET_LENGTH = 12;
+	const static index_t CC_TX_PACKET_LENGTH  = 16;
 
 	/****************************************************
 	 * Member variables used within ISR and outside ISR *
@@ -147,10 +147,10 @@ public:
 	 *   4. (optional) checksum
 	 *   5. tail
 	 */
-	void assemble(const uint8_t payload[], const uint8_t& payload_length,
+	void assemble(const byte payload[], const index_t& payload_length,
 			const bool add_checksum = false);
 
-	const uint8_t get_next_byte();
+	const byte get_next_byte();
 
 };
 
@@ -173,10 +173,10 @@ public:
 	/**
 	 * @returns true if packet is complete AFTER appending value to it.
 	 */
-	const bool append(const uint8_t& value);
+	const bool append(const byte& value);
 
-	const static uint8_t NUM_PACKETS = 5;
-	uint8_t current_packet;
+	const static index_t NUM_PACKETS = 5;
+	index_t current_packet;
 	RXPacket packets[NUM_PACKETS];
 };
 

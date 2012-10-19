@@ -34,7 +34,7 @@ namespace spi {
 	 *
 	 * @return 8-bit response
 	 */
-	const uint8_t transfer_byte(const uint8_t& out);
+	const byte transfer_byte(const byte& out);
 
 	/**
 	 * Send a 16-bit word over the SPI bus, with MSB first.

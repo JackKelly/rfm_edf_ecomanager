@@ -31,7 +31,7 @@ public:
 	~CcTx();
 	void update(const RXPacket& packet);
 	void missing();
-	const uint32_t& get_eta();
+	const millis_t& get_eta();
 	void print() const;
 
 protected:

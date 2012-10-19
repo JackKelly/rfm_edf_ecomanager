@@ -17,8 +17,7 @@
 
 Manager::Manager()
 : auto_pair(true), pair_with(ID_INVALID), print_packets(ALL_VALID),
-  retries(0), timecode_polled_first_cc_trx(0)
-{}
+  retries(0), timecode_polled_first_cc_trx(0)  {}
 
 
 void Manager::init()
@@ -169,18 +168,18 @@ const bool Manager::wait_for_response(const id_t& id, const millis_t& wait_durat
 }
 
 
-const bool Manager::process_rx_pack_buf_and_find_id(const uint32_t& target_id)
+const bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 {
     bool success = false;
     TxType tx_type;
-	uint32_t id;
+	id_t id;
 	RXPacket* packet = NULL; // just using this pointer to make code more readable
 
 	/* Loop through every packet in packet buffer. If it's done then post-process it
 	 * and then check if it's valid.  If so then handle the different types of
 	 * packet.  Finally reset the packet and return.
 	 */
-	for (uint8_t packet_i=0; packet_i<rfm.rx_packet_buffer.NUM_PACKETS; packet_i++) {
+	for (index_t packet_i=0; packet_i<rfm.rx_packet_buffer.NUM_PACKETS; packet_i++) {
 
 		packet = &rfm.rx_packet_buffer.packets[packet_i];
 		if (packet->done()) {

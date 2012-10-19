@@ -10,7 +10,7 @@ namespace utils {
  * for your string plus sentinel char).
  * Blocks until '\r' (carriage return) is received.
  */
-void read_cstring_from_serial(char* str, const uint8_t& length);
+void read_cstring_from_serial(char* str, const index_t& length);
 
 const uint32_t read_uint32_from_serial();
 

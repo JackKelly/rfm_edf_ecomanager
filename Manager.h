@@ -23,7 +23,7 @@ private:
     Rfm12b rfm;
 
     bool auto_pair; /* auto_pair mode on or off? */
-    uint32_t pair_with; /* radio ID to pair with */
+    id_t pair_with; /* radio ID to pair with */
 
     enum {ONLY_KNOWN, ALL_VALID, ALL} print_packets;
 
@@ -68,7 +68,7 @@ private:
 	 *
 	 * @return true if a packet corresponding to id is found
 	 */
-	const bool process_rx_pack_buf_and_find_id(const uint32_t& id);
+	const bool process_rx_pack_buf_and_find_id(const id_t& id);
 
 	void handle_pair_request(const TxType& tx_type, const id_t& id);
 

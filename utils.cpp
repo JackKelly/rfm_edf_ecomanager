@@ -1,9 +1,10 @@
 #include <Arduino.h>
+#include "consts.h"
 #include "utils.h"
 
-void utils::read_cstring_from_serial(char* str, const uint8_t& length)
+void utils::read_cstring_from_serial(char* str, const index_t& length)
 {
-    uint8_t i = 0;
+    index_t i = 0;
     str[0] = '\0';
 
     do {
@@ -21,7 +22,7 @@ void utils::read_cstring_from_serial(char* str, const uint8_t& length)
 
 const uint32_t utils::read_uint32_from_serial()
 {
-    const uint8_t BUFF_LENGTH = 15; /* 10 chars + 1 sentinel char + extras for whitespace.
+    const index_t BUFF_LENGTH = 15; /* 10 chars + 1 sentinel char + extras for whitespace.
                                      * The max value a uint32 can store is
                                      * 4 billion (10 chars decimal). */
     char buff[BUFF_LENGTH];

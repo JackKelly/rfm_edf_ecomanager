@@ -42,7 +42,7 @@ void Rfm12b::enable_tx()
 
 void Rfm12b::tx_next_byte()
 {
-	const uint8_t out = tx_packet.get_next_byte();
+	const byte out = tx_packet.get_next_byte();
 	spi::transfer_word(0xB800 | out);
 
 	if (tx_packet.done()) {
@@ -78,7 +78,7 @@ void Rfm12b::reset_fifo()
 void Rfm12b::interrupt_handler()
 {
 	spi::select(true);
-	const uint8_t status_MSB = spi::transfer_byte(0x00); // get status word MSB
+	const byte status_MSB = spi::transfer_byte(0x00); // get status word MSB
 	spi::transfer_byte(0x00); // get status word LSB
 
 	if (state == RX) {
@@ -261,7 +261,7 @@ void Rfm12b::init () {
 }
 
 
-void Rfm12b::poll_cc_trx(const uint32_t& id)
+void Rfm12b::poll_cc_trx(const id_t& id)
 {
     log(INFO, "Polling CC TRX %lu", id);
 
@@ -269,7 +269,7 @@ void Rfm12b::poll_cc_trx(const uint32_t& id)
 }
 
 
-void Rfm12b::ack_cc_trx(const uint32_t& id)
+void Rfm12b::ack_cc_trx(const id_t& id)
 {
     log(INFO, "ACK CC TRX %lu", id);
     send_command_to_trx(0x41, 0x4B, id);
@@ -278,10 +278,10 @@ void Rfm12b::ack_cc_trx(const uint32_t& id)
 }
 
 
-void Rfm12b::send_command_to_trx(const uint8_t& cmd1,
-        const uint8_t& cmd2, const uint32_t& id)
+void Rfm12b::send_command_to_trx(const byte& cmd1,
+        const byte& cmd2, const id_t& id)
 {
-    uint8_t tx_data[] = {0x46, 0x00, 0x00, 0x00, 0x00,
+    byte tx_data[] = {0x46, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x41, 0x4B, 0x00, 0x00, 0x4F};
 
     // convert 32-bit id into single bytes

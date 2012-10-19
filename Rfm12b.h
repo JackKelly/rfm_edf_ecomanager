@@ -18,12 +18,12 @@ public:
 	 * Poll a CurrentCost transceiver (TRX), e.g. an EDF Wireless Transmitter Plug,
 	 * to ask for the latest wattage reading.
 	 */
-	static void poll_cc_trx(const uint32_t& id);
+	static void poll_cc_trx(const id_t& id);
 
 	/**
 	 * Send acknowledgment to complete pairing.
 	 */
-	static void ack_cc_trx(const uint32_t& id);
+	static void ack_cc_trx(const id_t& id);
 
 	static PacketBuffer rx_packet_buffer; // TODO: volatile?
 
@@ -50,7 +50,7 @@ private:
 	 */
 	static void interrupt_handler();
 
-	static void send_command_to_trx(const uint8_t& cmd1, const uint8_t& cmd2, const uint32_t& id);
+	static void send_command_to_trx(const byte& cmd1, const byte& cmd2, const id_t& id);
 
 };
 

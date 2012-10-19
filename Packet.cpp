@@ -17,13 +17,13 @@ Packet::Packet()
 {}
 
 
-void Packet::set_packet_length(const uint8_t& _packet_length)
+void Packet::set_packet_length(const index_t& _packet_length)
 {
 	packet_length = _packet_length;
 }
 
 
-void Packet::append(const uint8_t* bytes, const uint8_t& length)
+void Packet::append(const byte* bytes, const index_t& length)
 {
 	for (int i=0; i<length; i++) {
 		Packet::append(bytes[i]);
@@ -31,7 +31,7 @@ void Packet::append(const uint8_t* bytes, const uint8_t& length)
 }
 
 
-void Packet::append(const uint8_t& value)
+void Packet::append(const byte& value)
 {
 	if (!done()) {
 		packet[byte_index++] = value;
@@ -61,19 +61,19 @@ void Packet::reset() {
 }
 
 
-const uint8_t Packet::modular_sum(
-		const volatile uint8_t payload[],
-		const uint8_t& length
+const byte Packet::modular_sum(
+		const volatile byte payload[],
+		const byte& length
 		)
 {
-    uint8_t acc = 0;
-    for (uint8_t i=0; i<length; i++) {
+    byte acc = 0;
+    for (index_t i=0; i<length; i++) {
     	acc += payload[i]; // deliberately overflow
     }
     return acc;
 }
 
-const uint8_t Packet::get_byte_index() const
+const volatile index_t& Packet::get_byte_index() const
 {
 	return byte_index;
 }
@@ -82,7 +82,7 @@ const uint8_t Packet::get_byte_index() const
  * TXPacket
  **********************************************/
 
-const uint8_t TXPacket::get_next_byte()
+const byte TXPacket::get_next_byte()
 {
 	if (done()) {
 	    return 0;
@@ -93,19 +93,19 @@ const uint8_t TXPacket::get_next_byte()
 
 
 void TXPacket::assemble(
-        const uint8_t payload[],
-        const uint8_t& payload_length,
+        const byte payload[],
+        const byte& payload_length,
 		const bool add_checksum)
 {
-	const uint8_t HEADER[] = {
+	const byte HEADER[] = {
 			0x55, // Preamble (to allow RX to lock on).
 			0x2D, // Synchron byte 0
 			0xD4  // Synchron byte 1
 	};
-	const uint8_t TAIL[] = {0x40, 0x00};
+	const byte TAIL[] = {0x40, 0x00};
 
-	const uint8_t HEADER_LENGTH = sizeof(HEADER);
-	const uint8_t TAIL_LENGTH   = sizeof(TAIL);
+	const byte HEADER_LENGTH = sizeof(HEADER);
+	const byte TAIL_LENGTH   = sizeof(TAIL);
 
 	reset();
 
@@ -130,7 +130,7 @@ RXPacket::RXPacket()
 :Packet(), tx_type(TX), timecode(0), health(NOT_CHECKED), id(ID_INVALID) {}
 
 
-void RXPacket::append(const uint8_t& value)
+void RXPacket::append(const byte& value)
 {
 	if (!done()) {
 		if (byte_index==0) { // first byte
@@ -155,7 +155,7 @@ void RXPacket::print_id_and_watts() const
 	Serial.print(", t: ");
 	Serial.print(timecode);
 
-	for (uint8_t i=0; i<3; i++) {
+	for (index_t i=0; i<3; i++) {
 		if (watts[i]!=WATTS_INVALID) {
 			Serial.print(", s");
 			Serial.print(i);
@@ -179,7 +179,7 @@ void RXPacket::print_id_and_watts() const
 
 const RXPacket::Health RXPacket::verify_checksum() const
 {
-	const uint8_t calculated_checksum = modular_sum(packet, packet_length-1);
+	const byte calculated_checksum = modular_sum(packet, packet_length-1);
 	return (calculated_checksum == packet[packet_length-1]) ? OK : BAD;
 }
 
@@ -222,17 +222,17 @@ const volatile TxType& RXPacket::get_tx_type() const
 
 void RXPacket::decode_wattage()
 {
-	uint8_t msb;
+	byte msb;
 
 	// Reset
-	for (uint8_t sensor=0; sensor<3; sensor++) {
+	for (index_t sensor=0; sensor<3; sensor++) {
 		watts[sensor] = WATTS_INVALID; // "not valid" value
 	}
 
 	// Decode wattage (TXs and TRXs use different encodings)
 	switch (tx_type) {
 	case TX:
-		for (uint8_t sensor=0; sensor<3; sensor++) {
+		for (index_t sensor=0; sensor<3; sensor++) {
 			if (packet[2+(sensor*2)] & 0x80) { // plugged in
 				msb            = packet[2+(sensor*2)];
 				msb           &= 0x7F;  // mask off first bit.
@@ -278,16 +278,16 @@ const bool RXPacket::is_pairing_request() const
 
 const RXPacket::Health RXPacket::de_manchesterise()
 {
-	const uint8_t ONE  = 0b10000000;
-	const uint8_t ZERO = 0b01000000;
-	uint8_t mask;
-	uint8_t is_one = false;
+	const byte ONE  = 0b10000000;
+	const byte ZERO = 0b01000000;
+	byte mask;
+	byte is_one = false;
 	bool success = true;
 
-	for (uint8_t in_byte_i=0; in_byte_i<packet_length; in_byte_i+=2) {
-		uint8_t output = 0; // the demanchesterised byte
-		for (uint8_t in_byte_offset=0; in_byte_offset<2; in_byte_offset++) {
-			for (uint8_t bit_pair=0; bit_pair<4; bit_pair++) {
+	for (index_t in_byte_i=0; in_byte_i<packet_length; in_byte_i+=2) {
+		byte output = 0; // the demanchesterised byte
+		for (index_t in_byte_offset=0; in_byte_offset<2; in_byte_offset++) {
+			for (index_t bit_pair=0; bit_pair<4; bit_pair++) {
 				mask   = ONE >> bit_pair*2;
 				if ((packet[in_byte_i+in_byte_offset] & mask) == mask) {
 					is_one = true;
@@ -340,13 +340,13 @@ PacketBuffer::PacketBuffer()
 : current_packet(0)
 {}
 
-const bool PacketBuffer::append(const uint8_t& value)
+const bool PacketBuffer::append(const byte& value)
 {
 	packets[current_packet].append(value);
 
 	if (packets[current_packet].done()) {
 	    bool successfully_found_empty_slot = false;
-	    for (uint8_t i=0; i<NUM_PACKETS; i++) { // find empty slot
+	    for (index_t i=0; i<NUM_PACKETS; i++) { // find empty slot
 	        if (!packets[i].done()) {
 	            current_packet = i;
 	            successfully_found_empty_slot = true;

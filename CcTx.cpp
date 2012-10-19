@@ -77,7 +77,7 @@ void CcTx::update(const RXPacket& packet)
 	time_last_seen = packet.get_timecode();
 }
 
-const uint32_t& CcTx::get_eta()
+const id_t& CcTx::get_eta()
 {
     // Sanity-check ETA to make sure it's in the future.
     if (eta < millis()) {
@@ -101,7 +101,7 @@ void CcTx::missing()
 
 void CcTxArray::next()
 {
-    for (uint8_t j=0; j<size; j++) {
+    for (index_t j=0; j<size; j++) {
         if (data[j].get_eta() < current().get_eta()) {
             i = j;
         }
