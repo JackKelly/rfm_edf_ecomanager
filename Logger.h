@@ -27,7 +27,7 @@ void print_log_level(const Level& level)
     case ERROR: Serial.print("(ERROR)"); break;
     case FATAL: Serial.print("(FATAL)"); break;
     }
-#endif // DEBUG
+#endif // LOGGING
 }
 
 inline
@@ -40,7 +40,7 @@ void print_log_levels()
     }
     print_log_level(FATAL);
     Serial.println("");
-#endif // DEBUG
+#endif // LOGGING
 }
 
 

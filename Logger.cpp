@@ -2,4 +2,4 @@
 
 #ifdef LOGGING
 Level Logger::log_threshold = WARN;
-#endif // DEBUG
+#endif // LOGGING
