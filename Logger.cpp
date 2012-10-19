@@ -1,5 +1,5 @@
 #include "Logger.h"
 
-#ifdef DEBUG
+#ifdef LOGGING
 Level Logger::log_threshold = WARN;
 #endif // DEBUG

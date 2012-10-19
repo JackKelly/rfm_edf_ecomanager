@@ -7,17 +7,17 @@
 
 enum Level {DEBUG, INFO, WARN, ERROR, FATAL};
 
-#ifdef DEBUG
+#ifdef LOGGING
 class Logger {
 public:
     static Level log_threshold;
 };
-#endif // DEBUG
+#endif // LOGGING
 
 inline
 void print_log_level(const Level& level)
 {
-#ifdef DEBUG
+#ifdef LOGGING
     Serial.print(level);
 
     switch (level) {
@@ -33,20 +33,20 @@ void print_log_level(const Level& level)
 inline
 void print_log_levels()
 {
-#ifdef DEBUG
+#ifdef LOGGING
     for (uint8_t level=DEBUG; level<FATAL; level+=1) {
         print_log_level((Level)level);
         Serial.print(", ");
     }
     print_log_level(FATAL);
     Serial.println("");
-#endif //DEBUG
+#endif // DEBUG
 }
 
 
 inline void log(const Level& level, const char *__fmt, ...)
 {
-#ifdef DEBUG
+#ifdef LOGGING
     if (Logger::log_threshold <= level) {
         Serial.print(millis());
         Serial.print(" ");
@@ -62,7 +62,7 @@ inline void log(const Level& level, const char *__fmt, ...)
 
         Serial.println(buf);
     }
-#endif // DEBUG
+#endif // LOGGING
 }
 
 

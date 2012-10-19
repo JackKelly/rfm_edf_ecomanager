@@ -69,7 +69,7 @@ void Manager::handle_serial_commands()
         }
         break;
     case 'v':
-#ifdef DEBUG
+#ifdef LOGGING
         Serial.println("ACK enter log level:");
         print_log_levels();
         Logger::log_threshold = (Level)utils::read_uint32_from_serial();
@@ -77,8 +77,8 @@ void Manager::handle_serial_commands()
         print_log_level(Logger::log_threshold);
         Serial.println("");
 #else
-        Serial.println("NAK debugging disabled!");
-#endif // DEBUG
+        Serial.println("NAK logging disabled!");
+#endif // LOGGING
         break;
     case 'k': print_packets = ONLY_KNOWN; Serial.println("ACK only print data from known transmitters"); break;
     case 'u': print_packets = ALL_VALID; Serial.println("ACK print all valid packets"); break;
