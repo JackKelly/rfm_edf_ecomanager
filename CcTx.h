@@ -1,12 +1,16 @@
 #ifndef SENSOR_H
 #define SENSOR_H
 
+#ifdef TESTING
+#include "tests/FakeArduino.h"
+#else
 #include <Arduino.h>
 #include "new.h"
+#endif
+
 #include "Packet.h"
 #include "DynamicArray.h"
-
-//TODO: try this on Windows Arduino IDE
+#include "RollingAv.h"
 
 /**
  * Class for Current Cost / EDF Transceiver (TRX) units
@@ -32,12 +36,12 @@ public:
 	void update(const RXPacket& packet);
 	void missing();
 	const millis_t& get_eta();
-	void print() const;
+	void print();
 
 protected:
 	void init(); // called from constructors
 	millis_t eta; // estimated time of arrival in milliseconds since power-on
-	uint16_t sample_period;
+	RollingAv sample_period;
 	uint8_t  num_periods;
 	millis_t time_last_seen;
 };

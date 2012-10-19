@@ -11,6 +11,8 @@
 #include <inttypes.h>
 #include "../consts.h"
 
+typedef uint8_t byte;
+
 enum PrintFormat {DEC, HEX};
 
 enum Level {DEBUG, INFO, WARN, ERROR, FATAL};

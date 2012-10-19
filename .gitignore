@@ -5,3 +5,4 @@
 Release
 *.o
 CcArray_test
+tests/RollingAv_test

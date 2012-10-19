@@ -33,14 +33,13 @@ void CcTx::init()
     // force the Arduino IDE to use C++11.
     // http://stackoverflow.com/questions/308276/c-call-constructor-from-constructor
     eta = 0xFFFFFFFF;
-    sample_period = SAMPLE_PERIOD;
     num_periods = 0;
     time_last_seen = 0;
 }
 
 CcTx::~CcTx() {}
 
-void CcTx::print() const
+void CcTx::print()
 {
     Serial.print("{id: ");
     Serial.print(id);
@@ -51,28 +50,30 @@ void CcTx::print() const
     Serial.print(", eta: ");
     Serial.print(eta);
     Serial.print(", sample_period: ");
-    Serial.print(sample_period);
+    Serial.print(sample_period.get_av());
     Serial.println("}");
 }
 
 void CcTx::update(const RXPacket& packet)
 {
     if (time_last_seen != 0) {
+        uint16_t new_sample_period;
+
         // update sample period for this Sensor
         // (seems to vary a little between sensors)
-        // TODO: take an average for the sample period
-        log(DEBUG, "CC_TX ID=%lu, old sample_period=%u", id, sample_period);
+        log(DEBUG, "CC_TX ID=%lu, old sample_period=%u", id, sample_period.get_av());
 
-        sample_period = (packet.get_timecode() - time_last_seen) / num_periods;
+        new_sample_period = (packet.get_timecode() - time_last_seen) / num_periods;
 
         // Check the new sample_period is sane
-        if (sample_period < 5700 || sample_period > 6300) {
-            sample_period = SAMPLE_PERIOD;
+        if (new_sample_period > 5700 && new_sample_period < 6300) {
+            log(DEBUG, "Adding new_sample_period %u", new_sample_period);
+            sample_period.add_sample(new_sample_period);
         }
 
-        log(DEBUG, "CC_TX ID=%lu, new sample_period=%u", id, sample_period);
+        log(DEBUG, "CC_TX ID=%lu, new sample_period=%u", id, sample_period.get_av());
     }
-	eta = packet.get_timecode() + sample_period;
+	eta = packet.get_timecode() + sample_period.get_av();
 	num_periods = 1;
 	time_last_seen = packet.get_timecode();
 }
@@ -88,7 +89,7 @@ const id_t& CcTx::get_eta()
 
 void CcTx::missing()
 {
-	eta += sample_period;
+	eta += sample_period.get_av();
 	num_periods++;
 
 	log(INFO, "id:%lu is missing. New ETA=%lu, num_periods missed=%u", id, eta, num_periods);
