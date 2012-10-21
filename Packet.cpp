@@ -13,9 +13,9 @@
  **********************************************/
 
 Packet::Packet()
-: length(MAX_PACKET_LENGTH), byte_index(0)
-{}
+: length(MAX_PACKET_LENGTH), byte_index(0) {}
 
+Packet::~Packet() {}
 
 void Packet::set_packet_length(const index_t& _packet_length)
 {

@@ -10,6 +10,7 @@
 class Packet {
 public:
 	Packet();
+	virtual ~Packet();
 
 	void set_packet_length(const index_t& _packet_length);
 
