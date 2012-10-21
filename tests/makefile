@@ -4,7 +4,10 @@ link = g++ -Wall -g -O0 -D TESTING
 #-fno-elide-constructors
 # -I/usr/lib/avr/include/ -D UBRRH -I/usr/lib/avr/include/avr/pgmspace.h -I/usr/share/arduino/hardware/arduino/cores/arduino/ -I/usr/share/arduino/hardware/arduino/variants/standard/
 
-all: CcArray_test RollingAv_test
+all: CcArray_test RollingAv_test Packet_test
+
+Packet_test: Packet_test.o Packet.o FakeArduino.o
+	$(link) Packet_test.o Packet.o FakeArduino.o -lboost_unit_test_framework -o Packet_test && ./Packet_test
 
 RollingAv_test: RollingAv.o RollingAv_test.o
 	$(link) RollingAv.o RollingAv_test.o -lboost_unit_test_framework -o RollingAv_test && ./RollingAv_test
@@ -30,6 +33,8 @@ RollingAv.o: ../RollingAv.h ../RollingAv.cpp
 RollingAv_test.o: RollingAv_test.cpp ../RollingAv.h ../RollingAv.cpp
 	$(compile) RollingAv_test.cpp	
 
+Packet_test.o: Packet_test.cpp ../Packet.h ../Packet.cpp
+	$(compile) Packet_test.cpp
 	
 clean:
 	rm -rf *.o CcArray_test

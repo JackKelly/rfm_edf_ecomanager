@@ -15,10 +15,11 @@ public:
 
 	void append(const byte& value);
 
-	void append(const byte* bytes, const index_t& length);
+	void append(const byte bytes[], const index_t& length);
 
 	/**
 	 * Print contents of packet to Serial port.
+	 * TODO: is this still needed?
 	 */
 	void print_bytes() const;
 
@@ -29,10 +30,17 @@ public:
 
 	/**
 	 * Returns true if we've reached the end of the packet.
+	 * TODO: can this be made private?
 	 */
 	const bool done() const;
 
+	// TODO: can this be made private?
 	const volatile index_t& get_byte_index() const;
+
+#ifdef TESTING
+	const volatile index_t& get_length() const;
+	const volatile byte* get_packet() const;
+#endif
 
 protected:
 	/* Longest packet = 1B preamble + 2B sync + 12B EDF IAM + 2B tail
@@ -42,7 +50,7 @@ protected:
 	/****************************************************
 	 * Member variables used within ISR and outside ISR *
 	 ****************************************************/
-	volatile index_t packet_length; // number of bytes in this packet
+	volatile index_t length; // number of bytes in this packet
 	volatile index_t byte_index;    // index of next byte to write/read
 	// we can't use new() on the
 	// arduino (not easily, anyway) so let's just have a statically declared
@@ -111,7 +119,7 @@ private:
 
     /**
      * Run this after packet has been received fully to
-     * set packet_ok, watts and id.
+     * demanchesterise (if from TX), set health, watts and id.
      */
     void post_process();
 

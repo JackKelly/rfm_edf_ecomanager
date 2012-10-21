@@ -13,17 +13,17 @@
  **********************************************/
 
 Packet::Packet()
-: packet_length(MAX_PACKET_LENGTH), byte_index(0)
+: length(MAX_PACKET_LENGTH), byte_index(0)
 {}
 
 
 void Packet::set_packet_length(const index_t& _packet_length)
 {
-	packet_length = _packet_length;
+	length = _packet_length;
 }
 
 
-void Packet::append(const byte* bytes, const index_t& length)
+void Packet::append(const byte bytes[], const index_t& length)
 {
 	for (int i=0; i<length; i++) {
 		Packet::append(bytes[i]);
@@ -42,7 +42,7 @@ void Packet::append(const byte& value)
 void Packet::print_bytes() const
 {
 
-	for (int i=0; i<packet_length; i++) {
+	for (int i=0; i<length; i++) {
 		Serial.print(packet[i], HEX);
 		Serial.print(" ");
 	}
@@ -53,7 +53,7 @@ void Packet::print_bytes() const
 
 const bool Packet::done() const
 {
-	return byte_index >= packet_length;
+	return byte_index >= length;
 }
 
 void Packet::reset() {
@@ -77,6 +77,19 @@ const volatile index_t& Packet::get_byte_index() const
 {
 	return byte_index;
 }
+
+#ifdef TESTING
+    const volatile index_t& Packet::get_length() const
+    {
+        return length;
+    }
+
+    const volatile byte* Packet::get_packet() const
+    {
+        return packet;
+    }
+#endif
+
 
 /**********************************************
  * TXPacket
@@ -137,10 +150,10 @@ void RXPacket::append(const byte& value)
 			timecode = millis(); // record timecode that first byte received
 			if (value==0x52) { // this packet is from a CC_TRX
                 tx_type = TRX;
-                packet_length  = CC_TRX_PACKET_LENGTH;
+                length  = CC_TRX_PACKET_LENGTH;
 			} else {
                 tx_type = TX;
-                packet_length  = CC_TX_PACKET_LENGTH;
+                length  = CC_TX_PACKET_LENGTH;
 			}
 		}
 		packet[byte_index++] = value;
@@ -179,8 +192,8 @@ void RXPacket::print_id_and_watts() const
 
 const RXPacket::Health RXPacket::verify_checksum() const
 {
-	const byte calculated_checksum = modular_sum(packet, packet_length-1);
-	return (calculated_checksum == packet[packet_length-1]) ? OK : BAD;
+	const byte calculated_checksum = modular_sum(packet, length-1);
+	return (calculated_checksum == packet[length-1]) ? OK : BAD;
 }
 
 
@@ -189,6 +202,7 @@ void RXPacket::reset()
     byte_index = 0;
     health = NOT_CHECKED;
 }
+
 
 const bool RXPacket::is_ok()
 {
@@ -280,34 +294,32 @@ const RXPacket::Health RXPacket::de_manchesterise()
 {
 	const byte ONE  = 0b10000000;
 	const byte ZERO = 0b01000000;
-	byte mask;
-	byte is_one = false;
+	const byte MASK = 0b11000000;
+	byte bit, this_byte, this_byte_masked;
 	bool success = true;
 
-	for (index_t in_byte_i=0; in_byte_i<packet_length; in_byte_i+=2) {
+	for (index_t src_byte_i=0; src_byte_i<length; src_byte_i+=2) {
 		byte output = 0; // the demanchesterised byte
-		for (index_t in_byte_offset=0; in_byte_offset<2; in_byte_offset++) {
+		for (index_t src_byte_offset=0; src_byte_offset<2; src_byte_offset++) {
+		    this_byte = packet[src_byte_i+src_byte_offset];
 			for (index_t bit_pair=0; bit_pair<4; bit_pair++) {
-				mask   = ONE >> bit_pair*2;
-				if ((packet[in_byte_i+in_byte_offset] & mask) == mask) {
-					is_one = true;
+				this_byte_masked = this_byte & (MASK >> bit_pair*2);
+				if (this_byte_masked == ONE >> bit_pair*2) {
+				    bit = 1;
+				} else if (this_byte_masked == ZERO >> bit_pair*2) {
+				    bit = 0;
 				} else {
-					mask   = ZERO >> bit_pair*2;
-					if ((packet[in_byte_i+in_byte_offset] & mask) == mask) {
-						is_one = false;
-					} else {
-						// de-manchesterisation failed
-						success = false;
-					}
+				    success = false;
+				    bit = 0;
 				}
 				output = output << 1;
-				output |= is_one;
+				output |= bit;
 			}
 		}
-		packet[in_byte_i / 2] = output;
+		packet[src_byte_i / 2] = output;
 	}
 
-	packet_length /= 2;
+	length /= 2;
 
 	return success ? OK : BAD;
 }
