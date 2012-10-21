@@ -29,7 +29,8 @@ public:
 class FakeSerial {
 public:
     static void print(const char* str, const PrintFormat print_format = DEC);
-    static void print(const int str, const PrintFormat print_format = DEC);
+    static void print(const int& str, const PrintFormat print_format = DEC);
+    static void print(const unsigned int& str, const PrintFormat print_format = DEC);
 
     static void println(const char* str, const PrintFormat print_format = DEC);
 private:

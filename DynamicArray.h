@@ -36,13 +36,14 @@ template <class item_t>
 class DynamicArray {
 protected:
     item_t * data;
-    index_t size;
-    index_t i; // index to the "current" item
+    index_t size, // total amount of allocated space
+            i, // index to the "current" item
+            n; // number of items currently stored
     id_t    min_id, max_id;
 
 public:
     DynamicArray()
-    : data(0), size(0), i(0), min_id(0), max_id(0) {}
+    : data(0), size(0), i(0), n(0), min_id(0), max_id(0) {}
 
 
     virtual ~DynamicArray()
@@ -53,11 +54,12 @@ public:
 
     // Copy Constructor (compile with -fno-elide-constructors to see this in action)
     DynamicArray(const DynamicArray& src)
-    : size(src.size), i(src.size), min_id(src.min_id), max_id(src.max_id)
+    : size(src.size), i(src.size), n(src.n),
+      min_id(src.min_id), max_id(src.max_id)
     {
         data = new item_t[size];
         if (data) {
-            src.copy(data, 0, 0, size);
+            src.copy(data, 0, 0, n);
         } else {
             log(ERROR, "OUT OF MEMORY");
         }
@@ -69,14 +71,15 @@ public:
             delete [] data;
         }
 
-        size = src.size;
-        i = src.i;
+        size   = src.size;
+        i      = src.i;
+        n      = src.n;
         min_id = src.min_id;
         max_id = src.max_id;
 
         data = new item_t[size];
         if (data) {
-            src.copy(data, 0, 0, size);
+            src.copy(data, 0, 0, n);
         } else {
             log(ERROR, "OUT OF MEMORY");
         }
@@ -85,7 +88,7 @@ public:
 
     item_t& operator[](const index_t& index)
     {
-        if (data && index < size) {
+        if (data && index < n) {
             return data[index];
         } else {
             log(WARN, "DYNAMIC ARRAY OUT OF RANGE ERROR");
@@ -95,7 +98,7 @@ public:
 
     const item_t& operator[](const index_t& index) const
     {
-        if (data && index < size) {
+        if (data && index < n) {
             return data[index];
         } else {
             log(WARN, "DYNAMIC ARRAY OUT OF RANGE ERROR");
@@ -103,30 +106,30 @@ public:
     }
 
 
-    const index_t get_size() const { return size; }
+    const index_t get_n() const { return n; }
 
     const index_t get_i() const { return i; }
 
     item_t& current() { return data[i]; }
 
     virtual void print_name() const = 0;
-/*
-    bool grow(const index_t new_size)
+
+    bool set_size(const index_t& new_size)
     {
-        if (size==0) {
-            data = new item_t[new_size];
-            if (data) {
-                size = new_size;
-                return true;
-            } else {
-                log(WARN, "DYNAMIC ARRAY OUT OF MEMORY");
-                return false;
-            }
+        item_t* new_data = new item_t[new_size];
+        if (new_data) {
+            size = new_size;
         } else {
-            // TODO
+            log(WARN, "DYNAMIC ARRAY OUT OF MEMORY");
+            return false;
         }
+
+        copy(new_data, 0, 0, n); // won't do anything if n==0
+        delete [] data;
+        data = new_data;
+        return true;
     }
-*/
+
 
     bool append(const id_t& id)
     {
@@ -137,19 +140,27 @@ public:
             return false;
         }
 
-        item_t * new_data = new item_t[size+1];
-        if (new_data == 0) {
-            log(ERROR, "OUT OF MEMORY");
-            return false;
+        if (n < size) {
+            /* so just move items from upper_bound to size up
+             * 1 position to keep array sorted after appending new item */
+            copy(data, upper_bound, upper_bound+1, n-upper_bound);
+            data[upper_bound] = item_t(id);
+            n++;
+        } else { // n == size so allocate more memory
+            item_t * new_data = new item_t[size+1];
+            if (new_data == 0) {
+                log(ERROR, "OUT OF MEMORY");
+                return false;
+            }
+
+            copy(new_data, 0, 0, upper_bound);
+            new_data[upper_bound] = item_t(id);
+            copy(new_data, upper_bound, upper_bound+1, n-upper_bound);
+
+            delete[] data;
+            data = new_data;
+            n = ++size;
         }
-
-        copy(new_data, 0, 0, upper_bound);
-        new_data[upper_bound] = item_t(id);
-        copy(new_data, upper_bound, upper_bound+1, size-upper_bound);
-
-        delete[] data;
-        data = new_data;
-        size++;
 
         // Update min_id and max if necessary
         if (size==1) {
@@ -170,12 +181,15 @@ public:
     void copy(item_t * dst, const index_t src_start,
             const index_t dst_start, const index_t length) const
     {
-        for (index_t i=0; i<length; i++) {
+        // copy backwards so shifting contents
+        // upwards 1 place works
+        for (index_t i=length-1; i<length; i--) { // termination condition is i<length because i is unsigned
             dst[i+dst_start] = data[i+src_start];
         }
     }
 
 
+    /* Entry point for find when called with just target_id */
     const bool find(const id_t& target_id) const
     {
         index_t index = 0;
@@ -186,7 +200,7 @@ public:
     /** Attempts to find target ID in data.
      *  If target can't be found then returns false and index == upper_bound nearest target.
      *  Note that if we search for an ID that's above the largest ID in index will be
-     *  equal to size. */
+     *  equal to n. */
     const bool find(const id_t& target_id, index_t& index) const
     {
 
@@ -194,29 +208,29 @@ public:
             index = 0;
             return false;
         } else if (target_id > max_id) {
-            index = size;
+            index = n;
             return false;
         }
-        else if (size > 1) {
+        else if (n > 1) {
             // Try to guess the candidate item position by looking at the size of target_id
             // relative to difference of max - min.  This will give us an educated guess and
             // then we search backwards or forwards from that starting guess.
             float diff = max_id - min_id;
-            index = ((target_id - min_id) / diff) * (size-1);
+            index = ((target_id - min_id) / diff) * (n-1);
 
-            if (index >= size) index = size;
+            if (index >= n) index = n;
 
             // Search backwards
             for (; index > 0 && data[index].id > target_id; index--)
                 ;
 
             // Search forwards
-            for (; index < size && data[index].id < target_id; index++)
+            for (; index < n && data[index].id < target_id; index++)
                 ;
 
             return data[index].id == target_id;
         }
-        else if (size == 1) {
+        else if (n == 1) {
             if (target_id == operator[](0).id) {
                 index = 0;
                 return true;
@@ -248,16 +262,17 @@ public:
     }
 #endif // TESTING
 
+
+    /* Don't de-allocate memory; just set n and i to 0 */
     void delete_all()
     {
-        size = i = 0;
+        n = i = 0;
         min_id = max_id = 0;
-        delete [] data;
-        data = 0;
         Serial.print("ACK deleted all");
         print_name();
         Serial.println("s");
     }
+
 
     void print() const
     {
@@ -266,9 +281,9 @@ public:
         print_name();
         Serial.println("s: [");
 
-        for (index_t i=0; i<size; i++) {
+        for (index_t i=0; i<n; i++) {
             data[i].print();
-            if (i < size-1) {
+            if (i < n-1) {
                 Serial.println(",");
             }
         }

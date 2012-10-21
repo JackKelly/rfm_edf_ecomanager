@@ -63,11 +63,18 @@ void FakeSerial::print(const char* str, const PrintFormat print_format)
     std::cout << str;
 }
 
-void FakeSerial::print(const int str, const PrintFormat print_format)
+void FakeSerial::print(const int& str, const PrintFormat print_format)
 {
     format(print_format);
     std::cout << str;
 }
+
+void FakeSerial::print(const unsigned int& str, const PrintFormat print_format)
+{
+    format(print_format);
+    std::cout << (unsigned int)str;
+}
+
 
 void FakeSerial::println(const char* str, const PrintFormat print_format)
 {
