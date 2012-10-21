@@ -129,15 +129,23 @@ private:
 	const Health verify_checksum() const;
 
 	/**
-	 * sets watts
+	 * Decodes watts and sets Packet::watts
 	 */
 	void decode_wattage();
 
 	void decode_id();
 
 	/**
-	 * DeManchesterise this packet
-	 * @return true if de-manchesterisation went OK.
+	 * De-Manchesterise this packet.
+	 *
+	 * Data from CC TXs appears to be "Manchesterised" such that x bytes of
+	 * Manchesterised data is decoded to produce x/2 bytes of data.
+	 * A bit pair of 01 in the source encodes a 0 and a 10 encodes a 1.
+	 * The fact that CC TX data is Manchesterised appears to have been
+	 * first figured out by gangliontwitch.
+	 *
+	 * @return OK if de-manchesterisation went OK
+	 * @return BAD if any illegal bit pairs (11 or 00) were found
 	 */
 	const Health de_manchesterise();
 

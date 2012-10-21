@@ -292,27 +292,38 @@ const bool RXPacket::is_pairing_request() const
 
 const RXPacket::Health RXPacket::de_manchesterise()
 {
-	const byte ONE  = 0b10000000;
-	const byte ZERO = 0b01000000;
-	const byte MASK = 0b11000000;
-	byte bit, this_byte, this_byte_masked;
-	bool success = true;
+	const byte ONE  = 0b10000000; // 1 in Manchester-speak is 10
+	const byte ZERO = 0b01000000; // 0 in Manchester-speak is 01
+	const byte MASK = 0b11000000; // 2-bit window to select current pit pair
 
-	for (index_t src_byte_i=0; src_byte_i<length; src_byte_i+=2) {
-		byte output = 0; // the demanchesterised byte
-		for (index_t src_byte_offset=0; src_byte_offset<2; src_byte_offset++) {
-		    this_byte = packet[src_byte_i+src_byte_offset];
-			for (index_t bit_pair=0; bit_pair<4; bit_pair++) {
-				this_byte_masked = this_byte & (MASK >> bit_pair*2);
-				if (this_byte_masked == ONE >> bit_pair*2) {
+	byte bit, // The output bit encoded by the current source bit pair
+	     src_byte, // the source byte we're currently processing
+	     src_byte_masked, // the source byte masked to expose only the current pit pair
+	     output; // the demanchesterised byte
+	index_t src_byte_i, src_byte_offset, bit_pair;
+	bool success = true; // true unless we find an illegal bit pair (00 and 11 are illegal)
+
+	for (src_byte_i=0; src_byte_i<length; src_byte_i+=2) {
+
+		output = 0;
+
+		// Decode 2 source bytes into 1 output byte
+		for (src_byte_offset=0; src_byte_offset<2; src_byte_offset++) {
+
+		    src_byte = packet[src_byte_i+src_byte_offset];
+
+		    // Decode the 4 bit pairs in src_byte
+			for (bit_pair=0; bit_pair<8; bit_pair+=2) {
+				src_byte_masked = src_byte & (MASK >> bit_pair);
+				if (src_byte_masked == ONE >> bit_pair) {
 				    bit = 1;
-				} else if (this_byte_masked == ZERO >> bit_pair*2) {
+				} else if (src_byte_masked == ZERO >> bit_pair) {
 				    bit = 0;
 				} else {
 				    success = false;
 				    bit = 0;
 				}
-				output = output << 1;
+				output <<= 1; // bit-shift output 1 to the left
 				output |= bit;
 			}
 		}

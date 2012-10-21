@@ -164,6 +164,7 @@ BOOST_AUTO_TEST_CASE(demanchesterise)
     BOOST_CHECK_EQUAL_COLLECTIONS(packet, packet+8, demanch_target, demanch_target+8);
 }
 
+
 BOOST_AUTO_TEST_CASE(demanchesteriseFail)
 {
     RXPacket rx_packet;
