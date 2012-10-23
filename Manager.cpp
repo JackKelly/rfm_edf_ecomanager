@@ -183,10 +183,10 @@ const bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 
 		packet = &rfm.rx_packet_buffer.packets[packet_i];
 		if (packet->done()) {
+            tx_type = packet->get_tx_type();
 			if (packet->is_ok()) {
-				id = packet->get_id();
 				success |= (id == target_id); // Was this the packet we were looking for?
-				tx_type = packet->get_tx_type();
+	            id = packet->get_id();
 
 				//******** PAIRING REQUEST **********************
 				if (packet->is_pairing_request()) {
@@ -229,7 +229,7 @@ const bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 				}
 
 			} else { // packet is not OK
-				log(INFO, "Rx'd broken packet");
+				log(INFO, "Rx'd broken %s packet", tx_type==TX ? "TX" : "TRX");
 				if (print_packets == ALL) {
 				    packet->print_bytes();
 				}
