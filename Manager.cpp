@@ -30,7 +30,7 @@ void Manager::init()
 void Manager::run()
 {
     //************* HANDLE TRANSMITTERS AND TRANSCEIVERS ***********
-    if (cc_txs.get_size() == 0) {
+    if (cc_txs.get_n() == 0) {
         // There are no CC TXs so all we have to do is poll TRXs
         poll_next_cc_trx();
     } else {
@@ -100,7 +100,7 @@ void Manager::handle_serial_commands()
 
 void Manager::poll_next_cc_trx()
 {
-    if (cc_trxs.get_size() == 0) return;
+    if (cc_trxs.get_n() == 0) return;
 
 	// don't continually poll TRXs;
     // instead wait SAMPLE_PERIOD between polling the first TRX and polling it again
