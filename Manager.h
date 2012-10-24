@@ -57,24 +57,16 @@ private:
 	 *****************************************/
     CcTxArray cc_txs;
 
-	/* length of time we're willing to wait
-	 * for a CC TX.  We'll open the window
-	 * half of WINDOW before the next CC TX's ETA. */
-	static const uint16_t CC_TX_WINDOW = 1000;
-
     /*****************************************
      * CC TRX (e.g. EDF IAMs)                *
      *****************************************/
 	CcTrxArray cc_trxs;
 
-    static const uint8_t CC_TRX_TIMEOUT = 100; /* milliseconds to wait for reply */
-
 	uint8_t retries; /* number of times we've tried to poll the current TRX */
-	static const uint8_t MAX_RETRIES = 5;
 
 	/* We need to keep track of when we started the TRX roll call so we can
 	 * ensure that we only do one roll call per SAMPLE_PERIOD */
-	millis_t timecode_started_trx_roll_call;
+	millis_t time_to_start_next_trx_roll_call;
 
 	/***************************
 	 * Private methods

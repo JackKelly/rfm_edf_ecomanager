@@ -81,7 +81,7 @@ void CcTx::update(const RXPacket& packet)
 
         log(DEBUG, "CC_TX ID=%lu, new sample_period=%u", id, sample_period.get_av());
     }
-	eta = packet.get_timecode() + sample_period.get_av();
+	eta = packet.get_timecode() + sample_period.get_av() - CC_TX_WINDOW_OPEN;
 	num_periods = 1;
 	last_seen = packet.get_timecode();
 }
@@ -90,7 +90,16 @@ void CcTx::update(const RXPacket& packet)
 const id_t& CcTx::get_eta()
 {
     // Sanity-check ETA to make sure it's in the future.
-    if (eta < millis()) {
+    // TODO: remove if this is never used
+    if (eta < millis() &&
+            eta+SAMPLE_PERIOD < millis()+SAMPLE_PERIOD) /* one possible reason
+            for eta < millis() is that millis() has rolled over.
+            If millis() has rolled over
+            then eta+SAMPLE_PERIOD > millis()+SAMPLE_PERIOD.  In other words, only
+            set eta to 0xFFFFFFFF if the fact that eta < millis cannot be explained
+            by roll-over.  We want to let roll-over do its thing.  */
+    {
+        log(DEBUG, "eta %lu < millis() %lu", eta, millis());
         eta = 0xFFFFFFFF;
     }
 	return eta;

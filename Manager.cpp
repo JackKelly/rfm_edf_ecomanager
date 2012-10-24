@@ -17,7 +17,7 @@
 
 Manager::Manager()
 : auto_pair(true), pair_with(ID_INVALID), print_packets(ALL_VALID),
-  retries(0), timecode_started_trx_roll_call(0)  {}
+  retries(0), time_to_start_next_trx_roll_call(0)  {}
 
 
 void Manager::init()
@@ -29,16 +29,17 @@ void Manager::init()
 
 void Manager::run()
 {
+    using namespace utils;
     //************* HANDLE TRANSMITTERS AND TRANSCEIVERS ***********
     if (cc_txs.get_n() == 0) {
         // There are no CC TXs so all we have to do is poll TRXs
         poll_next_cc_trx();
     } else {
-        if (millis() < (cc_txs.current().get_eta() - (CC_TX_WINDOW/2) )) {
+        if (in_future(cc_txs.current().get_eta())) {
             // We're far enough away from the next expected CC TX transmission
             // to mean that we have time to poll TRXs
             poll_next_cc_trx();
-        } else  {
+        } else {
             wait_for_cc_tx();
         }
     }
@@ -104,14 +105,15 @@ void Manager::handle_serial_commands()
 void Manager::poll_next_cc_trx()
 {
     if (cc_trxs.get_n() == 0) return;
+    using namespace utils;
 
 	// don't continually poll TRXs;
     // instead only do one roll call per SAMPLE_PERIOD
-	if (cc_trxs.get_i()==0) {
-		if (millis() < timecode_started_trx_roll_call+SAMPLE_PERIOD && retries==0) {
+	if (cc_trxs.get_i()==0 && retries==0) {
+		if (in_future(time_to_start_next_trx_roll_call)) {
 			return; // We've finished polling all TRXs for this SAMPLE_PERIOD.
 		} else {
-			timecode_started_trx_roll_call = millis();
+			time_to_start_next_trx_roll_call = millis() + SAMPLE_PERIOD;
 		}
 	}
 
@@ -138,8 +140,6 @@ void Manager::poll_next_cc_trx()
 
 void Manager::wait_for_cc_tx()
 {
-    // TODO handle roll-over over millis().
-
     // listen for TX for defined period.
     log(DEBUG, "Window open! Expecting %lu at %lu", cc_txs.current().id, cc_txs.current().get_eta());
     bool success = wait_for_response(cc_txs.current().id, CC_TX_WINDOW);
@@ -154,13 +154,13 @@ void Manager::wait_for_cc_tx()
 
 const bool Manager::wait_for_response(const id_t& id, const millis_t& wait_duration)
 {
-    // wait for response
-    const millis_t start_time = millis();
-    const millis_t end_time   = start_time + wait_duration;
+    using namespace utils;
+
+    const millis_t end_time = millis() + wait_duration;
     bool success = false;
 
     log(DEBUG, "Waiting %lu ms for ID %lu", wait_duration, id);
-    while (millis() < end_time) {
+    while (in_future(end_time)) {
         if (process_rx_pack_buf_and_find_id(id)) {
             // We got a reply from the TRX we polled
             success = true;

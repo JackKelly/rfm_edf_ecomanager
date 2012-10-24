@@ -35,4 +35,13 @@ const index_t  INVALID_INDEX  = 0xFF;
 /* Consts defining behaviour of system */
 const millis_t SAMPLE_PERIOD  = 6000; /* miliseconds    */
 
+/* length of time we're willing to wait
+ * for a CC TX.  We'll open the window
+ * half of WINDOW before the next CC TX's ETA. */
+static const uint16_t CC_TX_WINDOW = 1000;
+static const uint16_t CC_TX_WINDOW_OPEN = CC_TX_WINDOW / 2;
+
+static const uint8_t CC_TRX_TIMEOUT = 100; /* milliseconds to wait for reply */
+static const uint8_t MAX_RETRIES = 5; /* Max num times we'll try to poll a TRX per roll call */
+
 #endif /* CONSTS_H_ */
