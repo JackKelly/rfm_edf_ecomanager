@@ -12,8 +12,7 @@
  * DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
-#include <Arduino.h>
-#include "new.h"
+//#include <Arduino.h>
 #include "Manager.h"
 #include "Logger.h"
 

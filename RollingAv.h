@@ -16,7 +16,8 @@
 #ifndef ROLLINGAV_H_
 #define ROLLINGAV_H_
 
-#include <inttypes.h>
+//#include <inttypes.h>
+#include <Arduino.h>
 #include "consts.h"
 
 /**

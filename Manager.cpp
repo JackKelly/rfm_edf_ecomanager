@@ -5,13 +5,12 @@
  *      Author: jack
  */
 
-#ifdef ARDUINO
-#include <inttypes.h>
-#endif
+//#ifdef ARDUINO
+//#include <inttypes.h>
+//#endif
 
-#include "new.h"
+//#include <Arduino.h>
 #include "Manager.h"
-#include "consts.h"
 #include "Logger.h"
 #include "utils.h"
 
@@ -22,6 +21,8 @@ Manager::Manager()
 
 void Manager::init()
 {
+    // todo check that this works in the Manager() constructor, then
+    // remove init()
     rfm.init();
     rfm.enable_rx();
 }

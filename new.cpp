@@ -5,9 +5,10 @@
  *      Author: jack
  */
 
+#include <Arduino.h>
 #include "new.h"
 
-#ifdef DEFINE_NEW_AND_DELETE // defined in new.h if required
+//#ifdef DEFINE_NEW_AND_DELETE // defined in new.h if required
 
 void * operator new(size_t size)
 {
@@ -19,8 +20,9 @@ void operator delete(void * ptr)
 {
   free(ptr);
 }
-#endif // DEFINE_NEW_AND_DELETE
+//#endif // DEFINE_NEW_AND_DELETE
 
+//#warning "DEFINING NEW[] AND DELETE[]"
 
 void * operator new[](size_t size)
 {

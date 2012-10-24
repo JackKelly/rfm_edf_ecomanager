@@ -13,7 +13,7 @@
 #ifndef PACKET_H_
 #define PACKET_H_
 
-#include <stdint.h>
+#include <Arduino.h>
 #include "consts.h"
 
 /**

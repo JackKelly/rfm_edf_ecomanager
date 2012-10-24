@@ -16,8 +16,7 @@
 #ifdef TESTING
 #include "tests/FakeArduino.h"
 #else
-#include <Arduino.h>
-#include "new.h"
+//#include <Arduino.h>
 #endif
 
 #include "Packet.h"

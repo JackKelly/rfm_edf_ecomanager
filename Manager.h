@@ -29,7 +29,7 @@
 #ifndef MANAGER_H_
 #define MANAGER_H_
 
-#include <Arduino.h>
+//#include <Arduino.h>
 #include "consts.h"
 #include "Rfm12b.h"
 #include "Packet.h"

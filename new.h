@@ -37,12 +37,12 @@
  * So if NEW_H is not defined then we should
  * define new and delete. */
 
-#ifndef NEW_H
-#define NEW_H
-#define DEFINE_NEW_AND_DELETE
+//#ifndef NEW_H
+//#define NEW_H
+//#define DEFINE_NEW_AND_DELETE
 void * operator new(size_t size);
 void operator delete(void * ptr);
-#endif /* NEW_H */
+//#endif /* NEW_H */
 
 //#endif /* GCC_VERSION */
 

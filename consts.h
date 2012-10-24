@@ -16,7 +16,8 @@
 #ifndef CONSTS_H_
 #define CONSTS_H_
 
-#include <inttypes.h>
+//#include <inttypes.h>
+#include <Arduino.h>
 
 typedef uint32_t id_t;     /* type for storing IDs */
 typedef uint32_t millis_t; /* type for storing times in milliseconds */
