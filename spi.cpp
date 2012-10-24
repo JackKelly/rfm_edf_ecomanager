@@ -23,11 +23,11 @@ void spi::init()
     bitSet(SS_DDR, SS_BIT);
     digitalWrite(SS, 1);
 
-    // Set direction register for SCK and MOSI pin.
-    // MISO pin automatically overrides to INPUT.
-    // When the SS pin is set as OUTPUT, it can be used as
-    // a general purpose output port (it doesn't influence
-    // SPI operations).
+    /* Set direction register for SCK and MOSI pin.
+     * MISO pin automatically overrides to INPUT.
+     * When the SS pin is set as OUTPUT, it can be used as
+     * a general purpose output port (it doesn't influence
+     * SPI operations). */
 
     pinMode(SPI_SCK, OUTPUT);
     pinMode(SPI_MOSI, OUTPUT);
@@ -35,25 +35,25 @@ void spi::init()
     pinMode(SPI_MISO, INPUT);
   
 
-    // SPE enables SPI
-    // MSTR instructs AVR to operate in SPI master mode
+    /* SPE enables SPI
+     * MSTR instructs AVR to operate in SPI master mode */
     SPCR = _BV(SPE) | _BV(MSTR);
 
     pinMode(RFM_IRQ, INPUT);
     digitalWrite(RFM_IRQ, 1); // pull-up
 
-	// RFM12b can cope with a 20MHz SPI clock. Page 13 of the RFM12b manual
-	// gives clock high time and clock low time as 25ns each. Hence total
-	// cycle time is 50ns. Hence max frequency is 1/( 50 x 10^-9 ).
-	// DIV2 is the fastest we can go.
-    // https://sites.google.com/site/qeewiki/books/avr-guide/spi
-    // But jeelib uses clk/8 for sending so let's use that
+	/* RFM12b can cope with a 20MHz SPI clock. Page 13 of the RFM12b manual
+	 * gives clock high time and clock low time as 25ns each. Hence total
+	 * cycle time is 50ns. Hence max frequency is 1/( 50 x 10^-9 ).
+	 * DIV2 is the fastest we can go.
+     * https://sites.google.com/site/qeewiki/books/avr-guide/spi
+     * But jeelib uses clk/8 for sending so let's use that */
     SPSR |= _BV(SPI2X);
     bitClear(SPCR, SPR1);
 	bitSet(SPCR, SPR0);
 
-	// CPOL=0 (base value of clock is zero)
-	// CPHA=0 (data bits read upon rising edge of clock)
+	/* CPOL=0 (base value of clock is zero)
+	 * CPHA=0 (data bits read upon rising edge of clock) */
 	bitClear(SPCR, CPOL);
 	bitClear(SPCR, CPHA);
 }
