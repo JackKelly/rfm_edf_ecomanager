@@ -100,6 +100,7 @@ public:
         return *this;
     }
 
+
     item_t& operator[](const index_t& index)
     {
         if (data && index < n) {
@@ -122,11 +123,15 @@ public:
 
     const index_t get_n() const { return n; }
 
+
     const index_t get_i() const { return i; }
+
 
     item_t& current() { return data[i]; }
 
+
     virtual void print_name() const = 0;
+
 
     bool set_size(const index_t& new_size)
     {
@@ -143,6 +148,23 @@ public:
         data = new_data;
         return true;
     }
+
+
+#ifndef TESTING
+    void set_size_from_serial()
+    {
+        Serial.print("ACK enter number of");
+        print_name();
+        Serial.println("s:");
+
+        index_t new_size = utils::read_uint32_from_serial();
+
+        bool success;
+        success = set_size(new_size);
+
+        Serial.println(success ? "ACK" : "NAK");
+    }
+#endif // TESTING
 
 
     bool append(const id_t& id)
@@ -264,12 +286,9 @@ public:
         id_t id = utils::read_uint32_from_serial();
 
         bool success;
-        success = append( id );
-        if (success)
-            Serial.print("ACK");
-        else
-            Serial.print("NAK not");
+        success = append(id);
 
+        Serial.print(success ? "ACK" : "NAK not");
         Serial.print(" added");
         print_name();
         Serial.println(id);
@@ -305,7 +324,6 @@ public:
         Serial.println("");
         Serial.println("]}");
     }
-
 };
 
 #endif /* DYNAMICARRAY_H_ */

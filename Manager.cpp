@@ -85,6 +85,8 @@ void Manager::handle_serial_commands()
     case 'b': print_packets = ALL; Serial.println("ACK print all"); break;
     case 'n': cc_txs.get_id_from_serial();  break;
     case 'N': cc_trxs.get_id_from_serial(); break;
+    case 's': cc_txs.set_size_from_serial(); break;
+    case 'S': cc_trxs.set_size_from_serial(); break;
     case 'd': cc_txs.delete_all();  break;
     case 'D': cc_trxs.delete_all(); break;
     case 'l': cc_txs.print();  break;
