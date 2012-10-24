@@ -2,7 +2,15 @@
  * DynamicArray.h
  *
  *  Created on: 16 Oct 2012
- *      Author: jack
+ *      Author: Jack Kelly
+ *
+ * THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE
+ * LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+ * PARTIES PROVIDE THE PROGRAM “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE
+ * QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU. SHOULD THE PROGRAM PROVE
+ * DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
 #ifndef DYNAMICARRAY_H_
@@ -23,23 +31,26 @@
 
 // TODO: add remove() function to remove ID
 // TODO: implement a way to batch-add a specific number of items
-// TODO: should be initialised to some size, then populated, then grown only if size limit is reached.
 
 /**
- * A DynamicArray template for storing multiple CcTx and CcTrx objects.
+ * A DynamicArray template for storing multiple CcTx or CcTrx objects.
  * Keeps objects in order of ID to make searching for IDs fast (because
  * searching happens very frequently).
  * Appending items to the list happens very rarely so it's OK to make
  * append operations quite costly.
+ * To minimise memory fragmentation, it is best to allocate space using
+ * set_size(index_t) prior to appending data to the array using append(id_t).
+ * However, append(id_t) will allocate more space if n == size when append(id_t)
+ * is called.
  */
 template <class item_t>
 class DynamicArray {
 protected:
     item_t * data;
-    index_t size, // total amount of allocated space
-            i, // index to the "current" item
-            n; // number of items currently stored
-    id_t    min_id, max_id;
+    index_t size, /* total number of allocated slots */
+            i,    /* index of the "current" item */
+            n;    /* number of items currently stored */
+    id_t    min_id, max_id; /* used to speed up search */
 
 public:
     DynamicArray()
@@ -48,11 +59,13 @@ public:
 
     virtual ~DynamicArray()
     {
-        delete[] data; // TODO: test that this doesn't blow up if data = NULL
+        delete[] data;
     }
 
 
-    // Copy Constructor (compile with -fno-elide-constructors to see this in action)
+    /* Copy Constructor
+     * (compile with -fno-elide-constructors to see this in action when copying
+     *  a DynamicArray object back from a function) */
     DynamicArray(const DynamicArray& src)
     : size(src.size), i(src.size), n(src.n),
       min_id(src.min_id), max_id(src.max_id)
@@ -65,9 +78,10 @@ public:
         }
     }
 
+
     DynamicArray<item_t>& operator=(const DynamicArray& src)
     {
-        if (data) { // check if we're overwriting some old data
+        if (data) { /* check if we're overwriting some old data */
             delete [] data;
         }
 

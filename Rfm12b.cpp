@@ -33,12 +33,14 @@ void Rfm12b::enable_rx()
 	reset_fifo();
 }
 
+
 void Rfm12b::enable_tx()
 {
 	// See power managament command in enable_rx()
 	spi::transfer_word(0x8239);
 	state = TX;
 }
+
 
 void Rfm12b::tx_next_byte()
 {
@@ -50,6 +52,7 @@ void Rfm12b::tx_next_byte()
 		enable_rx();
 	}
 }
+
 
 void Rfm12b::reset_fifo()
 {
@@ -74,6 +77,7 @@ void Rfm12b::reset_fifo()
 	spi::transfer_word(0xCA83); // my attempt to enable FIFO fill
 
 }
+
 
 void Rfm12b::interrupt_handler()
 {
@@ -102,7 +106,6 @@ void Rfm12b::interrupt_handler()
 	}
 
 }
-
 
 
 void Rfm12b::init () {
@@ -284,7 +287,7 @@ void Rfm12b::send_command_to_trx(const byte& cmd1,
     byte tx_data[] = {0x46, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x41, 0x4B, 0x00, 0x00, 0x4F};
 
-    // convert 32-bit id into single bytes
+    // convert 32-bit id to single bytes
     tx_data[1] = (id & 0xFF000000) >> 24;
     tx_data[2] = (id & 0x00FF0000) >> 16;
     tx_data[3] = (id & 0x0000FF00) >>  8;

@@ -15,6 +15,7 @@ void spi::select(const bool state)
 	}
 }
 
+
 void spi::init()
 {
   
@@ -57,14 +58,17 @@ void spi::init()
 	bitClear(SPCR, CPHA);
 }
 
+
 const uint8_t spi::transfer_byte(const uint8_t& out)
 {
 	SPDR = out;
     // this loop spins 4 usec with a 2 MHz SPI clock
     while (!(SPSR & _BV(SPIF)))
         ; // SPIF goes high when data transfer complete
+
     return SPDR;
 }
+
 
 const uint16_t spi::transfer_word(const uint16_t& cmd, const bool& ss)
 {
@@ -74,4 +78,3 @@ const uint16_t spi::transfer_word(const uint16_t& cmd, const bool& ss)
 	if (ss) select(false);
 	return reply;
 }
-

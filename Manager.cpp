@@ -17,7 +17,7 @@
 
 Manager::Manager()
 : auto_pair(true), pair_with(ID_INVALID), print_packets(ALL_VALID),
-  retries(0), timecode_polled_first_cc_trx(0)  {}
+  retries(0), timecode_started_trx_roll_call(0)  {}
 
 
 void Manager::init()
@@ -50,6 +50,7 @@ void Manager::run()
         handle_serial_commands();
     }
 }
+
 
 void Manager::handle_serial_commands()
 {
@@ -103,12 +104,12 @@ void Manager::poll_next_cc_trx()
     if (cc_trxs.get_n() == 0) return;
 
 	// don't continually poll TRXs;
-    // instead wait SAMPLE_PERIOD between polling the first TRX and polling it again
+    // instead only do one roll call per SAMPLE_PERIOD
 	if (cc_trxs.get_i()==0) {
-		if (millis() < timecode_polled_first_cc_trx+SAMPLE_PERIOD && retries==0) {
+		if (millis() < timecode_started_trx_roll_call+SAMPLE_PERIOD && retries==0) {
 			return; // We've finished polling all TRXs for this SAMPLE_PERIOD.
 		} else {
-			timecode_polled_first_cc_trx = millis();
+			timecode_started_trx_roll_call = millis();
 		}
 	}
 

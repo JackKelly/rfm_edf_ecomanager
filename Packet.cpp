@@ -15,7 +15,9 @@
 Packet::Packet()
 : length(MAX_PACKET_LENGTH), byte_index(0) {}
 
+
 Packet::~Packet() {}
+
 
 void Packet::set_packet_length(const index_t& _packet_length)
 {
@@ -56,6 +58,7 @@ const bool Packet::done() const
 	return byte_index >= length;
 }
 
+
 void Packet::reset() {
 	byte_index = 0;
 }
@@ -73,10 +76,12 @@ const byte Packet::modular_sum(
     return acc;
 }
 
+
 const volatile index_t& Packet::get_byte_index() const
 {
 	return byte_index;
 }
+
 
 #ifdef TESTING
     const volatile index_t& Packet::get_length() const
@@ -363,6 +368,7 @@ PacketBuffer::PacketBuffer()
 : current_packet(0)
 {}
 
+
 const bool PacketBuffer::append(const byte& value)
 {
 	packets[current_packet].append(value);
@@ -385,5 +391,3 @@ const bool PacketBuffer::append(const byte& value)
 		return false;
 	}
 }
-
-

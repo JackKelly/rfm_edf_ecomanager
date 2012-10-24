@@ -15,6 +15,7 @@ RollingAv::RollingAv(): index(0), av_cache(SAMPLE_PERIOD), cache_valid(true)
     }
 }
 
+
 void RollingAv::add_sample(const uint16_t& sample)
 {
     samples[index++] = sample;
@@ -23,6 +24,7 @@ void RollingAv::add_sample(const uint16_t& sample)
     }
     cache_valid = false;
 }
+
 
 const uint16_t RollingAv::get_av()
 {

@@ -8,9 +8,12 @@
 
 CcTrx::CcTrx(): id(ID_INVALID) {}
 
+
 CcTrx::CcTrx(const id_t& _id): id(_id) {}
 
+
 CcTrx::~CcTrx() {}
+
 
 void CcTrx::print() const
 {
@@ -24,20 +27,24 @@ void CcTrx::print() const
 
 CcTx::CcTx():CcTrx() { init(); }
 
+
 CcTx::CcTx(const id_t& _id): CcTrx(_id) { init(); }
+
 
 void CcTx::init()
 {
-    // use of this init() function could be avoided if
-    // we use C++11, but I can't think of any way to
-    // force the Arduino IDE to use C++11.
-    // http://stackoverflow.com/questions/308276/c-call-constructor-from-constructor
+    /* This init() function could be avoided if
+     * we use C++11, but I can't think of any way to
+     * force the Arduino IDE to use C++11.
+     * http://stackoverflow.com/questions/308276/c-call-constructor-from-constructor */
     eta = 0xFFFFFFFF;
     num_periods = 0;
     last_seen = 0;
 }
 
+
 CcTx::~CcTx() {}
+
 
 void CcTx::print()
 {
@@ -53,6 +60,7 @@ void CcTx::print()
     Serial.print(sample_period.get_av());
     Serial.print("}");
 }
+
 
 void CcTx::update(const RXPacket& packet)
 {
@@ -78,6 +86,7 @@ void CcTx::update(const RXPacket& packet)
 	last_seen = packet.get_timecode();
 }
 
+
 const id_t& CcTx::get_eta()
 {
     // Sanity-check ETA to make sure it's in the future.
@@ -86,6 +95,7 @@ const id_t& CcTx::get_eta()
     }
 	return eta;
 }
+
 
 void CcTx::missing()
 {
@@ -111,6 +121,7 @@ void CcTxArray::next()
             current().id, current().get_eta());
 }
 
+
 void CcTxArray::print_name() const
 {
     Serial.print(" CC_TX");
@@ -126,6 +137,7 @@ void CcTrxArray::next()
     i++;
     if (i==size) i=0;
 }
+
 
 void CcTrxArray::print_name() const
 {

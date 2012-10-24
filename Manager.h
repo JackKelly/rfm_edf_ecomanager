@@ -3,6 +3,27 @@
  *
  *  Created on: 26 Sep 2012
  *      Author: jack
+ *
+ *  This class runs the show.  It is responsible for:
+ *
+ *    - Polling TRXs in sequence (a "roll call")
+ *       - retrying MAX_RETRIES times if no response is received
+ *       - ensure we only do one roll call per SAMPLE_PERIOD
+ *
+ *    - Listening for TXs.
+ *       - We try to learn when TXs are expected to arrive so we can pause
+ *         TRX polling for CC_TX_WINDOW milliseconds to minimise
+ *         the chances of an RF collision.
+ *
+ *    - Listening for commands from the serial port.
+ *
+ * THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE
+ * LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+ * PARTIES PROVIDE THE PROGRAM “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER
+ * EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE
+ * QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU. SHOULD THE PROGRAM PROVE
+ * DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
 #ifndef MANAGER_H_
@@ -25,7 +46,11 @@ private:
     bool auto_pair; /* auto_pair mode on or off? */
     id_t pair_with; /* radio ID to pair with */
 
-    enum {ONLY_KNOWN, ALL_VALID, ALL} print_packets;
+    enum {
+        ONLY_KNOWN, /* Only print packets we know about */
+        ALL_VALID,  /* Print all valid packets */
+        ALL         /* Print all packets, including broken ones */
+    } print_packets;
 
 	/*****************************************
 	 * CC TX (e.g. whole-house transmitters) *
@@ -34,7 +59,7 @@ private:
 
 	/* length of time we're willing to wait
 	 * for a CC TX.  We'll open the window
-	 * half of WINDOW before CC TX's ETA. */
+	 * half of WINDOW before the next CC TX's ETA. */
 	static const uint16_t CC_TX_WINDOW = 1000;
 
     /*****************************************
@@ -42,12 +67,14 @@ private:
      *****************************************/
 	CcTrxArray cc_trxs;
 
-    static const uint8_t CC_TRX_TIMEOUT = 100; // milliseconds to wait for reply
+    static const uint8_t CC_TRX_TIMEOUT = 100; /* milliseconds to wait for reply */
 
-	uint8_t retries; // for polling CC TRXs
-	static const uint8_t MAX_RETRIES = 5; // for polling CC TRXs
+	uint8_t retries; /* number of times we've tried to poll the current TRX */
+	static const uint8_t MAX_RETRIES = 5;
 
-	millis_t timecode_polled_first_cc_trx;
+	/* We need to keep track of when we started the TRX roll call so we can
+	 * ensure that we only do one roll call per SAMPLE_PERIOD */
+	millis_t timecode_started_trx_roll_call;
 
 	/***************************
 	 * Private methods
@@ -59,6 +86,7 @@ private:
 
 	void wait_for_cc_tx();
 
+	/* @return true if we get a response from id before wait_duration is up */
 	const bool wait_for_response(const id_t& id, const millis_t& wait_duration);
 
 	void handle_serial_commands();
