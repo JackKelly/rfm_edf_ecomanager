@@ -48,17 +48,17 @@ CcTx::~CcTx() {}
 
 void CcTx::print()
 {
-    Serial.print("{id: ");
+    Serial.print(F("{id: "));
     Serial.print(id);
-    Serial.print(", last_seen: ");
+    Serial.print(F(", last_seen: "));
     Serial.print(last_seen);
-    Serial.print(", num_periods_missed: ");
+    Serial.print(F(", num_periods_missed: "));
     Serial.print(num_periods);
-    Serial.print(", eta: ");
+    Serial.print(F(", eta: "));
     Serial.print(eta);
-    Serial.print(", sample_period: ");
+    Serial.print(F(", sample_period: "));
     Serial.print(sample_period.get_av());
-    Serial.print("}");
+    Serial.print(F("}"));
 }
 
 
@@ -133,7 +133,7 @@ void CcTxArray::next()
 
 void CcTxArray::print_name() const
 {
-    Serial.print(" CC_TX");
+    Serial.print(F(" CC_TX"));
 }
 
 
@@ -150,5 +150,5 @@ void CcTrxArray::next()
 
 void CcTrxArray::print_name() const
 {
-    Serial.print(" CC_TRX");
+    Serial.print(F(" CC_TRX"));
 }

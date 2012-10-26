@@ -46,10 +46,10 @@ void Packet::print_bytes() const
 
 	for (int i=0; i<length; i++) {
 		Serial.print(packet[i], HEX);
-		Serial.print(" ");
+		Serial.print(F(" "));
 	}
 
-	Serial.println("");
+	Serial.println(F(""));
 }
 
 
@@ -168,30 +168,26 @@ void RXPacket::append(const byte& value)
 
 void RXPacket::print_id_and_watts() const
 {
-	Serial.print("{id: ");
+	Serial.print(F("{id: "));
 	Serial.print(id);
-	Serial.print(", t: ");
+	Serial.print(F(", t: "));
 	Serial.print(timecode);
 
 	for (index_t i=0; i<3; i++) {
 		if (watts[i]!=WATTS_INVALID) {
-			Serial.print(", s");
+			Serial.print(F(", s"));
 			Serial.print(i);
-			Serial.print(": ");
+			Serial.print(F(": "));
 			Serial.print(watts[i]);
 		}
 	}
 
 	if (tx_type == TRX) {
-	    Serial.print(", state: ");
-	    if (packet[10]==0x53) {
-	        Serial.print("on");
-	    } else {
-	        Serial.print("off");
-	    }
+	    Serial.print(F(", state: "));
+	    Serial.print(packet[10]==0x53 ? F("on") : F("off"));
 	}
 
-	Serial.println("}");
+	Serial.println(F("}"));
 }
 
 

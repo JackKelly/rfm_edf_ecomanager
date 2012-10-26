@@ -58,33 +58,33 @@ void Manager::handle_serial_commands()
 {
     char incomming_byte = Serial.read();
     switch (incomming_byte) {
-    case 'a': auto_pair = true;  Serial.println("ACK auto_pair on"); break;
-    case 'm': auto_pair = false; Serial.println("ACK audo_pair off"); break;
+    case 'a': auto_pair = true;  Serial.println(F("ACK auto_pair on")); break;
+    case 'm': auto_pair = false; Serial.println(F("ACK audo_pair off")); break;
     case 'p':
         if (auto_pair) {
-            Serial.println("NAK Enable manual pairing before 'p' cmd.");
+            Serial.println(F("NAK Enable manual pairing before 'p' cmd."));
         } else {
-            Serial.println("ACK Enter ID:");
+            Serial.println(F("ACK Enter ID:"));
             pair_with = utils::read_uint32_from_serial();
-            Serial.print("ACK pair_with set to ");
+            Serial.print(F("ACK pair_with set to "));
             Serial.println(pair_with);
         }
         break;
     case 'v':
 #ifdef LOGGING
-        Serial.println("ACK enter log level:");
+        Serial.println(F("ACK enter log level:"));
         print_log_levels();
         Logger::log_threshold = (Level)utils::read_uint32_from_serial();
-        Serial.print("ACK Log level set to ");
+        Serial.print(F("ACK Log level set to "));
         print_log_level(Logger::log_threshold);
-        Serial.println("");
+        Serial.println(F(""));
 #else
-        Serial.println("NAK logging disabled!");
+        Serial.println(F("NAK logging disabled!"));
 #endif // LOGGING
         break;
-    case 'k': print_packets = ONLY_KNOWN; Serial.println("ACK only print data from known transmitters"); break;
-    case 'u': print_packets = ALL_VALID; Serial.println("ACK print all valid packets"); break;
-    case 'b': print_packets = ALL; Serial.println("ACK print all"); break;
+    case 'k': print_packets = ONLY_KNOWN; Serial.println(F("ACK only print data from known transmitters")); break;
+    case 'u': print_packets = ALL_VALID; Serial.println(F("ACK print all valid packets")); break;
+    case 'b': print_packets = ALL; Serial.println(F("ACK print all")); break;
     case 'n': cc_txs.get_id_from_serial();  break;
     case 'N': cc_trxs.get_id_from_serial(); break;
     case 's': cc_txs.set_size_from_serial(); break;
@@ -95,9 +95,9 @@ void Manager::handle_serial_commands()
     case 'L': cc_trxs.print(); break;
     case '\r': break; // ignore carriage returns
     default:
-        Serial.print("NAK unrecognised command '");
+        Serial.print(F("NAK unrecognised command '"));
         Serial.print(incomming_byte);
-        Serial.println("'");
+        Serial.println(F("'"));
         break;
     }
 }
@@ -265,9 +265,9 @@ void Manager::handle_pair_request(const TxType& tx_type, const id_t& id)
         pair(tx_type);
     } else {
         // Manual pair mode. Tell user about pair request.
-        Serial.print("{PR: ");
+        Serial.print(F("{PR: "));
         Serial.print(id);
-        Serial.println("}");
+        Serial.println(F("}"));
     }
 }
 
@@ -289,9 +289,9 @@ void Manager::pair(const TxType& tx_type)
     }
 
     if (success) {
-        Serial.print("{pw: ");
+        Serial.print(F("{pw: "));
         Serial.print(pair_with);
-        Serial.println(" }");
+        Serial.println(F(" }"));
     }
 
     pair_with = ID_INVALID; // reset

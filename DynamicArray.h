@@ -30,7 +30,6 @@
 #include "utils.h"
 
 // TODO: add remove() function to remove ID
-// TODO: implement a way to batch-add a specific number of items
 
 /**
  * A DynamicArray template for storing multiple CcTx or CcTrx objects.
@@ -156,16 +155,16 @@ public:
 #ifndef TESTING
     void set_size_from_serial()
     {
-        Serial.print("ACK enter number of");
+        Serial.print(F("ACK enter number of"));
         print_name();
-        Serial.println("s:");
+        Serial.println(F("s:"));
 
         index_t new_size = utils::read_uint32_from_serial();
 
         bool success;
         success = set_size(new_size);
 
-        Serial.println(success ? "ACK" : "NAK");
+        Serial.println(success ? F("ACK") : F("NAK"));
     }
 #endif // TESTING
 
@@ -282,17 +281,17 @@ public:
 #ifndef TESTING
     void get_id_from_serial()
     {
-        Serial.print("ACK enter ");
+        Serial.print(F("ACK enter "));
         print_name();
-        Serial.println(" ID to add:");
+        Serial.println(F(" ID to add:"));
 
         id_t id = utils::read_uint32_from_serial();
 
         bool success;
         success = append(id);
 
-        Serial.print(success ? "ACK" : "NAK not");
-        Serial.print(" added");
+        Serial.print(success ? F("ACK") : F("NAK not"));
+        Serial.print(F(" added"));
         print_name();
         Serial.println(id);
     }
@@ -304,28 +303,27 @@ public:
     {
         n = i = 0;
         min_id = max_id = 0;
-        Serial.print("ACK deleted all");
+        Serial.print(F("ACK deleted all"));
         print_name();
-        Serial.println("s");
+        Serial.println(F("s"));
     }
 
 
     void print() const
     {
-        Serial.println("ACK");
-        Serial.print("{");
+        Serial.println(F("ACK"));
+        Serial.print(F("{"));
         print_name();
-        Serial.println("s: [");
+        Serial.println(F("s: ["));
 
         for (index_t i=0; i<n; i++) {
             data[i].print();
             if (i < n-1) {
-                Serial.println(",");
+                Serial.println(F(","));
             }
         }
 
-        Serial.println("");
-        Serial.println("]}");
+        Serial.println(F("\r\n]}"));
     }
 };
 

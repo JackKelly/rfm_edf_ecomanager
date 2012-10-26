@@ -15,7 +15,7 @@ void utils::read_cstring_from_serial(char* str, const index_t& length)
         }
     } while (str[i-1] != '\r');
 
-    Serial.println("");
+    Serial.println(F(""));
     Serial.flush();
     str[i] = '\0';
 }

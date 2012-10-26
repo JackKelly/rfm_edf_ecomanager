@@ -33,11 +33,11 @@ void print_log_level(const Level& level)
     Serial.print(level);
 
     switch (level) {
-    case DEBUG: Serial.print("(DEBUG)"); break;
-    case INFO: Serial.print("(INFO)"); break;
-    case WARN: Serial.print("(WARN)"); break;
-    case ERROR: Serial.print("(ERROR)"); break;
-    case FATAL: Serial.print("(FATAL)"); break;
+    case DEBUG: Serial.print(F("(DEBUG)")); break;
+    case INFO: Serial.print(F("(INFO)")); break;
+    case WARN: Serial.print(F("(WARN)")); break;
+    case ERROR: Serial.print(F("(ERROR)")); break;
+    case FATAL: Serial.print(F("(FATAL)")); break;
     }
 #endif // LOGGING
 }
@@ -48,10 +48,10 @@ void print_log_levels()
 #ifdef LOGGING
     for (uint8_t level=DEBUG; level<FATAL; level+=1) {
         print_log_level((Level)level);
-        Serial.print(", ");
+        Serial.print(F(", "));
     }
     print_log_level(FATAL);
-    Serial.println("");
+    Serial.println(F(""));
 #endif // LOGGING
 }
 
@@ -75,9 +75,9 @@ inline void log(const Level& level, const char *__fmt, ...)
     const uint8_t LENGTH = 64;
     if (Logger::log_threshold <= level) {
         Serial.print(millis());
-        Serial.print(" ");
+        Serial.print(F(" "));
         print_log_level(level);
-        Serial.print(" ");
+        Serial.print(F(" "));
 
         char fmt[LENGTH];
         flash_strcpy(fmt, __fmt);
