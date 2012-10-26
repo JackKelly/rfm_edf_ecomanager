@@ -40,11 +40,6 @@ public:
 
 	static PacketBuffer rx_packet_buffer;
 
-	static void set_freq_for_cctx();
-	static void set_freq_for_cctrx();
-	static void enable_afc();
-	static void disable_afc();
-
 private:
 	static enum State {RX, TX} state; // state RFM12b is in
 	static TXPacket tx_packet; // the packet about to be sent

@@ -120,10 +120,8 @@ void Manager::poll_next_cc_trx()
 		}
 	}
 
-	rfm.set_freq_for_cctrx();
 	rfm.poll_cc_trx(cc_trxs.current().id);
 	const bool success = wait_for_response(cc_trxs.current().id, CC_TRX_TIMEOUT);
-	rfm.set_freq_for_cctx();
 
 	if (success) {
         // We got a reply from the TRX we polled
