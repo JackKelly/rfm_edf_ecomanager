@@ -74,7 +74,7 @@ public:
         if (data) {
             src.copy(data, 0, 0, n);
         } else {
-            log(ERROR, "OUT OF MEMORY");
+            log(ERROR, PSTR("OUT OF MEMORY"));
         }
     }
 
@@ -95,18 +95,20 @@ public:
         if (data) {
             src.copy(data, 0, 0, n);
         } else {
-            log(ERROR, "OUT OF MEMORY");
+            log(ERROR, PSTR("OUT OF MEMORY"));
         }
         return *this;
     }
 
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreturn-type"
     item_t& operator[](const index_t& index)
     {
         if (data && index < n) {
             return data[index];
         } else {
-            log(WARN, "DYNAMIC ARRAY OUT OF RANGE ERROR");
+            log(WARN, PSTR("DYNAMIC ARRAY OUT OF RANGE ERROR"));
         }
     }
 
@@ -116,9 +118,10 @@ public:
         if (data && index < n) {
             return data[index];
         } else {
-            log(WARN, "DYNAMIC ARRAY OUT OF RANGE ERROR");
+            log(WARN, PSTR("DYNAMIC ARRAY OUT OF RANGE ERROR"));
         }
     }
+#pragma GCC diagnostic pop
 
 
     const index_t get_n() const { return n; }
@@ -139,7 +142,7 @@ public:
         if (new_data) {
             size = new_size;
         } else {
-            log(WARN, "DYNAMIC ARRAY OUT OF MEMORY");
+            log(WARN, PSTR("DYNAMIC ARRAY OUT OF MEMORY"));
             return false;
         }
 
@@ -172,7 +175,7 @@ public:
         index_t upper_bound = 0;
 
         if (find(id, upper_bound)) {
-            log(DEBUG, "%lu is already in data.", id);
+            log(DEBUG, PSTR("%lu is already in data."), id);
             return false;
         }
 
@@ -185,7 +188,7 @@ public:
         } else { // n == size so allocate more memory
             item_t * new_data = new item_t[size+1];
             if (new_data == 0) {
-                log(ERROR, "OUT OF MEMORY");
+                log(ERROR, PSTR("OUT OF MEMORY"));
                 return false;
             }
 

@@ -55,21 +55,38 @@ void print_log_levels()
 #endif // LOGGING
 }
 
+#ifdef LOGGING
+inline
+void flash_strcpy(char* dst, const char* src)
+{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wparentheses"
+
+    while (*dst++ = pgm_read_byte(src++))
+        ;
+
+#pragma GCC diagnostic pop
+}
+#endif
 
 inline void log(const Level& level, const char *__fmt, ...)
 {
 #ifdef LOGGING
+    const uint8_t LENGTH = 64;
     if (Logger::log_threshold <= level) {
         Serial.print(millis());
         Serial.print(" ");
         print_log_level(level);
         Serial.print(" ");
 
-        char buf[64];
+        char fmt[LENGTH];
+        flash_strcpy(fmt, __fmt);
+
+        char buf[LENGTH];
 
         va_list vl;
         va_start(vl, __fmt);
-        vsprintf(buf, __fmt, vl);
+        vsprintf(buf, fmt, vl);
         va_end(vl);
 
         Serial.println(buf);

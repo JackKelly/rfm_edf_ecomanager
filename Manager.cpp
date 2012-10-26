@@ -128,11 +128,11 @@ void Manager::poll_next_cc_trx()
 	} else {
 	    // We didn't get a reply from the TRX we polled
 		if (retries < MAX_RETRIES) {
-            log(DEBUG, "Missing TRX %lu, retries=%d", cc_trxs.current().id, retries);
+            log(DEBUG, PSTR("Missing TRX %lu, retries=%d"), cc_trxs.current().id, retries);
 			retries++;
 		} else {
 			cc_trxs.next();
-			log(INFO, "Missing TRX %lu. Giving up.", cc_trxs.current().id);
+			log(INFO, PSTR("Missing TRX %lu. Giving up."), cc_trxs.current().id);
 			retries = 0;
 		}
 	}
@@ -142,9 +142,9 @@ void Manager::poll_next_cc_trx()
 void Manager::wait_for_cc_tx()
 {
     // listen for TX for defined period.
-    log(DEBUG, "Window open! Expecting %lu at %lu", cc_txs.current().id, cc_txs.current().get_eta());
+    log(DEBUG, PSTR("Window open! Expecting %lu at %lu"), cc_txs.current().id, cc_txs.current().get_eta());
     bool success = wait_for_response(cc_txs.current().id, CC_TX_WINDOW);
-    log(DEBUG, "Window closed. success=%d", success);
+    log(DEBUG, PSTR("Window closed. success=%d"), success);
 
     if (!success) {
         // tell whole-house TX it missed its slot
@@ -160,7 +160,7 @@ const bool Manager::wait_for_response(const id_t& id, const millis_t& wait_durat
     const millis_t end_time = millis() + wait_duration;
     bool success = false;
 
-    log(DEBUG, "Waiting %lu ms for ID %lu", wait_duration, id);
+    log(DEBUG, PSTR("Waiting %lu ms for ID %lu"), wait_duration, id);
     while (in_future(end_time)) {
         if (process_rx_pack_buf_and_find_id(id)) {
             // We got a reply from the TRX we polled
@@ -206,11 +206,11 @@ const bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 				    index_t cc_tx_i;
 				    found = cc_txs.find(id, cc_tx_i);
 				    if (found) { // received ID is a CC_TX id we know about
+                        packet->print_id_and_watts(); // send data over serial
 				        cc_txs[cc_tx_i].update(*packet);
-				        packet->print_id_and_watts(); // send data over serial
 				        cc_txs.next();
 				    } else {
-				        log(INFO, "Rx'd CC_TX packet with unknown ID %lu", id);
+				        log(INFO, PSTR("Rx'd CC_TX packet with unknown ID %lu"), id);
 				        if (print_packets >= ALL_VALID) {
 				            packet->print_id_and_watts(); // send data over serial
 				        }
@@ -224,7 +224,7 @@ const bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 				    }
 				    //********* UNKNOWN TRX ID *************************
 				    else {
-				        log(INFO, "Rx'd CC_TRX packet with unknown ID %lu", id);
+				        log(INFO, PSTR("Rx'd CC_TRX packet with unknown ID %lu"), id);
 				        if (print_packets >= ALL_VALID) {
 				            packet->print_id_and_watts(); // send data over serial
 				        }
@@ -233,7 +233,7 @@ const bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 				}
 
 			} else { // packet is not OK
-				log(INFO, "Rx'd broken %s packet", tx_type==TX ? "TX" : "TRX");
+				log(INFO, PSTR("Rx'd broken %s packet"), tx_type==TX ? "TX" : "TRX");
 				if (print_packets == ALL) {
 				    packet->print_bytes();
 				}
@@ -248,7 +248,7 @@ const bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 
 void Manager::handle_pair_request(const TxType& tx_type, const id_t& id)
 {
-    log(DEBUG, "Pair req from %lu", id);
+    log(DEBUG, PSTR("Pair req from %lu"), id);
     if (tx_type==TX && cc_txs.find(id)) {
         // ignore pair request from CC_TX we're already paired with
     } else if (tx_type==TRX && cc_trxs.find(id)) {

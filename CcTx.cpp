@@ -69,17 +69,17 @@ void CcTx::update(const RXPacket& packet)
 
         // update sample period for this Sensor
         // (seems to vary a little between sensors)
-        log(DEBUG, "CC_TX ID=%lu, old sample_period=%u", id, sample_period.get_av());
+        log(DEBUG, PSTR("TX %lu old sample period=%u"), id, sample_period.get_av()); /* Old sample period */
 
         new_sample_period = (packet.get_timecode() - last_seen) / num_periods;
 
         // Check the new sample_period is sane
         if (new_sample_period > 5700 && new_sample_period < 6300) {
-            log(DEBUG, "Adding new_sample_period %u", new_sample_period);
+            log(DEBUG, PSTR("Adding new_sample_period %u"), new_sample_period); /* Adding new sample period */
             sample_period.add_sample(new_sample_period);
         }
 
-        log(DEBUG, "CC_TX ID=%lu, new sample_period=%u", id, sample_period.get_av());
+        log(DEBUG, PSTR("TX %lu new sample period=%u"), id, sample_period.get_av()); /* New sample period */
     }
 	eta = packet.get_timecode() + sample_period.get_av() - CC_TX_WINDOW_OPEN;
 	num_periods = 1;
@@ -99,7 +99,7 @@ const id_t& CcTx::get_eta()
             set eta to 0xFFFFFFFF if the fact that eta < millis cannot be explained
             by roll-over.  We want to let roll-over do its thing.  */
     {
-        log(DEBUG, "eta %lu < millis() %lu", eta, millis());
+        log(DEBUG, PSTR("eta %lu < millis() %lu"), eta, millis());
         eta = 0xFFFFFFFF;
     }
 	return eta;
@@ -111,7 +111,7 @@ void CcTx::missing()
 	eta += sample_period.get_av();
 	num_periods++;
 
-	log(INFO, "id:%lu is missing. New ETA=%lu, num_periods missed=%u", id, eta, num_periods);
+	log(INFO, PSTR("id:%lu missing. New ETA=%lu missed=%u"), id, eta, num_periods);
 }
 
 
@@ -126,7 +126,7 @@ void CcTxArray::next()
             i = j;
         }
     }
-    log(DEBUG, "Next expected CC_TX: ID=%lu, ETA=%lu",
+    log(DEBUG, PSTR("Next TX ID=%lu, ETA=%lu"),
             current().id, current().get_eta());
 }
 

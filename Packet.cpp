@@ -383,7 +383,7 @@ const bool PacketBuffer::append(const byte& value)
 	        }
 	    }
 	    if (!successfully_found_empty_slot) {
-	        log(ERROR, "NO MORE BUFFERS!");
+	        log(ERROR, PSTR("NO MORE BUFFERS!"));
 	    }
 
 		return true;

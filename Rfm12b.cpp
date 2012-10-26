@@ -257,7 +257,7 @@ void Rfm12b::init () {
 	// Clock pin freq = 1.0Mhz (lowest poss)
 	spi::transfer_word(0xC000);
 
-	log(INFO, "attaching interrupt");
+	log(INFO, PSTR("attaching interrupt"));
 	delay(500);
 	attachInterrupt(0, interrupt_handler, LOW);
 	return;
@@ -266,7 +266,7 @@ void Rfm12b::init () {
 
 void Rfm12b::poll_cc_trx(const id_t& id)
 {
-    log(INFO, "Polling CC TRX %lu", id);
+    log(INFO, PSTR("Polling CC TRX %lu"), id);
 
 	send_command_to_trx(0x50, 0x53, id);
 }
@@ -274,7 +274,7 @@ void Rfm12b::poll_cc_trx(const id_t& id)
 
 void Rfm12b::ack_cc_trx(const id_t& id)
 {
-    log(INFO, "ACK CC TRX %lu", id);
+    log(INFO, PSTR("ACK CC TRX %lu"), id);
     send_command_to_trx(0x41, 0x4B, id);
     delay(50);
     send_command_to_trx(0x41, 0x4B, id);
