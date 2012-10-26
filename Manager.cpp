@@ -153,7 +153,7 @@ void Manager::wait_for_cc_tx()
 }
 
 
-const bool Manager::wait_for_response(const id_t& id, const millis_t& wait_duration)
+bool Manager::wait_for_response(const id_t& id, const millis_t& wait_duration)
 {
     using namespace utils;
 
@@ -172,7 +172,7 @@ const bool Manager::wait_for_response(const id_t& id, const millis_t& wait_durat
 }
 
 
-const bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
+bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 {
     bool success = false;
     TxType tx_type;

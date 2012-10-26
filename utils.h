@@ -24,13 +24,13 @@ namespace utils {
  */
 void read_cstring_from_serial(char* str, const index_t& length);
 
-const uint32_t read_uint32_from_serial();
+uint32_t read_uint32_from_serial();
 
 /**
  * @returns true if deadline is in the future.
  * Should handle roll-over of millis() correctly.
  */
-const bool in_future(const millis_t& deadline);
+bool in_future(const millis_t& deadline);
 
 };
 

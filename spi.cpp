@@ -59,7 +59,7 @@ void spi::init()
 }
 
 
-const uint8_t spi::transfer_byte(const uint8_t& out)
+uint8_t spi::transfer_byte(const uint8_t& out)
 {
 	SPDR = out;
     // this loop spins 4 usec with a 2 MHz SPI clock
@@ -70,7 +70,7 @@ const uint8_t spi::transfer_byte(const uint8_t& out)
 }
 
 
-const uint16_t spi::transfer_word(const uint16_t& cmd, const bool& ss)
+uint16_t spi::transfer_word(const uint16_t& cmd, const bool& ss)
 {
 	if (ss) select(true);
 	uint16_t reply = transfer_byte(cmd >> 8) << 8; 	// transfer MSB first

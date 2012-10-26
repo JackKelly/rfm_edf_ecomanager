@@ -21,7 +21,7 @@ void utils::read_cstring_from_serial(char* str, const index_t& length)
 }
 
 
-const uint32_t utils::read_uint32_from_serial()
+uint32_t utils::read_uint32_from_serial()
 {
     const index_t BUFF_LENGTH = 15; /* 10 chars + 1 sentinel char + extras for whitespace.
                                      * The max value a uint32 can store is
@@ -32,7 +32,7 @@ const uint32_t utils::read_uint32_from_serial()
 }
 
 
-const bool utils::in_future(const millis_t& deadline)
+bool utils::in_future(const millis_t& deadline)
 {
     const millis_t PUSH_FORWARD = 100000;
 

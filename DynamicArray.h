@@ -123,10 +123,10 @@ public:
 #pragma GCC diagnostic pop
 
 
-    const index_t get_n() const { return n; }
+    const index_t& get_n() const { return n; }
 
 
-    const index_t get_i() const { return i; }
+    const index_t& get_i() const { return i; }
 
 
     item_t& current() { return data[i]; }
@@ -227,8 +227,10 @@ public:
     }
 
 
+
+
     /* Entry point for find when called with just target_id */
-    const bool find(const id_t& target_id) const
+    bool find(const id_t& target_id) const
     {
         index_t index = 0;
         return find(target_id, index);
@@ -239,7 +241,7 @@ public:
      *  If target can't be found then returns false and index == upper_bound nearest target.
      *  Note that if we search for an ID that's above the largest ID in index will be
      *  equal to n. */
-    const bool find(const id_t& target_id, index_t& index) const
+    bool find(const id_t& target_id, index_t& index) const
     {
 
         if (target_id < min_id) {

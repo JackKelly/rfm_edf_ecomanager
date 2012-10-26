@@ -48,14 +48,14 @@ namespace spi {
 	 *
 	 * @return 8-bit response
 	 */
-	const byte transfer_byte(const byte& out);
+	byte transfer_byte(const byte& out);
 
 	/**
 	 * Send a 16-bit word over the SPI bus, with MSB first.
 	 *
 	 * @return 16-bit response. First response is MSB.
 	 */
-	const uint16_t transfer_word(const uint16_t& cmd, const bool& ss = true);
+	uint16_t transfer_word(const uint16_t& cmd, const bool& ss = true);
 };
 
 #endif /* SPI_H_ */

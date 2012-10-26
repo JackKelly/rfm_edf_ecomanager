@@ -53,7 +53,7 @@ void Packet::print_bytes() const
 }
 
 
-const bool Packet::done() const
+bool Packet::done() const
 {
 	return byte_index >= length;
 }
@@ -64,7 +64,7 @@ void Packet::reset() {
 }
 
 
-const byte Packet::modular_sum(
+byte Packet::modular_sum(
 		const volatile byte payload[],
 		const byte& length
 		)
@@ -100,7 +100,7 @@ const volatile index_t& Packet::get_byte_index() const
  * TXPacket
  **********************************************/
 
-const byte TXPacket::get_next_byte()
+byte TXPacket::get_next_byte()
 {
 	if (done()) {
 	    return 0;
@@ -191,7 +191,7 @@ void RXPacket::print_id_and_watts() const
 }
 
 
-const RXPacket::Health RXPacket::verify_checksum() const
+RXPacket::Health RXPacket::verify_checksum() const
 {
 	const byte calculated_checksum = modular_sum(packet, length-1);
 	return (calculated_checksum == packet[length-1]) ? OK : BAD;
@@ -205,7 +205,7 @@ void RXPacket::reset()
 }
 
 
-const bool RXPacket::is_ok()
+bool RXPacket::is_ok()
 {
     if (health == NOT_CHECKED) {
         post_process();
@@ -283,7 +283,7 @@ void RXPacket::decode_id()
 }
 
 
-const bool RXPacket::is_pairing_request() const
+bool RXPacket::is_pairing_request() const
 {
     return tx_type == TX ?
             packet[0] & 0b10000000 : // TX
@@ -291,7 +291,7 @@ const bool RXPacket::is_pairing_request() const
 }
 
 
-const RXPacket::Health RXPacket::de_manchesterise()
+RXPacket::Health RXPacket::de_manchesterise()
 {
 	const byte ONE  = 0b10000000; // 1 in Manchester-speak is 10
 	const byte ZERO = 0b01000000; // 0 in Manchester-speak is 01
@@ -365,7 +365,7 @@ PacketBuffer::PacketBuffer()
 {}
 
 
-const bool PacketBuffer::append(const byte& value)
+bool PacketBuffer::append(const byte& value)
 {
 	packets[current_packet].append(value);
 

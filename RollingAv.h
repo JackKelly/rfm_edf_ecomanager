@@ -27,7 +27,7 @@ class RollingAv {
 public:
     RollingAv();
     void add_sample(const uint16_t& sample);
-    const uint16_t get_av();
+    const uint16_t& get_av();
 
 private:
     static const index_t NUM_SAMPLES = 5;

@@ -79,7 +79,7 @@ private:
 	void wait_for_cc_tx();
 
 	/* @return true if we get a response from id before wait_duration is up */
-	const bool wait_for_response(const id_t& id, const millis_t& wait_duration);
+	bool wait_for_response(const id_t& id, const millis_t& wait_duration);
 
 	void handle_serial_commands();
 
@@ -88,7 +88,7 @@ private:
 	 *
 	 * @return true if a packet corresponding to id is found
 	 */
-	const bool process_rx_pack_buf_and_find_id(const id_t& id);
+	bool process_rx_pack_buf_and_find_id(const id_t& id);
 
 	void handle_pair_request(const TxType& tx_type, const id_t& id);
 

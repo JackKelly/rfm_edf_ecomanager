@@ -26,7 +26,7 @@ void RollingAv::add_sample(const uint16_t& sample)
 }
 
 
-const uint16_t RollingAv::get_av()
+const uint16_t& RollingAv::get_av()
 {
     if (!cache_valid) {
         uint16_t acc = 0;

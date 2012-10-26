@@ -45,7 +45,7 @@ public:
 	 * Returns true if we've reached the end of the packet.
 	 * TODO: can this be made private?
 	 */
-	const bool done() const;
+	bool done() const;
 
 	// TODO: can this be made private?
 	const volatile index_t& get_byte_index() const;
@@ -77,7 +77,7 @@ protected:
 	 * @returns the modular sum (the checksum algorithm used in the
 	 *           EDF EcoManager protocol) given the payload.
 	 */
-	static const byte modular_sum(
+	static byte modular_sum(
 			const volatile byte payload[],
 			const index_t& length);
 
@@ -92,9 +92,9 @@ public:
 
 	void append(const byte& value); // override
 
-	const bool is_ok();
+	bool is_ok();
 
-	const bool is_pairing_request() const;
+	bool is_pairing_request() const;
 
     const volatile TxType& get_tx_type() const;
 
@@ -139,7 +139,7 @@ private:
 	/**
 	 * @ return true if checksum in packet matches calculated checksum
 	 */
-	const Health verify_checksum() const;
+	Health verify_checksum() const;
 
 	/**
 	 * Decodes watts and sets Packet::watts
@@ -160,7 +160,7 @@ private:
 	 * @return OK if de-manchesterisation went OK
 	 * @return BAD if any illegal bit pairs (11 or 00) were found
 	 */
-	const Health de_manchesterise();
+	Health de_manchesterise();
 
 };
 
@@ -179,7 +179,7 @@ public:
 	void assemble(const byte payload[], const index_t& payload_length,
 			const bool add_checksum = false);
 
-	const byte get_next_byte();
+	byte get_next_byte();
 
 };
 
@@ -202,7 +202,7 @@ public:
 	/**
 	 * @returns true if packet is complete AFTER appending value to it.
 	 */
-	const bool append(const byte& value);
+	bool append(const byte& value);
 
 	const static index_t NUM_PACKETS = 5;
 	index_t current_packet;
