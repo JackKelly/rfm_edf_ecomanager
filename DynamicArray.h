@@ -167,6 +167,7 @@ public:
         Serial.println(success ? F("ACK") : F("NAK"));
     }
 
+
     void get_id_from_serial()
     {
         Serial.print(F("ACK enter "));
@@ -183,6 +184,7 @@ public:
         print_name();
         Serial.println(id);
     }
+
 
     void remove_id_from_serial()
     {

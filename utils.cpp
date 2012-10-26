@@ -7,11 +7,23 @@ void utils::read_cstring_from_serial(char* str, const index_t& length)
     index_t i = 0;
     str[0] = '\0';
 
+    char ch;
+
     do {
         if (Serial.available()) {
-            str[i++] = Serial.read();
-            Serial.print(str[i-1]); // echo
-            if (i == length-1) break;
+            ch = Serial.read();
+            if (ch == 0x7F) { /* backspace ASCII char */
+                if (i>0) {
+                    i--;
+                    Serial.write(8); /* backspace */
+                    Serial.print(F(" ")); /* replace character with a space */
+                    Serial.write(8); /* backspace */
+                }
+            } else {
+                str[i++] = ch;
+                Serial.print(str[i-1]); // echo
+                if (i == length-1) break;
+            }
         }
     } while (str[i-1] != '\r');
 
