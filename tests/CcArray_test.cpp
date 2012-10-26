@@ -26,10 +26,13 @@ CcTxArray make_cc_tx_array()
 
 BOOST_AUTO_TEST_CASE(testNullData)
 {
+    Logger::log_threshold = FATAL;
+
     // Test destructing if data = NULL
     // Try accessing operator[] when data == NULL
     {
-        std::cout << "Testing access on null data. Should generate an OUT OF RANGE WARNING." << std::endl;
+        // Testing access on null data. Should generate an OUT OF RANGE WARNING
+        // if log_threshold <= WARN
 
         CcTxArray cc_txs;
         cc_txs[0];
@@ -260,4 +263,129 @@ BOOST_AUTO_TEST_CASE(setSize)
     BOOST_CHECK( cc_txs.append(0x00000009));
 }
 
-//TODO test current()
+BOOST_AUTO_TEST_CASE(remove_index)
+{
+    CcTxArray cc_txs;
+    index_t index;
+
+    BOOST_CHECK(cc_txs.set_size(10));
+    BOOST_CHECK( cc_txs.append(0x000000FF) );
+    BOOST_CHECK( cc_txs.append(0xABCDEFAB) );
+    BOOST_CHECK( cc_txs.append(0xBBBBBBBB) );
+    BOOST_CHECK( cc_txs.append(0xCCCCCCCC) );
+
+    BOOST_CHECK( !cc_txs.remove_index(20) );
+    BOOST_CHECK( !cc_txs.remove_index(5) );
+
+    BOOST_CHECK( cc_txs.remove_index(0) );
+
+    BOOST_CHECK( !cc_txs.find(0x000000FF, index) );
+    BOOST_CHECK( cc_txs.find(0xABCDEFAB, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+    BOOST_CHECK( cc_txs.find(0xBBBBBBBB, index) );
+    BOOST_CHECK_EQUAL(index, 1);
+    BOOST_CHECK( cc_txs.find(0xCCCCCCCC, index) );
+    BOOST_CHECK_EQUAL(index, 2);
+
+    BOOST_CHECK( !cc_txs.remove_index(3) );
+    BOOST_CHECK( cc_txs.remove_index(2) );
+
+    BOOST_CHECK( !cc_txs.find(0x000000FF, index) );
+    BOOST_CHECK( cc_txs.find(0xABCDEFAB, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+    BOOST_CHECK( cc_txs.find(0xBBBBBBBB, index) );
+    BOOST_CHECK_EQUAL(index, 1);
+    BOOST_CHECK( !cc_txs.find(0xCCCCCCCC, index) );
+    BOOST_CHECK_EQUAL(index, 2);
+
+    BOOST_CHECK( !cc_txs.remove_index(2) );
+    BOOST_CHECK( cc_txs.remove_index(1) );
+    BOOST_CHECK( !cc_txs.find(0x000000FF, index) );
+    BOOST_CHECK( cc_txs.find(0xABCDEFAB, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+    BOOST_CHECK( !cc_txs.find(0xBBBBBBBB, index) );
+    BOOST_CHECK_EQUAL(index, 1);
+    BOOST_CHECK( !cc_txs.find(0xCCCCCCCC, index) );
+    BOOST_CHECK_EQUAL(index, 1);
+
+    BOOST_CHECK( !cc_txs.remove_index(1) );
+    BOOST_CHECK( cc_txs.remove_index(0) );
+    BOOST_CHECK( !cc_txs.find(0x000000FF, index) );
+    BOOST_CHECK( !cc_txs.find(0xABCDEFAB, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+    BOOST_CHECK( !cc_txs.find(0xBBBBBBBB, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+    BOOST_CHECK( !cc_txs.find(0xCCCCCCCC, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+
+    BOOST_CHECK( !cc_txs.remove_index(0) );
+    BOOST_CHECK( !cc_txs.remove_index(1) );
+    BOOST_CHECK( !cc_txs.remove_index(255) );
+
+}
+
+
+BOOST_AUTO_TEST_CASE(remove_id)
+{
+    CcTxArray cc_txs;
+    index_t index;
+
+    BOOST_CHECK(cc_txs.set_size(10));
+    BOOST_CHECK( cc_txs.append(0x000000FF) );
+    BOOST_CHECK( cc_txs.append(0xABCDEFAB) );
+    BOOST_CHECK( cc_txs.append(0xBBBBBBBB) );
+    BOOST_CHECK( cc_txs.append(0xCCCCCCCC) );
+
+    BOOST_CHECK( !cc_txs.remove_id(20) );
+    BOOST_CHECK( !cc_txs.remove_id(5) );
+
+    BOOST_CHECK( cc_txs.remove_id(0x000000FF) );
+
+    BOOST_CHECK( !cc_txs.find(0x000000FF, index) );
+    BOOST_CHECK( cc_txs.find(0xABCDEFAB, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+    BOOST_CHECK( cc_txs.find(0xBBBBBBBB, index) );
+    BOOST_CHECK_EQUAL(index, 1);
+    BOOST_CHECK( cc_txs.find(0xCCCCCCCC, index) );
+    BOOST_CHECK_EQUAL(index, 2);
+
+    BOOST_CHECK( !cc_txs.remove_id(0x000000FF) );
+    BOOST_CHECK( cc_txs.remove_id(0xCCCCCCCC) );
+
+    BOOST_CHECK( !cc_txs.find(0x000000FF, index) );
+    BOOST_CHECK( cc_txs.find(0xABCDEFAB, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+    BOOST_CHECK( cc_txs.find(0xBBBBBBBB, index) );
+    BOOST_CHECK_EQUAL(index, 1);
+    BOOST_CHECK( !cc_txs.find(0xCCCCCCCC, index) );
+    BOOST_CHECK_EQUAL(index, 2);
+
+    BOOST_CHECK( !cc_txs.remove_id(0xCCCCCCCC) );
+    BOOST_CHECK( cc_txs.remove_id(0xBBBBBBBB) );
+    BOOST_CHECK( !cc_txs.find(0x000000FF, index) );
+    BOOST_CHECK( cc_txs.find(0xABCDEFAB, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+    BOOST_CHECK( !cc_txs.find(0xBBBBBBBB, index) );
+    BOOST_CHECK_EQUAL(index, 1);
+    BOOST_CHECK( !cc_txs.find(0xCCCCCCCC, index) );
+    BOOST_CHECK_EQUAL(index, 1);
+
+    BOOST_CHECK( !cc_txs.remove_id(0xBBBBBBBB) );
+    BOOST_CHECK( cc_txs.remove_id(0xABCDEFAB) );
+    BOOST_CHECK( !cc_txs.find(0x000000FF, index) );
+    BOOST_CHECK( !cc_txs.find(0xABCDEFAB, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+    BOOST_CHECK( !cc_txs.find(0xBBBBBBBB, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+    BOOST_CHECK( !cc_txs.find(0xCCCCCCCC, index) );
+    BOOST_CHECK_EQUAL(index, 0);
+
+    BOOST_CHECK( !cc_txs.remove_index(0) );
+    BOOST_CHECK( !cc_txs.remove_index(1) );
+    BOOST_CHECK( !cc_txs.remove_index(255) );
+
+    BOOST_CHECK( !cc_txs.remove_id(0xBBBBBBBB) );
+    BOOST_CHECK( !cc_txs.remove_id(0xABCDEFAB) );
+
+}
+

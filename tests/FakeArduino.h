@@ -13,6 +13,9 @@
 
 typedef uint8_t byte;
 
+#define PSTR(X) X
+#define F(X) X
+
 enum PrintFormat {DEC, HEX};
 
 enum Level {DEBUG, INFO, WARN, ERROR, FATAL};

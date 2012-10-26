@@ -13,7 +13,12 @@
 #ifndef PACKET_H_
 #define PACKET_H_
 
+#ifdef TESTING
+#include "tests/FakeArduino.h"
+#else
 #include <Arduino.h>
+#endif
+
 #include "consts.h"
 
 /**

@@ -91,6 +91,8 @@ void Manager::handle_serial_commands()
     case 'S': cc_trxs.set_size_from_serial(); break;
     case 'd': cc_txs.delete_all();  break;
     case 'D': cc_trxs.delete_all(); break;
+    case 'r': cc_txs.remove_id_from_serial();  break;
+    case 'R': cc_trxs.remove_id_from_serial();  break;
     case 'l': cc_txs.print();  break;
     case 'L': cc_trxs.print(); break;
     case '\r': break; // ignore carriage returns

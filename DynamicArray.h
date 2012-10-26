@@ -166,7 +166,80 @@ public:
 
         Serial.println(success ? F("ACK") : F("NAK"));
     }
+
+    void get_id_from_serial()
+    {
+        Serial.print(F("ACK enter "));
+        print_name();
+        Serial.println(F(" ID to add:"));
+
+        id_t id = utils::read_uint32_from_serial();
+
+        bool success;
+        success = append(id);
+
+        Serial.print(success ? F("ACK") : F("NAK not"));
+        Serial.print(F(" added"));
+        print_name();
+        Serial.println(id);
+    }
+
+    void remove_id_from_serial()
+    {
+        Serial.print(F("ACK enter "));
+        print_name();
+        Serial.println(F(" ID to remove:"));
+
+        id_t id = utils::read_uint32_from_serial();
+
+        bool success;
+        success = remove_id(id);
+
+        Serial.print(success ? F("ACK") : F("NAK not"));
+        Serial.print(F(" removed"));
+        print_name();
+        Serial.println(id);
+    }
 #endif // TESTING
+
+
+    bool remove_index(const index_t& index)
+    {
+        if (index >= n) {
+            Serial.println(F("NAK index too large"));
+            return false;
+        }
+
+        /* Copy contents down one (can't use copy() because it goes backwards) */
+        const index_t length = (n-index) - 1;
+        const index_t src_start = index+1;
+        for (index_t j=0; j<length; j++) {
+            data[j+index] = data[j+src_start];
+        }
+
+        /* Update min_id or max_id if we removed first or last entry, respectively */
+        if (index == 0) {
+            min_id = data[0].id;
+        } else if (index == n-1) {
+            max_id = data[n-2].id;
+        }
+
+        n--;
+        return true;
+    }
+
+
+    bool remove_id(const id_t& id)
+    {
+        index_t index = 0;
+
+        if (find(id, index)) {
+            return remove_index(index);
+        } else {
+            log(DEBUG, PSTR("%lu not in data."), id);
+            return false;
+        }
+    }
 
 
     bool append(const id_t& id)
@@ -278,26 +351,6 @@ public:
         }
         return false; // should never get here (this is just to keep the compiler happy)
     }
-
-
-#ifndef TESTING
-    void get_id_from_serial()
-    {
-        Serial.print(F("ACK enter "));
-        print_name();
-        Serial.println(F(" ID to add:"));
-
-        id_t id = utils::read_uint32_from_serial();
-
-        bool success;
-        success = append(id);
-
-        Serial.print(success ? F("ACK") : F("NAK not"));
-        Serial.print(F(" added"));
-        print_name();
-        Serial.println(id);
-    }
-#endif // TESTING
 
 
     /* Don't de-allocate memory; just set n and i to 0 */
