@@ -189,8 +189,8 @@ const bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 		if (packet->done()) {
             tx_type = packet->get_tx_type();
 			if (packet->is_ok()) {
-				success |= (id == target_id); // Was this the packet we were looking for?
 	            id = packet->get_id();
+                success |= (id == target_id); // Was this the packet we were looking for?
 
 				//******** PAIRING REQUEST **********************
 				if (packet->is_pairing_request()) {

@@ -38,7 +38,7 @@ const bool utils::in_future(const millis_t& deadline)
 
     if (millis() < deadline)
         return true;
-    else if (millis() + PUSH_FORWARD < deadline + PUSH_FORWARD)
+    else if ((millis() + PUSH_FORWARD) < (deadline + PUSH_FORWARD))
         /* Try pushing both millis and deadline forward so they both roll over */
         return true;
     else
