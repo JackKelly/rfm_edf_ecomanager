@@ -36,7 +36,7 @@ void Rfm12b::enable_rx()
 
 void Rfm12b::enable_tx()
 {
-	// See power managament command in enable_rx()
+	// See power management command in enable_rx()
 	spi::transfer_word(0x8239);
 	state = TX;
 }
@@ -81,11 +81,15 @@ void Rfm12b::reset_fifo()
 
 void Rfm12b::interrupt_handler()
 {
+    spi::transfer_word(0xC4F6); // turn off AFC to get accurate reading
 	spi::select(true);
 	const byte status_MSB = spi::transfer_byte(0x00); // get status word MSB
-	spi::transfer_byte(0x00); // get status word LSB
+	const byte status_LSB = spi::transfer_byte(0x00); // get status word LSB
 
 	if (state == RX) {
+	    Serial.print(status_MSB, HEX);
+	    Serial.print(status_LSB, HEX);
+	    Serial.print(", ");
 		bool full = false; // is the buffer full after receiving the byte waiting for us?
 		if ((status_MSB & 0x20) != 0) { // FIFO overflow
 			full  = rx_packet_buffer.append(spi::transfer_byte(0x00)); // get 1st byte of data
@@ -105,6 +109,87 @@ void Rfm12b::interrupt_handler()
 		spi::select(false);
 	}
 
+	spi::transfer_word(0xC4F7);
+}
+
+void Rfm12b::set_freq_for_cctx()
+{
+    // 4. Frequency setting command
+    // 1 0 1 0 F
+    // F  = 1588 decimal = 0x634 (EnviR RFM01 has 1560 decimal giving command A618)
+    // Fc = 10 x 1 x (43 + F/4000) MHz = 433.97 MHz (EnviR RFM01 uses 433.9 MHz)
+    // spi::transfer_word(0xA634);
+    disable_afc();
+    spi::transfer_word(0xA62C); // <- works well for TXs
+    enable_afc();
+}
+
+void Rfm12b::set_freq_for_cctrx()
+{
+    // 4. Frequency setting command
+    // 1 0 1 0 F
+    // F  = 1588 decimal = 0x634 (EnviR RFM01 has 1560 decimal giving command A618)
+    // Fc = 10 x 1 x (43 + F/4000) MHz = 433.97 MHz (EnviR RFM01 uses 433.9 MHz)
+    // spi::transfer_word(0xA634);
+    disable_afc();
+    spi::transfer_word(0xA62F); // <- works well for TRXs
+    enable_afc();
+}
+
+void Rfm12b::enable_afc()
+{
+    // 11. AFC Command C4F7
+    // 1 1 0 0 0 1 0 0 a1 a0 rl1 rl0 st fi oe en
+    // 1 1 0 0 0 1 0 0  1  1   1   1  0  1  1  1
+    // a:  AFC auto-mode selector (different to CC RFM01)
+    //     10 = keep offset when VDI hi (RFM01 and default)
+    //     11 = Keep the f_offset value independently from the state of the VDI signal (EDF EcoManager)
+    // rl: range limit (different to CC RFM01)
+    //     01 = +15 to -16 (433band: 2.5kHz) (CC RFM01)
+    //     11 =  +3 to  -4 (EDF EcoManager)
+    // st: (different to CC RFM01)
+    //     Strobe edge, when st goes to high, the actual latest
+    //     calculated frequency error is stored into the offset
+    //     register of the AFC block.
+    // fi: Enable AFC hi accuracy mode (same as CC RFM01)
+    //     Switches the circuit to high accuracy (fine) mode.
+    //     In this case, the processing time is about twice as
+    //     long, but the measurement uncertainty is about half.
+    // oe: Enables the frequency offset register. (same as CC RFM01)
+    //     It allows the addition of the offset register
+    //     to the frequency control word of the PLL.
+    // en: Enable AFC function. (Same as CC RFM01)
+    //     Enables the calculation of the
+    //     offset frequency by the AFC circuit.
+    spi::transfer_word(0xC4F7);
+}
+
+void Rfm12b::disable_afc()
+{
+    // 11. AFC Command C4F7
+    // 1 1 0 0 0 1 0 0 a1 a0 rl1 rl0 st fi oe en
+    // 1 1 0 0 0 1 0 0  1  1   1   1  0  1  1  1
+    // a:  AFC auto-mode selector (different to CC RFM01)
+    //     10 = keep offset when VDI hi (RFM01 and default)
+    //     11 = Keep the f_offset value independently from the state of the VDI signal (EDF EcoManager)
+    // rl: range limit (different to CC RFM01)
+    //     01 = +15 to -16 (433band: 2.5kHz) (CC RFM01)
+    //     11 =  +3 to  -4 (EDF EcoManager)
+    // st: (different to CC RFM01)
+    //     Strobe edge, when st goes to high, the actual latest
+    //     calculated frequency error is stored into the offset
+    //     register of the AFC block.
+    // fi: Enable AFC hi accuracy mode (same as CC RFM01)
+    //     Switches the circuit to high accuracy (fine) mode.
+    //     In this case, the processing time is about twice as
+    //     long, but the measurement uncertainty is about half.
+    // oe: Enables the frequency offset register. (same as CC RFM01)
+    //     It allows the addition of the offset register
+    //     to the frequency control word of the PLL.
+    // en: Enable AFC function. (Same as CC RFM01)
+    //     Enables the calculation of the
+    //     offset frequency by the AFC circuit.
+    spi::transfer_word(0xC4B4);
 }
 
 
@@ -145,11 +230,9 @@ void Rfm12b::init () {
 	// dc : disable clock output of CLK pin
 	spi::transfer_word(0x8201);
 
-	// 4. Frequency setting command
-	// 1 0 1 0 F
-	// F  = 1588 decimal = 0x634 (EnviR RFM01 has 1560 decimal)
-	// Fc = 10 x 1 x (43 + F/4000) MHz = 433.97 MHz (EnviR RFM01 uses 433.9 MHz)
-	spi::transfer_word(0xA634);
+
+	set_freq_for_cctx();
+
 
 	// 5. Data Rate command
 	// 1 1 0 0   0 1 1 0   cs  r...
@@ -177,7 +260,8 @@ void Rfm12b::init () {
 	// ml: enable clock recovery fast mode. CCRFM01=1 (diff to CC RFM01)
 	// s :  data filter. 0=digital filter. (default & CCRFM01)=0 (same as CC RFM01)
 	// f : DQD threshold. CCRFM01=2; but RFM12b manual recommends >4 (diff to CC RFM01)
-	spi::transfer_word(0xC22C);
+	// spi::transfer_word(0xC22C); // EDF EcoManager default
+	spi::transfer_word(0xC22A); // DQD = 2
 
 	// 8. FIFO and Reset Mode Command (CA81)
 	// 1 1 0 0 1 0 1 0 f3 f2 f1 f0 sp al ff dr
@@ -196,30 +280,10 @@ void Rfm12b::init () {
 	// D4 = default synchron pattern
 	spi::transfer_word(0xCED4);
 
-	// 11. AFC Command C4F7
-	// 1 1 0 0 0 1 0 0 a1 a0 rl1 rl0 st fi oe en
-	// 1 1 0 0 0 1 0 0  1  1   1   1  0  1  1  1
-	// a:  AFC auto-mode selector (different to CC RFM01)
-	//     10 = keep offset when VDI hi (RFM01 and default)
-	//     11 = Keep the f_offset value independently from the state of the VDI signal (EDF EcoManager)
-	// rl: range limit (different to CC RFM01)
-	//     01 = +15 to -16 (433band: 2.5kHz) (CC RFM01)
-	//     11 =  +3 to  -4 (EDF EcoManager)
-	// st: (different to CC RFM01)
-	//     Strobe edge, when st goes to high, the actual latest
-	//     calculated frequency error is stored into the offset
-	//     register of the AFC block.
-	// fi: Enable AFC hi accuracy mode (same as CC RFM01)
-	//     Switches the circuit to high accuracy (fine) mode.
-	//     In this case, the processing time is about twice as
-	//     long, but the measurement uncertainty is about half.
-	// oe: Enables the frequency offset register. (same as CC RFM01)
-	//     It allows the addition of the offset register
-	//     to the frequency control word of the PLL.
-	// en: Enable AFC function. (Same as CC RFM01)
-	//     Enables the calculation of the
-	//     offset frequency by the AFC circuit.
-	spi::transfer_word(0xC4F7);
+	enable_afc();
+
+	// spi::transfer_word(0xC4B7);
+	//spi::transfer_word(0xC497); // a=10, rl=01
 
 	// 12. TX Configuration Control Command 0x9820
 	// 1 0 0 1 1 0 0 mp m3 m2 m1 m0 0 p2 p1 p0
