@@ -209,9 +209,8 @@ public:
 	 */
 	bool append(const byte& value);
 
-	const static index_t NUM_PACKETS = 5;
 	index_t current_packet;
-	RXPacket packets[NUM_PACKETS];
+	RXPacket packets[PACKET_BUF_LENGTH];
 };
 
 #endif /* PACKET_H_ */

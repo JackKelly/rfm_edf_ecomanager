@@ -185,7 +185,7 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 	 * and then check if it's valid.  If so then handle the different types of
 	 * packet.  Finally reset the packet and return.
 	 */
-	for (index_t packet_i=0; packet_i<rfm.rx_packet_buffer.NUM_PACKETS; packet_i++) {
+	for (index_t packet_i=0; packet_i<PACKET_BUF_LENGTH; packet_i++) {
 
 		packet = &rfm.rx_packet_buffer.packets[packet_i];
 		if (packet->done()) {

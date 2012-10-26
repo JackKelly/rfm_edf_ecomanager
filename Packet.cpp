@@ -371,7 +371,7 @@ bool PacketBuffer::append(const byte& value)
 
 	if (packets[current_packet].done()) {
 	    bool successfully_found_empty_slot = false;
-	    for (index_t i=0; i<NUM_PACKETS; i++) { // find empty slot
+	    for (index_t i=0; i<PACKET_BUF_LENGTH; i++) { // find empty slot
 	        if (!packets[i].done()) {
 	            current_packet = i;
 	            successfully_found_empty_slot = true;
