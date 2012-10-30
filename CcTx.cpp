@@ -145,7 +145,7 @@ void CcTxArray::next()
 
 void CcTxArray::print_name() const
 {
-    Serial.print(F(" CC_TX"));
+    Serial.print(F("CC_TX"));
 }
 
 
@@ -162,5 +162,5 @@ void CcTrxArray::next()
 
 void CcTrxArray::print_name() const
 {
-    Serial.print(F(" CC_TRX"));
+    Serial.print(F("CC_TRX"));
 }

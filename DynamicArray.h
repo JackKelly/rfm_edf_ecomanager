@@ -155,7 +155,7 @@ public:
 #ifndef TESTING
     void set_size_from_serial()
     {
-        Serial.print(F("ACK enter number of"));
+        Serial.print(F("ACK enter number of "));
         print_name();
         Serial.println(F("s:"));
 
@@ -180,8 +180,9 @@ public:
         success = append(id);
 
         Serial.print(success ? F("ACK") : F("NAK not"));
-        Serial.print(F(" added"));
+        Serial.print(F(" added "));
         print_name();
+        Serial.print(F(" "));
         Serial.println(id);
     }
 
@@ -198,8 +199,9 @@ public:
         success = remove_id(id);
 
         Serial.print(success ? F("ACK") : F("NAK not"));
-        Serial.print(F(" removed"));
+        Serial.print(F(" removed "));
         print_name();
+        Serial.print(F(" "));
         Serial.println(id);
     }
 #endif // TESTING
@@ -360,7 +362,7 @@ public:
     {
         n = i = 0;
         min_id = max_id = 0;
-        Serial.print(F("ACK deleted all"));
+        Serial.print(F("ACK deleted all "));
         print_name();
         Serial.println(F("s"));
     }
@@ -369,9 +371,9 @@ public:
     void print() const
     {
         Serial.println(F("ACK"));
-        Serial.print(F("{"));
+        Serial.print(F("{\""));
         print_name();
-        Serial.println(F("s: ["));
+        Serial.println(F("s\": ["));
 
         for (index_t i=0; i<n; i++) {
             data[i].print();
