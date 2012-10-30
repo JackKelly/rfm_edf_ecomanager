@@ -125,14 +125,16 @@ void Manager::poll_next_cc_trx()
 
 	if (success) {
         // We got a reply from the TRX we polled
+	    cc_trxs.current().active = true;
 		cc_trxs.next();
 		retries = 0;
 	} else {
 	    // We didn't get a reply from the TRX we polled
-		if (retries < MAX_RETRIES) {
+		if (retries < MAX_RETRIES && cc_trxs.current().active) {
             log(DEBUG, PSTR("Missing TRX %lu, retries=%d"), cc_trxs.current().id, retries);
 			retries++;
 		} else {
+		    cc_trxs.current().active = false;
 			cc_trxs.next();
 			log(INFO, PSTR("Missing TRX %lu. Giving up."), cc_trxs.current().id);
 			retries = 0;
@@ -151,6 +153,7 @@ void Manager::wait_for_cc_tx()
     if (!success) {
         // tell whole-house TX it missed its slot
         cc_txs.current().missing();
+        cc_txs.next();
     }
 }
 

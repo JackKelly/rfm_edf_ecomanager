@@ -32,8 +32,10 @@ public:
     CcTrx(const id_t& _id);
     virtual ~CcTrx();
     virtual void print() const;
+    bool is_active() const;
 
     id_t id; /* Deliberately public */
+    bool active;
 };
 
 /**
@@ -53,7 +55,7 @@ protected:
 	void init(); // called from constructors
 	millis_t eta; // estimated time of arrival in milliseconds since power-on
 	RollingAv sample_period;
-	uint8_t  num_periods;
+	uint8_t  num_periods_missed;
 	millis_t last_seen;
 };
 
