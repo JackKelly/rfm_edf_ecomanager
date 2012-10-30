@@ -168,23 +168,23 @@ void RXPacket::append(const byte& value)
 
 void RXPacket::print_id_and_watts() const
 {
-	Serial.print(F("{id: "));
+	Serial.print(F("{\"id\": "));
 	Serial.print(id);
-	Serial.print(F(", t: "));
+	Serial.print(F(", \"t\": "));
 	Serial.print(timecode);
 
 	for (index_t i=0; i<3; i++) {
 		if (watts[i]!=WATTS_INVALID) {
-			Serial.print(F(", s"));
+			Serial.print(F(", \"s"));
 			Serial.print(i);
-			Serial.print(F(": "));
+			Serial.print(F("\": "));
 			Serial.print(watts[i]);
 		}
 	}
 
 	if (tx_type == TRX) {
-	    Serial.print(F(", state: "));
-	    Serial.print(packet[10]==0x53 ? F("on") : F("off"));
+	    Serial.print(F(", \"state\": "));
+	    Serial.print(packet[10]==0x53 ? F("1") : F("0"));
 	}
 
 	Serial.println(F("}"));

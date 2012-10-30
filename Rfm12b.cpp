@@ -218,7 +218,8 @@ void Rfm12b::init () {
     // en: Enable AFC function. (Same as CC RFM01)
     //     Enables the calculation of the
     //     offset frequency by the AFC circuit.
-    spi::transfer_word(0xC4F7);
+    // spi::transfer_word(0xC4F7); // EcoManager default
+	spi::transfer_word(0xC4B7); // a=10, otherwise EcoManger default
 
     // Also tried:
 	// spi::transfer_word(0xC4B7);
