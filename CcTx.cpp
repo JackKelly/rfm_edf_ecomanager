@@ -91,7 +91,7 @@ void CcTx::update(const RXPacket& packet)
 
         log(DEBUG, PSTR("TX %lu new sample period=%u"), id, sample_period.get_av()); /* New sample period */
     }
-	eta = packet.get_timecode() + sample_period.get_av() - CC_TX_WINDOW_OPEN;
+	eta = packet.get_timecode() + sample_period.get_av();
 	num_periods_missed = 1;
 	last_seen = packet.get_timecode();
 	active = true;
@@ -101,17 +101,17 @@ void CcTx::update(const RXPacket& packet)
 const id_t& CcTx::get_eta()
 {
     // Sanity-check ETA to make sure it's in the future.
-    // TODO: remove if this is never used
-    if (eta < millis() &&
-            eta+SAMPLE_PERIOD < millis()+SAMPLE_PERIOD) /* one possible reason
+    if (eta+CC_TX_WINDOW_OPEN < millis() &&
+            eta+CC_TX_WINDOW_OPEN+SAMPLE_PERIOD < millis()+SAMPLE_PERIOD)
+        /* one possible reason
             for eta < millis() is that millis() has rolled over.
             If millis() has rolled over
             then eta+SAMPLE_PERIOD > millis()+SAMPLE_PERIOD.  In other words, only
-            set eta to 0xFFFFFFFF if the fact that eta < millis cannot be explained
+            called missing() if the fact that eta < millis cannot be explained
             by roll-over.  We want to let roll-over do its thing.  */
     {
         log(DEBUG, PSTR("eta %lu < millis() %lu. id=%lu. num_periods=%d, active=%d"), eta, millis(), id, num_periods_missed, active);
-        eta = 0xFFFFFFFF;
+        missing();
     }
 	return eta;
 }

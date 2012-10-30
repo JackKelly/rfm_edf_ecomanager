@@ -36,7 +36,7 @@ void Manager::run()
         // There are no CC TXs so all we have to do is poll TRXs
         poll_next_cc_trx();
     } else {
-        if (in_future(cc_txs.current().get_eta())) {
+        if (in_future(cc_txs.current().get_eta() - CC_TX_WINDOW_OPEN)) {
             // We're far enough away from the next expected CC TX transmission
             // to mean that we have time to poll TRXs
             poll_next_cc_trx();
