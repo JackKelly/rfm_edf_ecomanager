@@ -45,7 +45,7 @@ void CcTx::init()
      * we use C++11, but I can't think of any way to
      * force the Arduino IDE to use C++11.
      * http://stackoverflow.com/questions/308276/c-call-constructor-from-constructor */
-    eta = 0xFFFFFFFF;
+    eta = 0xFFFFFFFF - CC_TX_WINDOW_OPEN - SAMPLE_PERIOD;
     num_periods_missed = 0;
     last_seen = 0;
 }
@@ -79,17 +79,14 @@ void CcTx::update(const RXPacket& packet)
 
         // update sample period for this Sensor
         // (seems to vary a little between sensors)
-        log(DEBUG, PSTR("TX %lu old sample period=%u"), id, sample_period.get_av()); /* Old sample period */
-
         new_sample_period = (packet.get_timecode() - last_seen) / num_periods_missed;
 
         // Check the new sample_period is sane
         if (new_sample_period > 5700 && new_sample_period < 6300) {
-            log(DEBUG, PSTR("Adding new_sample_period %u"), new_sample_period); /* Adding new sample period */
             sample_period.add_sample(new_sample_period);
+            log(DEBUG, PSTR("TX %lu. Adding new_sample_period %u, average now=%u"),
+                    id, new_sample_period, sample_period.get_av()); /* Adding new sample period */
         }
-
-        log(DEBUG, PSTR("TX %lu new sample period=%u"), id, sample_period.get_av()); /* New sample period */
     }
 	eta = packet.get_timecode() + sample_period.get_av();
 	num_periods_missed = 1;
