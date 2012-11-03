@@ -28,11 +28,8 @@ class Packet {
 public:
 	Packet();
 	virtual ~Packet();
-
 	void set_packet_length(const index_t& _packet_length);
-
 	void append(const byte& value);
-
 	void append(const byte bytes[], const index_t& length);
 
 	/**
@@ -92,23 +89,16 @@ class RXPacket : public Packet
 {
 public:
 	RXPacket();
-
 	void print_id_and_watts() const;
-
+	void print_id_and_type(const bool on_its_own = false) const;
+	void print_sensors() const;
 	void append(const byte& value); // override
-
 	bool is_ok();
-
 	bool is_pairing_request() const;
-
     const volatile TxType& get_tx_type() const;
-
 	const id_t& get_id() const;
-
 	const watts_t* get_watts() const;
-
 	void reset();
-
 	volatile const millis_t& get_timecode() const;
 
 private:

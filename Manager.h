@@ -90,12 +90,12 @@ private:
 	 */
 	bool process_rx_pack_buf_and_find_id(const id_t& id);
 
-	void handle_pair_request(const TxType& tx_type, const id_t& id);
+	void handle_pair_request(const RXPacket& packet);
 
 	/**
 	 * If pair_with != ID_INVALID then pair with pair_with.
 	 */
-	void pair(const TxType& tx_type);
+	void pair(const RXPacket& packet);
 
 };
 

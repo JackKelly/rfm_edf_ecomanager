@@ -168,19 +168,12 @@ void RXPacket::append(const byte& value)
 
 void RXPacket::print_id_and_watts() const
 {
-	Serial.print(F("{\"id\": "));
-	Serial.print(id);
+    print_id_and_type();
+
 	Serial.print(F(", \"t\": "));
 	Serial.print(timecode);
 
-	for (index_t i=0; i<3; i++) {
-		if (watts[i]!=WATTS_INVALID) {
-			Serial.print(F(", \"s"));
-			Serial.print(i);
-			Serial.print(F("\": "));
-			Serial.print(watts[i]);
-		}
-	}
+	print_sensors();
 
 	if (tx_type == TRX) {
 	    Serial.print(F(", \"state\": "));
@@ -188,6 +181,35 @@ void RXPacket::print_id_and_watts() const
 	}
 
 	Serial.println(F("}"));
+}
+
+
+void RXPacket::print_id_and_type(const bool on_its_own) const
+{
+    Serial.print(F("{\"type\": \""));
+    Serial.print(tx_type == TX ? F("tx") : F("trx"));
+    Serial.print(F("\", \"id\": ")); // {"type": "tx", "id": 123, "t": 1000, "sensors": {0: 100, 1: 500}}
+    Serial.print(id);
+    if (on_its_own) Serial.print(F("}"));
+}
+
+
+void RXPacket::print_sensors() const
+{
+    Serial.print(F(", \"sensors\": {"));
+
+    bool first = true;
+    for (index_t i=0; i<3; i++) {
+        if (watts[i]!=WATTS_INVALID) {
+            if (first) first = false;  else Serial.print(F(", "));
+            Serial.print(F("\""));
+            Serial.print(i);
+            Serial.print(F("\": "));
+            Serial.print(watts[i]);
+        }
+    }
+
+    Serial.print(F("}"));
 }
 
 

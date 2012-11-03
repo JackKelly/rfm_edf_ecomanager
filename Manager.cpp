@@ -59,7 +59,7 @@ void Manager::handle_serial_commands()
     char incomming_byte = Serial.read();
     switch (incomming_byte) {
     case 'a': auto_pair = true;  Serial.println(F("ACK auto_pair on")); break;
-    case 'm': auto_pair = false; Serial.println(F("ACK audo_pair off")); break;
+    case 'm': auto_pair = false; Serial.println(F("ACK auto_pair off")); break;
     case 'p':
         if (auto_pair) {
             Serial.println(F("NAK Enable manual pairing before 'p' cmd."));
@@ -200,7 +200,7 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 				//******** PAIRING REQUEST **********************
 				if (packet->is_pairing_request()) {
 				    packet->reset();
-				    handle_pair_request(tx_type, id);
+				    handle_pair_request(*packet);
 				    break;
 				}
 
@@ -251,8 +251,11 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 }
 
 
-void Manager::handle_pair_request(const TxType& tx_type, const id_t& id)
+void Manager::handle_pair_request(const RXPacket& packet)
 {
+    const TxType tx_type = packet.get_tx_type();
+    const id_t id = packet.get_id();
+
     log(DEBUG, PSTR("Pair req from %lu"), id);
     if (tx_type==TX && cc_txs.find(id)) {
         // ignore pair request from CC_TX we're already paired with
@@ -260,28 +263,28 @@ void Manager::handle_pair_request(const TxType& tx_type, const id_t& id)
         // pair request from CC_TRX we previously attempted to pair with
         // this means our ACK response failed so try again
         pair_with = id;
-        pair(tx_type);
+        pair(packet);
     } else if (auto_pair) {
         // Auto pair mode. Go ahead and pair.
         pair_with = id;
-        pair(tx_type);
+        pair(packet);
     } else if (pair_with == id) {
         // Manual pair mode and pair_with has already been set so pair.
-        pair(tx_type);
+        pair(packet);
     } else {
         // Manual pair mode. Tell user about pair request.
-        Serial.print(F("{PR: "));
-        Serial.print(id);
+        Serial.print(F("{\"pr\": "));
+        packet.print_id_and_type(true);
         Serial.println(F("}"));
     }
 }
 
 
-void Manager::pair(const TxType& tx_type)
+void Manager::pair(const RXPacket& packet)
 {
     bool success = false;
 
-    switch (tx_type) {
+    switch (packet.get_tx_type()) {
     case TX:
         success = cc_txs.append(pair_with);
         break;
@@ -294,8 +297,8 @@ void Manager::pair(const TxType& tx_type)
     }
 
     if (success) {
-        Serial.print(F("{pw: "));
-        Serial.print(pair_with);
+        Serial.print(F("{\"pw\": "));
+        packet.print_id_and_type(true);
         Serial.println(F(" }"));
     }
 
