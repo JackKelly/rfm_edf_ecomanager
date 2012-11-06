@@ -97,6 +97,8 @@ private:
 	 */
 	void pair(const RXPacket& packet);
 
+	void change_state(const bool state) const;
+
 };
 
 #endif /* MANAGER_H_ */

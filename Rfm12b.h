@@ -40,6 +40,8 @@ public:
 
 	static PacketBuffer rx_packet_buffer;
 
+    static void send_command_to_trx(const byte& cmd1, const byte& cmd2, const id_t& id);
+
 private:
 	static enum State {RX, TX} state; // state RFM12b is in
 	static TXPacket tx_packet; // the packet about to be sent
@@ -62,9 +64,6 @@ private:
 	 * This must handle interrupts associated with both RX and TX.
 	 */
 	static void interrupt_handler();
-
-	static void send_command_to_trx(const byte& cmd1, const byte& cmd2, const id_t& id);
-
 };
 
 #endif /* RFM12B_H_ */

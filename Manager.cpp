@@ -95,6 +95,8 @@ void Manager::handle_serial_commands()
     case 'R': cc_trxs.remove_id_from_serial();  break;
     case 'l': cc_txs.print();  break;
     case 'L': cc_trxs.print(); break;
+    case '0': change_state(0); break;
+    case '1': change_state(1); break;
     case '\r': break; // ignore carriage returns
     default:
         Serial.print(F("NAK unrecognised command '"));
@@ -303,4 +305,19 @@ void Manager::pair(const RXPacket& packet)
     }
 
     pair_with = ID_INVALID; // reset
+}
+
+void Manager::change_state(const bool state) const
+{
+#ifndef TESTING
+    Serial.print(F("ACK enter id of TRX to switch: "));
+
+    id_t id_to_switch = utils::read_uint32_from_serial();
+
+    if (state) { // Turn on
+        rfm.send_command_to_trx('O', 'N', id_to_switch);
+    } else { // Turn off
+        rfm.send_command_to_trx('O', 'F', id_to_switch);
+    }
+#endif // TESTING
 }
