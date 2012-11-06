@@ -8,9 +8,9 @@ in a building.
 Current status
 ==============
 
-At present the code is in a very early stage.  The code as-is
-will capture and display all Current Cost or EDF EcoManager RF packets it
-receives.
+The code is "feature complete" and implements in that it implements all of the features listed in the
+[user manual](https://github.com/JackKelly/rfm_edf_ecomanager/wiki).
+
 
 More info
 =========
