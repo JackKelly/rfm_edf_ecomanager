@@ -72,7 +72,7 @@ void Manager::handle_serial_commands()
         break;
     case 'v':
 #ifdef LOGGING
-        Serial.println(F("ACK enter log level:"));
+        Serial.print(F("ACK enter log level: "));
         print_log_levels();
         Logger::log_threshold = (Level)utils::read_uint32_from_serial();
         Serial.print(F("ACK Log level set to "));
