@@ -6,7 +6,7 @@
  */
 
 #include <Arduino.h>
-#include "new.h"
+#include "new_fix.h"
 
 //#ifdef DEFINE_NEW_AND_DELETE // defined in new.h if required
 

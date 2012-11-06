@@ -23,7 +23,7 @@
 #undef max // Arduino pollutes the namespace with these min and max macros which breaks compilation
 #undef min //
 #include "Logger.h"
-#include "new.h"
+#include "new_fix.h"
 #endif
 
 #include "consts.h"
