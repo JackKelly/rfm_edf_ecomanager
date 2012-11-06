@@ -29,8 +29,6 @@
 #include "consts.h"
 #include "utils.h"
 
-// TODO: add remove() function to remove ID
-
 /**
  * A DynamicArray template for storing multiple CcTx or CcTrx objects.
  * Keeps objects in order of ID to make searching for IDs fast (because
@@ -164,7 +162,11 @@ public:
         bool success;
         success = set_size(new_size);
 
-        Serial.println(success ? F("ACK") : F("NAK"));
+        Serial.print(success ? F("ACK") : F("NAK not"));
+        Serial.print(F(" added "));
+        Serial.print(new_size);
+        print_name();
+        Serial.println(F("s"));
     }
 
 
