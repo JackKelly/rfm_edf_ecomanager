@@ -203,7 +203,7 @@ void RXPacket::print_sensors() const
         if (watts[i]!=WATTS_INVALID) {
             if (first) first = false;  else Serial.print(F(", "));
             Serial.print(F("\""));
-            Serial.print(i);
+            Serial.print(i+1);
             Serial.print(F("\": "));
             Serial.print(watts[i]);
         }
