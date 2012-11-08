@@ -32,22 +32,25 @@ typedef uint8_t  index_t;  /* type for storing indices */
 enum TxType {TRX, TX};
 
 /* Values denoting invalid status */
-const watts_t WATTS_INVALID  = 0xFFFF;
-const id_t    ID_INVALID     = 0xFFFFFFFF;
-const index_t INVALID_INDEX  = 0xFF;
+const watts_t WATTS_INVALID   = 0xFFFF;
+const id_t    ID_INVALID      = 0xFFFFFFFF;
+const index_t INVALID_INDEX   = 0xFF;
+const uint32_t UINT32_INVALID = 0xFFFFFFFF;
 
 /* Consts defining behaviour of system */
-const millis_t SAMPLE_PERIOD  = 6000; /* miliseconds    */
+const millis_t SAMPLE_PERIOD  = 6000; /* milliseconds    */
 
 /* length of time we're willing to wait
  * for a CC TX.  We'll open the window
  * half of WINDOW before the next CC TX's ETA. */
-static const uint16_t CC_TX_WINDOW = 500;
-static const uint16_t CC_TX_WINDOW_OPEN = CC_TX_WINDOW / 2;
+const uint16_t CC_TX_WINDOW = 500;
+const uint16_t CC_TX_WINDOW_OPEN = CC_TX_WINDOW / 2;
 
-static const uint8_t CC_TRX_TIMEOUT = 90; /* milliseconds to wait for reply from TRX */
-static const uint8_t MAX_RETRIES = 5; /* Max num times we'll try to poll a TRX per roll call */
+const uint8_t CC_TRX_TIMEOUT = 90; /* milliseconds to wait for reply from TRX */
+const uint8_t MAX_RETRIES = 5; /* Max num times we'll try to poll a TRX per roll call */
 
-const static index_t PACKET_BUF_LENGTH = 5; /* Number of packets in RX packet buffer */
+const index_t PACKET_BUF_LENGTH = 5; /* Number of packets in RX packet buffer */
+
+const millis_t KEYPRESS_TIMEOUT = 5000; /* milliseconds */
 
 #endif /* CONSTS_H_ */

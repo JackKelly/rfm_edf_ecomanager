@@ -57,6 +57,8 @@ void Manager::run()
 void Manager::handle_serial_commands()
 {
     char incomming_byte = Serial.read();
+    uint32_t input;
+
     switch (incomming_byte) {
     case 'a': auto_pair = true;  Serial.println(F("ACK auto_pair on")); break;
     case 'm': auto_pair = false; Serial.println(F("ACK auto_pair off")); break;
@@ -65,19 +67,29 @@ void Manager::handle_serial_commands()
             Serial.println(F("NAK Enable manual pairing before 'p' cmd."));
         } else {
             Serial.println(F("ACK Enter ID:"));
-            pair_with = utils::read_uint32_from_serial();
-            Serial.print(F("ACK pair_with set to "));
-            Serial.println(pair_with);
+            input = utils::read_uint32_from_serial();
+            if (input == UINT32_INVALID) {
+                Serial.println(F("NAK"));
+            } else {
+                pair_with = input;
+                Serial.print(F("ACK pair_with set to "));
+                Serial.println(pair_with);
+            }
         }
         break;
     case 'v':
 #ifdef LOGGING
         Serial.print(F("ACK enter log level: "));
         print_log_levels();
-        Logger::log_threshold = (Level)utils::read_uint32_from_serial();
-        Serial.print(F("ACK Log level set to "));
-        print_log_level(Logger::log_threshold);
-        Serial.println(F(""));
+        input = utils::read_uint32_from_serial();
+        if (input == UINT32_INVALID) {
+            Serial.println(F("NAK"));
+        } else {
+            Logger::log_threshold = (Level)input;
+            Serial.print(F("ACK Log level set to "));
+            print_log_level(Logger::log_threshold);
+            Serial.println(F(""));
+        }
 #else
         Serial.println(F("NAK logging disabled!"));
 #endif // LOGGING
@@ -313,6 +325,10 @@ void Manager::change_state(const bool state) const
     Serial.print(F("ACK enter id of TRX to switch: "));
 
     id_t id_to_switch = utils::read_uint32_from_serial();
+    if (id_to_switch == UINT32_INVALID) {
+        Serial.println(F("NAK"));
+        return;
+    }
 
     if (state) { // Turn on
         rfm.send_command_to_trx('O', 'N', id_to_switch);

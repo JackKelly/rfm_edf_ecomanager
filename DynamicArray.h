@@ -157,10 +157,11 @@ public:
         print_name();
         Serial.println(F("s:"));
 
-        index_t new_size = utils::read_uint32_from_serial();
+        uint32_t new_size = utils::read_uint32_from_serial();
 
         bool success;
-        success = set_size(new_size);
+
+        success = new_size == UINT32_INVALID ? false : set_size(new_size);
 
         Serial.print(success ? F("ACK") : F("NAK not"));
         Serial.print(F(" added "));
@@ -176,10 +177,10 @@ public:
         print_name();
         Serial.println(F(" ID to add:"));
 
-        id_t id = utils::read_uint32_from_serial();
+        uint32_t id = utils::read_uint32_from_serial();
 
         bool success;
-        success = append(id);
+        success = id == UINT32_INVALID ? false : append(id);
 
         Serial.print(success ? F("ACK") : F("NAK not"));
         Serial.print(F(" added "));
@@ -195,10 +196,10 @@ public:
         print_name();
         Serial.println(F(" ID to remove:"));
 
-        id_t id = utils::read_uint32_from_serial();
+        uint32_t id = utils::read_uint32_from_serial();
 
         bool success;
-        success = remove_id(id);
+        success = id == UINT32_INVALID ? false : remove_id(id);
 
         Serial.print(success ? F("ACK") : F("NAK not"));
         Serial.print(F(" removed "));
@@ -304,8 +305,6 @@ public:
             dst[i+dst_start] = data[i+src_start];
         }
     }
-
-
 
 
     /* Entry point for find when called with just target_id */

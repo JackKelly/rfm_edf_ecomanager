@@ -1,13 +1,16 @@
 #include <Arduino.h>
 #include "consts.h"
 #include "utils.h"
+#include "Logger.h"
 
 void utils::read_cstring_from_serial(char* str, const index_t& length)
 {
     index_t i = 0;
     str[0] = '\0';
 
-    char ch;
+    char ch = '\0';
+
+    const millis_t end_time = millis() + KEYPRESS_TIMEOUT;
 
     do {
         if (Serial.available()) {
@@ -25,7 +28,7 @@ void utils::read_cstring_from_serial(char* str, const index_t& length)
                 if (i == length-1) break;
             }
         }
-    } while (str[i-1] != '\r');
+    } while (ch != '\r' && in_future(end_time));
 
     Serial.println(F(""));
     Serial.flush();
@@ -40,7 +43,13 @@ uint32_t utils::read_uint32_from_serial()
                                      * 4 billion (10 chars decimal). */
     char buff[BUFF_LENGTH];
     read_cstring_from_serial(buff, BUFF_LENGTH);
-    return strtoul(buff, NULL, 0);
+
+    if (buff[0] == '\0') {
+        log(INFO, PSTR("timeout"));
+        return UINT32_INVALID;
+    }
+
+    return  strtoul(buff, NULL, 0);
 }
 
 
