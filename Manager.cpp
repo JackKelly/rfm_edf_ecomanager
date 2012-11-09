@@ -109,7 +109,7 @@ void Manager::handle_serial_commands()
     case 'L': cc_trxs.print(); break;
     case '0': change_state(0); break;
     case '1': change_state(1); break;
-    case 't': Serial.println(millis()); break;
+    case 't': delay(10); Serial.println(millis()); break;
     case '\r': break; // ignore carriage returns
     default:
         Serial.print(F("NAK unrecognised command '"));
