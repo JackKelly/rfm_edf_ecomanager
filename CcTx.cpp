@@ -133,7 +133,7 @@ void CcTx::missing()
 
 void CcTxArray::next()
 {
-    for (index_t j=0; j<size; j++) {
+    for (index_t j=0; j<n; j++) {
         if (data[j].active && data[j].get_eta() < current().get_eta()) {
             i = j;
         }
@@ -156,7 +156,7 @@ void CcTxArray::print_name() const
 void CcTrxArray::next()
 {
     i++;
-    if (i==size) i=0;
+    if (i==n) i=0;
 }
 
 

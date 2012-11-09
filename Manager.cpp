@@ -146,8 +146,8 @@ void Manager::poll_next_cc_trx()
 			retries++;
 		} else {
 		    cc_trxs.current().active = false;
-			cc_trxs.next();
 			log(INFO, PSTR("Missing TRX %lu. Giving up."), cc_trxs.current().id);
+            cc_trxs.next();
 			retries = 0;
 		}
 	}
