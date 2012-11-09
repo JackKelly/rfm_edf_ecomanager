@@ -12,7 +12,6 @@
  * DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
  */
 
-//#include <Arduino.h>
 #include "Manager.h"
 #include "Logger.h"
 
@@ -21,7 +20,6 @@ Manager manager;
 void setup()
 {
     Serial.begin(115200);
-
     Serial.println(F("EDF IAM Receiver"));
     manager.init();
     Serial.println(F("Finished init"));
