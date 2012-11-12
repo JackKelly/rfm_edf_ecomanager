@@ -146,7 +146,7 @@ void Rfm12b::init () {
     // 1 0 1 0 F
     // F  = 1588 decimal = 0x634 (EnviR RFM01 has 1560 decimal giving command A618)
     // Fc = 10 x 1 x (43 + F/4000) MHz = 433.97 MHz (EnviR RFM01 uses 433.9 MHz)
-    // spi::transfer_word(0xA634);
+    //spi::transfer_word(0xA634); // EcoManager default
     spi::transfer_word(0xA62C); // <- works well for TXs (433.95MHz, F=1580 dec)
 
 	// 5. Data Rate command
@@ -175,8 +175,9 @@ void Rfm12b::init () {
 	// ml: enable clock recovery fast mode. CCRFM01=1 (diff to CC RFM01)
 	// s :  data filter. 0=digital filter. (default & CCRFM01)=0 (same as CC RFM01)
 	// f : DQD threshold. CCRFM01=2; but RFM12b manual recommends >4 (diff to CC RFM01)
-	// spi::transfer_word(0xC22C); // EDF EcoManager default
-	spi::transfer_word(0xC22A); // DQD = 2
+	//spi::transfer_word(0xC22C); // EDF EcoManager default
+	//spi::transfer_word(0xC22A); // DQD = 2
+	spi::transfer_word(0xC26A); // DQD = 2, ML=1
 
 	// 8. FIFO and Reset Mode Command (CA81)
 	// 1 1 0 0 1 0 1 0 f3 f2 f1 f0 sp al ff dr
@@ -218,7 +219,7 @@ void Rfm12b::init () {
     // en: Enable AFC function. (Same as CC RFM01)
     //     Enables the calculation of the
     //     offset frequency by the AFC circuit.
-    // spi::transfer_word(0xC4F7); // EcoManager default
+    //spi::transfer_word(0xC4F7); // EcoManager default
 	spi::transfer_word(0xC4B7); // a=10, otherwise EcoManger default
 
     // Also tried:
