@@ -64,6 +64,11 @@ private:
 	 * This must handle interrupts associated with both RX and TX.
 	 */
 	static void interrupt_handler();
+
+	/**
+	 * Print tuning offset.
+	 */
+    static void tuning(const byte& status_LSB);
 };
 
 #endif /* RFM12B_H_ */

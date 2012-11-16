@@ -141,7 +141,7 @@ void Manager::poll_next_cc_trx()
 		retries = 0;
 	} else {
 	    // We didn't get a reply from the TRX we polled
-		if (retries < MAX_RETRIES && cc_trxs.current().active) {
+		if (retries < MAX_RETRIES){ // && cc_trxs.current().active) { //TODO. Issue #43
             log(DEBUG, PSTR("Missing TRX %lu, retries=%d"), cc_trxs.current().id, retries);
 			retries++;
 		} else {

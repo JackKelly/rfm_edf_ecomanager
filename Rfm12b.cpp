@@ -81,7 +81,7 @@ void Rfm12b::interrupt_handler()
 {
 	spi::select(true);
 	const byte status_MSB = spi::transfer_byte(0x00); // get status word MSB
-	spi::transfer_byte(0x00); // get status word LSB
+	const byte status_LSB = spi::transfer_byte(0x00); // get status word LSB
 
 	if (state == RX) {
 		bool full = false; // is the buffer full after receiving the byte waiting for us?
@@ -95,6 +95,7 @@ void Rfm12b::interrupt_handler()
 
 		if (full) {
 			reset_fifo();
+			tuning(status_LSB);
 		}
 	} else { // state == TX
 		if ((status_MSB & 0x80) != 0) { // TX register ready
@@ -102,6 +103,19 @@ void Rfm12b::interrupt_handler()
 		}
 		spi::select(false);
 	}
+}
+
+
+void Rfm12b::tuning(const byte& status_LSB)
+{
+    int8_t tuning_offset = status_LSB & 0xF;
+
+    // decode two's compliment
+    if (status_LSB & 0x10) { // if sign bit == 1 then this is a negative number
+        tuning_offset = tuning_offset - 0x10;
+    }
+
+    log(INFO, PSTR("Tuning = %d"), tuning_offset);
 }
 
 
@@ -146,8 +160,9 @@ void Rfm12b::init () {
     // 1 0 1 0 F
     // F  = 1588 decimal = 0x634 (EnviR RFM01 has 1560 decimal giving command A618)
     // Fc = 10 x 1 x (43 + F/4000) MHz = 433.97 MHz (EnviR RFM01 uses 433.9 MHz)
-    //spi::transfer_word(0xA634); // EcoManager default
-    spi::transfer_word(0xA62C); // <- works well for TXs (433.95MHz, F=1580 dec)
+	//spi::transfer_word(0xA634); // EcoManager default
+    //spi::transfer_word(0xA62C); // <- works well for TXs (433.95MHz, F=1580 dec)
+	spi::transfer_word(0xA62F); // 433.9575 F=1583 <-- spot-on for TRXs
 
 	// 5. Data Rate command
 	// 1 1 0 0   0 1 1 0   cs  r...
@@ -177,7 +192,7 @@ void Rfm12b::init () {
 	// f : DQD threshold. CCRFM01=2; but RFM12b manual recommends >4 (diff to CC RFM01)
 	//spi::transfer_word(0xC22C); // EDF EcoManager default
 	//spi::transfer_word(0xC22A); // DQD = 2
-	spi::transfer_word(0xC26A); // DQD = 2, ML=1
+	spi::transfer_word(0xC26A); // DQD = 2, ML=1 (enabling fast clock recovery gives a bit improvement for receiving CC TXs)
 
 	// 8. FIFO and Reset Mode Command (CA81)
 	// 1 1 0 0 1 0 1 0 f3 f2 f1 f0 sp al ff dr
@@ -220,11 +235,11 @@ void Rfm12b::init () {
     //     Enables the calculation of the
     //     offset frequency by the AFC circuit.
     //spi::transfer_word(0xC4F7); // EcoManager default
-	spi::transfer_word(0xC4B7); // a=10, otherwise EcoManger default
+	//spi::transfer_word(0xC4B7); // a=10, otherwise EcoManger default
 
     // Also tried:
 	// spi::transfer_word(0xC4B7);
-	// spi::transfer_word(0xC497); // a=10, rl=01
+	spi::transfer_word(0xC497); // a=10, rl=01, en=1
 
 	// 12. TX Configuration Control Command 0x9820
 	// 1 0 0 1 1 0 0 mp m3 m2 m1 m0 0 p2 p1 p0
