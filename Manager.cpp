@@ -60,7 +60,7 @@ void Manager::handle_serial_commands()
     case 'm': auto_pair = false; Serial.println(F("ACK auto_pair off")); break;
     case 'p':
         if (auto_pair) {
-            Serial.println(F("NAK Enable manual pairing before 'p' cmd."));
+            Serial.println(F("NAK Enable manual pairing before p cmd"));
         } else {
             Serial.println(F("ACK Enter ID:"));
             input = utils::read_uint32_from_serial();
@@ -108,7 +108,7 @@ void Manager::handle_serial_commands()
     case 't': delay(10); Serial.println(millis()); break;
     case '\r': break; // ignore carriage returns
     default:
-        Serial.print(F("NAK unrecognised command '"));
+        Serial.print(F("NAK unrecognised cmd '"));
         Serial.print(incomming_byte);
         Serial.println(F("'"));
         break;
@@ -142,21 +142,11 @@ void Manager::poll_next_cc_trx()
 	} else {
 	    // We didn't get a reply from the TRX we polled
 		if (retries < MAX_RETRIES){ // && cc_trxs.current().active) { //TODO. Issue #43
-            log(DEBUG, PSTR("Missing TRX %lu, retries=%d"), cc_trxs.current().id, retries);
+            log(DEBUG, PSTR("Missing TRX %lu,retries=%d"), cc_trxs.current().id, retries);
 			retries++;
 		} else {
-            /* As a last-ditch attempt to contact TRX, try using the "on" command. */
-		    rfm.change_trx_state(cc_trxs.current().id, true);
-            const bool state_change_success =
-                    wait_for_response(cc_trxs.current().id, CC_TRX_TIMEOUT);
-
-            if (state_change_success) {
-                log(INFO, PSTR("Found TRX %lu after sending ON cmd."), cc_trxs.current().id);
-            } else {
-                cc_trxs.current().active = false;
-                log(INFO, PSTR("Missing TRX %lu. Giving up."), cc_trxs.current().id);
-            }
-
+		    cc_trxs.current().active = false;
+		    log(INFO, PSTR("Missing TRX %lu.Giving up"), cc_trxs.current().id);
             cc_trxs.next();
 			retries = 0;
 		}
@@ -167,9 +157,9 @@ void Manager::poll_next_cc_trx()
 void Manager::wait_for_cc_tx()
 {
     // listen for TX for defined period.
-    log(DEBUG, PSTR("Window open! Expecting %lu at %lu"), cc_txs.current().id, cc_txs.current().get_eta());
+    log(DEBUG, PSTR("Win open!Expecting %lu at %lu"), cc_txs.current().id, cc_txs.current().get_eta());
     bool success = wait_for_response(cc_txs.current().id, CC_TX_WINDOW);
-    log(DEBUG, PSTR("Window closed. success=%d"), success);
+    log(DEBUG, PSTR("Win closed.success=%d"), success);
 
     if (!success) {
         // tell whole-house TX it missed its slot
@@ -236,7 +226,7 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 				        cc_txs[cc_tx_i].update(*packet);
 				        cc_txs.next();
 				    } else {
-				        log(INFO, PSTR("Rx'd CC_TX packet with unknown ID %lu"), id);
+				        log(INFO, PSTR("Rx'd CC_TX packet w unknown ID %lu"), id);
 				        if (print_packets >= ALL_VALID) {
 				            packet->print_id_and_watts(); // send data over serial
 				        }
@@ -250,7 +240,7 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 				    }
 				    //********* UNKNOWN TRX ID *************************
 				    else {
-				        log(INFO, PSTR("Rx'd CC_TRX packet with unknown ID %lu"), id);
+				        log(INFO, PSTR("Rx'd CC_TRX packet w unknown ID %lu"), id);
 				        if (print_packets >= ALL_VALID) {
 				            packet->print_id_and_watts(); // send data over serial
 				        }
@@ -277,7 +267,7 @@ void Manager::handle_pair_request(const RXPacket& packet)
     const TxType tx_type = packet.get_tx_type();
     const id_t id = packet.get_id();
 
-    log(DEBUG, PSTR("Pair req from %lu"), id);
+    log(DEBUG, PSTR("Pair req frm %lu"), id);
     if (tx_type==TX && cc_txs.find(id)) {
         // ignore pair request from CC_TX we're already paired with
     } else if (tx_type==TRX && cc_trxs.find(id)) {

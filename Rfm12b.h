@@ -70,10 +70,12 @@ private:
 	 */
 	static void interrupt_handler();
 
+#ifdef TUNING
 	/**
 	 * Print tuning offset.
 	 */
     static void tuning(const byte& status_LSB);
+#endif // TUNING
 };
 
 #endif /* RFM12B_H_ */

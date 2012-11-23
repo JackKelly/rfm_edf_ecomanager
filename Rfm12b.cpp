@@ -95,7 +95,9 @@ void Rfm12b::interrupt_handler()
 
 		if (full) {
 			reset_fifo();
+#ifdef TUNING
 			tuning(status_LSB);
+#endif // TUNING
 		}
 	} else { // state == TX
 		if ((status_MSB & 0x80) != 0) { // TX register ready
@@ -105,7 +107,7 @@ void Rfm12b::interrupt_handler()
 	}
 }
 
-
+#ifdef TUNING
 void Rfm12b::tuning(const byte& status_LSB)
 {
     int8_t tuning_offset = status_LSB & 0xF;
@@ -117,7 +119,7 @@ void Rfm12b::tuning(const byte& status_LSB)
 
     log(INFO, PSTR("Tuning = %d"), tuning_offset);
 }
-
+#endif // TUNING
 
 void Rfm12b::init () {
 	spi::init();
