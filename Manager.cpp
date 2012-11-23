@@ -145,8 +145,18 @@ void Manager::poll_next_cc_trx()
             log(DEBUG, PSTR("Missing TRX %lu, retries=%d"), cc_trxs.current().id, retries);
 			retries++;
 		} else {
-		    cc_trxs.current().active = false;
-			log(INFO, PSTR("Missing TRX %lu. Giving up."), cc_trxs.current().id);
+            /* As a last-ditch attempt to contact TRX, try using the "on" command. */
+		    rfm.change_trx_state(cc_trxs.current().id, true);
+            const bool state_change_success =
+                    wait_for_response(cc_trxs.current().id, CC_TRX_TIMEOUT);
+
+            if (state_change_success) {
+                log(INFO, PSTR("Found TRX %lu after sending ON cmd."), cc_trxs.current().id);
+            } else {
+                cc_trxs.current().active = false;
+                log(INFO, PSTR("Missing TRX %lu. Giving up."), cc_trxs.current().id);
+            }
+
             cc_trxs.next();
 			retries = 0;
 		}
@@ -327,11 +337,7 @@ void Manager::change_state(const bool state) const
         return;
     }
 
-    if (state) { // Turn on
-        rfm.send_command_to_trx('O', 'N', id_to_switch);
-    } else { // Turn off
-        rfm.send_command_to_trx('O', 'F', id_to_switch);
-    }
+    rfm.change_trx_state(id_to_switch, state);
 
     // TODO: check response from TRX
 

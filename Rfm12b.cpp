@@ -301,6 +301,16 @@ void Rfm12b::ack_cc_trx(const id_t& id)
 }
 
 
+void Rfm12b::change_trx_state(const id_t& id, const bool state)
+{
+    if (state) { // Turn on
+        send_command_to_trx('O', 'N', id);
+    } else { // Turn off
+        send_command_to_trx('O', 'F', id);
+    }
+}
+
+
 void Rfm12b::send_command_to_trx(const byte& cmd1,
         const byte& cmd2, const id_t& id)
 {

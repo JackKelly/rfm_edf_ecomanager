@@ -38,6 +38,11 @@ public:
 	 */
 	static void ack_cc_trx(const id_t& id);
 
+	/**
+	 * Turn TRX on or off.
+	 */
+	static void change_trx_state(const id_t& id, const bool state);
+
 	static PacketBuffer rx_packet_buffer;
 
     static void send_command_to_trx(const byte& cmd1, const byte& cmd2, const id_t& id);
