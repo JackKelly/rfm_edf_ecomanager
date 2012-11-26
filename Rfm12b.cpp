@@ -7,8 +7,10 @@
 #include "Rfm12b.h"
 #include "spi.h"
 #include "Logger.h"
+#include "utils.h"
 
 Rfm12b::State Rfm12b::state;
+volatile bool Rfm12b::currently_receiving;
 TXPacket Rfm12b::tx_packet;
 PacketBuffer Rfm12b::rx_packet_buffer;
 
@@ -28,17 +30,21 @@ void Rfm12b::enable_rx()
 	// dc : disable clock output of CLK pin
 	//                          eeeeeeed
 	//                          rbtsxbwc
+    state = RX;
 	spi::transfer_word(0x82D9);
-	state = RX;
 	reset_fifo();
 }
 
 
 void Rfm12b::enable_tx()
 {
-	// See power management command in enable_rx()
-	spi::transfer_word(0x8239);
-	state = TX;
+    /* If we're currently receiving then wait up to 50ms */
+    const millis_t deadline = millis() + 50;
+    while (currently_receiving && utils::in_future(deadline))
+        ;
+
+    state = TX;
+    spi::transfer_word(0x8239); // See power management command in enable_rx()
 }
 
 
@@ -84,7 +90,7 @@ void Rfm12b::interrupt_handler()
 	const byte status_LSB = spi::transfer_byte(0x00); // get status word LSB
 
 	if (state == RX) {
-		bool full = false; // is the buffer full after receiving the byte waiting for us?
+	    bool full = false; // is the buffer full after receiving the byte waiting for us?
 		if ((status_MSB & 0x20) != 0) { // FIFO overflow
 			full  = rx_packet_buffer.append(spi::transfer_byte(0x00)); // get 1st byte of data
 			full |= rx_packet_buffer.append(spi::transfer_byte(0x00));
@@ -93,11 +99,14 @@ void Rfm12b::interrupt_handler()
 		}
 		spi::select(false);
 
-		if (full) {
+		if (full) { // Reached end of packet
 			reset_fifo();
+			currently_receiving = false;
 #ifdef TUNING
 			tuning(status_LSB);
 #endif // TUNING
+		} else {
+		    currently_receiving = true;
 		}
 	} else { // state == TX
 		if ((status_MSB & 0x80) != 0) { // TX register ready
@@ -122,6 +131,7 @@ void Rfm12b::tuning(const byte& status_LSB)
 #endif // TUNING
 
 void Rfm12b::init () {
+    currently_receiving = false;
 	spi::init();
 
 	spi::transfer_word(0x0000);
@@ -288,7 +298,7 @@ void Rfm12b::init () {
 
 void Rfm12b::poll_cc_trx(const id_t& id)
 {
-    log(INFO, PSTR("Polling CC TRX %lu"), id);
+    log(INFO, PSTR("Poll CC TRX %lu"), id);
 
 	send_command_to_trx(0x50, 0x53, id);
 }

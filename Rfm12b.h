@@ -49,6 +49,7 @@ public:
 
 private:
 	static enum State {RX, TX} state; // state RFM12b is in
+	static volatile bool currently_receiving;
 	static TXPacket tx_packet; // the packet about to be sent
 
 	/**

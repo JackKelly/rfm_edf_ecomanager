@@ -46,7 +46,7 @@ const millis_t SAMPLE_PERIOD  = 6000; /* milliseconds    */
 const uint16_t CC_TX_WINDOW = 500;
 const uint16_t CC_TX_WINDOW_OPEN = CC_TX_WINDOW / 2;
 
-const uint8_t CC_TRX_TIMEOUT = 90; /* milliseconds to wait for reply from TRX */
+const uint8_t CC_TRX_TIMEOUT = 100; /* milliseconds to wait for reply from TRX */
 const uint8_t MAX_RETRIES = 7; /* Max num times we'll try to poll a TRX per roll call */
 
 const index_t PACKET_BUF_LENGTH = 5; /* Number of packets in RX packet buffer */
