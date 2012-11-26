@@ -20,6 +20,9 @@ class Rfm12b {
 public:
 	static void enable_rx();
 
+	/**
+	 * Will wait a short while before TXing if we're already RXing
+	 */
 	static void enable_tx();
 
 	/**

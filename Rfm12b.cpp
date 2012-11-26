@@ -38,10 +38,13 @@ void Rfm12b::enable_rx()
 
 void Rfm12b::enable_tx()
 {
-    /* If we're currently receiving then wait up to 50ms */
-    const millis_t deadline = millis() + 50;
-    while (currently_receiving && utils::in_future(deadline))
-        ;
+    if (currently_receiving) {
+        log(DEBUG, PSTR("CRX"));
+        /* If we're currently receiving then wait up to 50ms */
+        const millis_t deadline = millis() + 50;
+        while (currently_receiving && utils::in_future(deadline))
+            ;
+    }
 
     state = TX;
     spi::transfer_word(0x8239); // See power management command in enable_rx()
@@ -261,6 +264,7 @@ void Rfm12b::init () {
 	//     deviation       = 45 kHz
 	// p : Output power. 0x000=0dB
 	spi::transfer_word(0x9820);
+
 
 	// 13. PLL Setting Command 0xCC66
 	// 1 1 0 0 1 1 0 0 0 ob1 ob0 1 dly ddit 1 bw0

@@ -58,9 +58,9 @@ public:
 #endif
 
 protected:
-	/* Longest packet = 1B preamble + 2B sync + 12B EDF IAM + 2B tail
+	/* Longest packet = 6B preamble + 2B sync + 12B EDF IAM + 2B tail
 	 *  If you want to mimick CC_TX packets then this needs to be set to 21!  */
-	const static index_t MAX_PACKET_LENGTH = 17;
+	const static index_t MAX_PACKET_LENGTH = 22;
 
 	/****************************************************
 	 * Member variables used within ISR and outside ISR *
