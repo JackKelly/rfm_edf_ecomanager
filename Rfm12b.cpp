@@ -31,7 +31,8 @@ void Rfm12b::enable_rx()
 	//                          eeeeeeed
 	//                          rbtsxbwc
     state = RX;
-	spi::transfer_word(0x82D9);
+    spi::transfer_word(0x82D9); // enable RX (er=1), disable TX (et=0)
+    spi::transfer_word(0x8058); // disable TX register (el=0), enable RX FIFO register (ef=1)
 	reset_fifo();
 }
 
@@ -47,12 +48,18 @@ void Rfm12b::enable_tx()
     }
 
     state = TX;
-    spi::transfer_word(0x8239); // See power management command in enable_rx()
+    spi::transfer_word(0x9830); // 60kHz FSK deviation for first few bytes
+    spi::transfer_word(0x8098); // enable TX register (el=1), disable RX FIFO register (ef=0)
+    spi::transfer_word(0x8279); // disable RX (er=0), enable TX (et=1), leave base band block running
 }
 
 
 void Rfm12b::tx_next_byte()
 {
+    if (tx_packet.get_byte_index() == 2) {
+        spi::transfer_word(0x9820); // 45kHz FSK deviation for rest of bytes
+    }
+
 	const byte out = tx_packet.get_next_byte();
 	spi::transfer_word(0xB800 | out);
 
@@ -90,7 +97,11 @@ void Rfm12b::interrupt_handler()
 {
 	spi::select(true);
 	const byte status_MSB = spi::transfer_byte(0x00); // get status word MSB
+#ifdef TUNING
 	const byte status_LSB = spi::transfer_byte(0x00); // get status word LSB
+#else
+	spi::transfer_byte(0x00); // get status word LSB
+#endif // TUNING
 
 	if (state == RX) {
 	    bool full = false; // is the buffer full after receiving the byte waiting for us?
@@ -207,7 +218,8 @@ void Rfm12b::init () {
 	// f : DQD threshold. CCRFM01=2; but RFM12b manual recommends >4 (diff to CC RFM01)
 	//spi::transfer_word(0xC22C); // EDF EcoManager default
 	//spi::transfer_word(0xC22A); // DQD = 2
-	spi::transfer_word(0xC26A); // DQD = 2, ML=1 (enabling fast clock recovery gives a bit improvement for receiving CC TXs)
+	//spi::transfer_word(0xC26A); // DQD = 2, ML=1 (enabling fast clock recovery gives a bit improvement for receiving CC TXs)
+	spi::transfer_word(0xC2EA); // DQD = 2, AL=1 (auto clock recovery, ML has no effect)
 
 	// 8. FIFO and Reset Mode Command (CA81)
 	// 1 1 0 0 1 0 1 0 f3 f2 f1 f0 sp al ff dr
@@ -251,15 +263,14 @@ void Rfm12b::init () {
     //     offset frequency by the AFC circuit.
     //spi::transfer_word(0xC4F7); // EcoManager default
 	//spi::transfer_word(0xC4B7); // a=10, otherwise EcoManger default
-
-    // Also tried:
-	// spi::transfer_word(0xC4B7);
-	spi::transfer_word(0xC497); // a=10, rl=01, en=1
+	//spi::transfer_word(0xC4B7);
+	//spi::transfer_word(0xC497); // a=10, rl=01, en=1
+	spi::transfer_word(0xC4A7); // a=10, rl=+7..-8, en=1
 
 	// 12. TX Configuration Control Command 0x9820
 	// 1 0 0 1 1 0 0 mp m3 m2 m1 m0 0 p2 p1 p0
 	// 1 0 0 1 1 0 0  0  0  0  1  0 0  0  0  0
-	// mp: FSK modulation parameters (using jeelabs RFM12b calc)
+	// mp: FSK modulation parameters (inferred using jeelabs RFM12b calc)
 	//     frequency shift = pos
 	//     deviation       = 45 kHz
 	// p : Output power. 0x000=0dB

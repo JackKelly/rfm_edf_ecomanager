@@ -118,16 +118,16 @@ void TXPacket::assemble(
     // We can get away with a shorter header of just 0x55, 0x2D, 0xD4
     // but using a long preamble seems to improve reliability.
 	const byte HEADER[] = {
-	        0x33, // Low effective bitrate to help RX lock on
-	        0x33,
-	        0x33,
-			0x55, // Preamble (to allow RX to lock on).
-			0x55,
-			0x55,
+	        0xCC, // Low effective bitrate to help RX lock on
+	        0xCC,
+	        0xCC,
+			0xAA, // Preamble (to allow RX to lock on).
+			0xAA,
+			0xAA,
 			0x2D, // Synchron byte 0
 			0xD4  // Synchron byte 1
 	};
-	const byte TAIL[] = {0x40, 0x00};
+	const byte TAIL[] = {0x40, 0x00}; // Reducing this to a single byte produces very unreliable comms
 
 	const byte HEADER_LENGTH = sizeof(HEADER);
 	const byte TAIL_LENGTH   = sizeof(TAIL);
