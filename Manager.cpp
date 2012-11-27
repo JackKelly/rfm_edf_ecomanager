@@ -10,7 +10,8 @@
 #include "utils.h"
 
 Manager::Manager()
-: auto_pair(true), pair_with(ID_INVALID), print_packets(ALL_VALID),
+: auto_pair(true), pair_with(ID_INVALID), retry_missing_trxs(false),
+  print_packets(ALL_VALID),
   retries(0), time_to_start_next_trx_roll_call(0)  {}
 
 
@@ -119,37 +120,30 @@ void Manager::handle_serial_commands()
 void Manager::poll_next_cc_trx()
 {
     if (cc_trxs.get_n() == 0) return;
+
     using namespace utils;
 
 	// don't continually poll TRXs;
     // instead only do one roll call per SAMPLE_PERIOD
-	if (cc_trxs.get_i()==0 && retries==0) {
+	if (cc_trxs.get_i()==0) {
 		if (in_future(time_to_start_next_trx_roll_call)) {
-			return; // We've finished polling all TRXs for this SAMPLE_PERIOD.
+		    /* We've finished the first pass of polling
+		     * all TRXs for this SAMPLE_PERIOD.
+		     * So now poll the missing TRXs. */
+		    retry_missing_trxs = true;
 		} else {
+		    /* Time to start the first pass of another TRX roll call. */
+		    retry_missing_trxs = false;
 			time_to_start_next_trx_roll_call = millis() + SAMPLE_PERIOD;
 		}
 	}
 
-	rfm.poll_cc_trx(cc_trxs.current().id);
-	const bool success = wait_for_response(cc_trxs.current().id, CC_TRX_TIMEOUT);
-
-	if (success) {
-        // We got a reply from the TRX we polled
-	    cc_trxs.current().active = true;
-		cc_trxs.next();
-		retries = 0;
+	if (retry_missing_trxs && cc_trxs.current().active) {
+	    cc_trxs.next();
 	} else {
-	    // We didn't get a reply from the TRX we polled
-		if (retries < MAX_RETRIES){ // && cc_trxs.current().active) { //TODO. Issue #43
-            log(DEBUG, PSTR("Missing TRX %lu,retries=%d"), cc_trxs.current().id, retries);
-			retries++;
-		} else {
-		    cc_trxs.current().active = false;
-		    log(INFO, PSTR("Missing TRX %lu.Giving up"), cc_trxs.current().id);
-            cc_trxs.next();
-			retries = 0;
-		}
+        rfm.poll_cc_trx(cc_trxs.current().id);
+        cc_trxs.current().active = wait_for_response(cc_trxs.current().id, CC_TRX_TIMEOUT);
+        cc_trxs.next();
 	}
 }
 

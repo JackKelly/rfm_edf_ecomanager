@@ -45,6 +45,8 @@ private:
     bool auto_pair; /* auto_pair mode on or off? */
     id_t pair_with; /* radio ID to pair with */
 
+    bool retry_missing_trxs;
+
     enum {
         ONLY_KNOWN, /* Only print packets we know about */
         ALL_VALID,  /* Print all valid packets */
