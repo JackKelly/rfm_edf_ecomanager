@@ -313,9 +313,10 @@ void Manager::pair(const RXPacket& packet)
 void Manager::change_state(const bool state) const
 {
 #ifndef TESTING
-    Serial.println(F("ACK enter id of TRX to switch:"));
+    Serial.print(F("ACK enter TRX to switch "));
+    Serial.println(state ? F("on:") : F("off:"));
 
-    id_t id_to_switch = utils::read_uint32_from_serial();
+    const id_t id_to_switch = utils::read_uint32_from_serial();
     if (id_to_switch == UINT32_INVALID) {
         Serial.println(F("NAK"));
         return;

@@ -41,8 +41,8 @@ void Rfm12b::enable_tx()
 {
     if (currently_receiving) {
         log(DEBUG, PSTR("CRX"));
-        /* If we're currently receiving then wait up to 50ms */
-        const millis_t deadline = millis() + 50;
+        /* If we're currently receiving then wait up to 100ms */
+        const millis_t deadline = millis() + 100;
         while (currently_receiving && utils::in_future(deadline))
             ;
     }
@@ -356,5 +356,7 @@ void Rfm12b::send_command_to_trx(const byte& cmd1,
 
     tx_packet.assemble(tx_data, 11, true);
     enable_tx();
+
+    while (!tx_packet.done()); // Wait until we finish transmitting
 }
 

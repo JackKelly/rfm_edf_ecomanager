@@ -48,6 +48,9 @@ public:
 
 	static PacketBuffer rx_packet_buffer;
 
+	/**
+	 * Blocks until finished TX.
+	 */
     static void send_command_to_trx(const byte& cmd1, const byte& cmd2, const id_t& id);
 
 private:
