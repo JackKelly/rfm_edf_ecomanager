@@ -30,8 +30,8 @@
 #define MANAGER_H_
 
 #include "consts.h"
-#include "Rfm12b.h"
-#include "Packet.h"
+#include <Rfm12b.h>
+#include "RxPacketFromSensor.h"
 #include "CcTx.h"
 
 class Manager {
@@ -40,7 +40,7 @@ public:
 	void init();
 	void run();
 private:
-    Rfm12b rfm;
+    Rfm12b<RxPacketFromSensor> rfm;
 
     bool auto_pair; /* auto_pair mode on or off? */
     id_t pair_with; /* radio ID to pair with */
@@ -91,14 +91,35 @@ private:
 	 */
 	bool process_rx_pack_buf_and_find_id(const id_t& id);
 
-	void handle_pair_request(const RXPacket& packet);
+	void handle_pair_request(const RxPacketFromSensor& packet);
 
 	/**
 	 * If pair_with != ID_INVALID then pair with pair_with.
 	 */
-	void pair(const RXPacket& packet);
+	void pair(const RxPacketFromSensor& packet);
 
-	void change_state(const bool state) const;
+	void change_state(const bool state);
+
+    /**
+     * Poll a CurrentCost transceiver (TRX), e.g. an EDF Wireless Transmitter Plug,
+     * to ask for the latest wattage reading.
+     */
+	void poll_cc_trx(const id_t& id);
+
+	/**
+	 * Send acknowledgement to complete pairing.
+	 */
+	void ack_cc_trx(const id_t& id);
+
+	/**
+	 * Turn TRX on or off.
+	 */
+	void change_trx_state(const id_t& id, const bool state);
+
+    /**
+     * Blocks until finished TX.
+     */
+	void send_command_to_trx(const byte& cmd1, const byte& cmd2, const id_t& id);
 
 };
 

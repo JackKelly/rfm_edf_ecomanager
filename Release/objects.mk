@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lArduinoCore
+LIBS := -lnanode_rf_utils -lArduinoCore
 

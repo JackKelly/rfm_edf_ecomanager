@@ -7,7 +7,8 @@
 
 #include "Manager.h"
 #include "Logger.h"
-#include "utils.h"
+#include <utils.h>
+#include <utilsconsts.h>
 
 Manager::Manager()
 : auto_pair(true), pair_with(ID_INVALID), retry_missing_trxs(false),
@@ -141,7 +142,7 @@ void Manager::poll_next_cc_trx()
 	if (retry_missing_trxs && cc_trxs.current().active) {
 	    cc_trxs.next();
 	} else {
-        rfm.poll_cc_trx(cc_trxs.current().id);
+        poll_cc_trx(cc_trxs.current().id);
         cc_trxs.current().active = wait_for_response(cc_trxs.current().id, CC_TRX_TIMEOUT);
         cc_trxs.next();
 	}
@@ -187,7 +188,7 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
     bool success = false;
     TxType tx_type;
 	id_t id;
-	RXPacket* packet = NULL; // just using this pointer to make code more readable
+	RxPacketFromSensor* packet = NULL; // just using this pointer to make code more readable
 
 	/* Loop through every packet in packet buffer. If it's done then post-process it
 	 * and then check if it's valid.  If so then handle the different types of
@@ -211,7 +212,7 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 
 				//********* CC TX (transmit-only sensor) ********
 				switch (tx_type) {
-				case TX:
+				case CCTX:
 				    bool found;
 				    index_t cc_tx_i;
 				    found = cc_txs.find(id, cc_tx_i);
@@ -226,7 +227,7 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 				        }
 				    }
 				    break;
-				case TRX:
+				case CCTRX:
 				    //****** CC TRX (transceiver; e.g. EDF IAM) ******
 				    if (cc_trxs.find(id)) {
 				        // Received ID is a CC_TRX id we know about
@@ -243,7 +244,7 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 				}
 
 			} else { // packet is not OK
-				log(INFO, PSTR("Rx'd broken %s packet"), tx_type==TX ? "TX" : "TRX");
+				log(INFO, PSTR("Rx'd broken %s packet"), tx_type==CCTX ? "TX" : "TRX");
 				if (print_packets == ALL) {
 				    packet->print_bytes();
 				}
@@ -256,15 +257,15 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 }
 
 
-void Manager::handle_pair_request(const RXPacket& packet)
+void Manager::handle_pair_request(const RxPacketFromSensor& packet)
 {
     const TxType tx_type = packet.get_tx_type();
     const id_t id = packet.get_id();
 
     log(DEBUG, PSTR("Pair req frm %lu"), id);
-    if (tx_type==TX && cc_txs.find(id)) {
+    if (tx_type==CCTX && cc_txs.find(id)) {
         // ignore pair request from CC_TX we're already paired with
-    } else if (tx_type==TRX && cc_trxs.find(id)) {
+    } else if (tx_type==CCTRX && cc_trxs.find(id)) {
         // pair request from CC_TRX we previously attempted to pair with
         // this means our ACK response failed so try again
         pair_with = id;
@@ -285,16 +286,16 @@ void Manager::handle_pair_request(const RXPacket& packet)
 }
 
 
-void Manager::pair(const RXPacket& packet)
+void Manager::pair(const RxPacketFromSensor& packet)
 {
     bool success = false;
 
     switch (packet.get_tx_type()) {
-    case TX:
+    case CCTX:
         success = cc_txs.append(pair_with);
         break;
-    case TRX: // transceiver. So we need to ACK.
-        rfm.ack_cc_trx(pair_with);
+    case CCTRX: // transceiver. So we need to ACK.
+        ack_cc_trx(pair_with);
         success = cc_trxs.append(pair_with);
         // Note that this may be a re-try to ACK a TRX we
         // previously added if our first ACK failed.
@@ -310,7 +311,7 @@ void Manager::pair(const RXPacket& packet)
     pair_with = ID_INVALID; // reset
 }
 
-void Manager::change_state(const bool state) const
+void Manager::change_state(const bool state)
 {
 #ifndef TESTING
     Serial.print(F("ACK enter TRX to switch "));
@@ -322,10 +323,56 @@ void Manager::change_state(const bool state) const
         return;
     }
 
-    rfm.change_trx_state(id_to_switch, state);
+    change_trx_state(id_to_switch, state);
 
     // TODO: check response from TRX
 
     Serial.println(F("ACK"));
 #endif // TESTING
+}
+
+void Manager::poll_cc_trx(const id_t& id)
+{
+    log(INFO, PSTR("Poll CC TRX %lu"), id);
+
+send_command_to_trx(0x50, 0x53, id);
+}
+
+
+void Manager::ack_cc_trx(const id_t& id)
+{
+    log(INFO, PSTR("ACK CC TRX %lu"), id);
+    send_command_to_trx(0x41, 0x4B, id);
+    delay(50);
+    send_command_to_trx(0x41, 0x4B, id);
+}
+
+
+void Manager::change_trx_state(const id_t& id, const bool state)
+{
+    if (state) { // Turn on
+        send_command_to_trx('O', 'N', id);
+    } else { // Turn off
+        send_command_to_trx('O', 'F', id);
+    }
+}
+
+
+void Manager::send_command_to_trx(const byte& cmd1,
+        const byte& cmd2, const id_t& id)
+{
+    byte tx_data[] = {0x46, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x41, 0x4B, 0x00, 0x00, 0x4F};
+
+    // convert 32-bit id to single bytes
+    tx_data[1] = (id & 0xFF000000) >> 24;
+    tx_data[2] = (id & 0x00FF0000) >> 16;
+    tx_data[3] = (id & 0x0000FF00) >> 8;
+    tx_data[4] = (id & 0x000000FF);
+
+    // add command byte pair
+    tx_data[6] = cmd1;
+    tx_data[7] = cmd2;
+
+    rfm.transmit(tx_data, 11, true);
 }
