@@ -6,6 +6,7 @@
  */
 
 #include "RxPacketFromSensor.h"
+#include <utils.h>
 
 #ifdef TESTING
 #include <tests/FakeArduino.h>
@@ -126,18 +127,14 @@ void RxPacketFromSensor::decode_wattage()
 
 void RxPacketFromSensor::decode_id()
 {
-    id=0;
-
     switch (tx_type) {
     case CCTX: // this packet is from a CC transmit-only sensor
+        id = 0;
         id |= (packet[0] & 0x0F) << 8; // get nibble from first byte
         id |= packet[1];
         break;
     case CCTRX: // this packet is from a CC transceiver (e.g. an EDF IAM)
-        id |= (uint32_t)packet[1] << 24;
-        id |= (uint32_t)packet[2] << 16;
-        id |= (uint16_t)packet[3] << 8;
-        id |= packet[4];
+        id = utils::bytes_to_uint32(packet+1);
         break;
     }
 }
