@@ -23,6 +23,8 @@ public:
     const watts_t* get_watts() const;
 
 private:
+    using RXPacket::Health;
+
     /********************
      * Consts           *
      * ******************/
