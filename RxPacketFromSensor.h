@@ -11,7 +11,7 @@
 #include <Packet.h>
 #include "consts.h"
 
-class RxPacketFromSensor : public RXPacket<> {
+class RxPacketFromSensor : public RxPacket<> {
 public:
     RxPacketFromSensor();
     void print_id_and_watts() const;
@@ -23,8 +23,6 @@ public:
     const watts_t* get_watts() const;
 
 private:
-    using RXPacket::Health;
-
     /********************
      * Consts           *
      * ******************/
