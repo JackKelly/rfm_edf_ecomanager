@@ -72,7 +72,7 @@ void CcTx::print()
 }
 
 
-void CcTx::update(const RXPacket& packet)
+void CcTx::update(const RxPacketFromSensor& packet)
 {
     if (last_seen != 0) {
         uint16_t new_sample_period;

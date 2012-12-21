@@ -34,10 +34,10 @@ void loop()
 
 int main(void)
 {
-  init();
-  setup();
+    init();
+    setup();
 
-  while(true) {
-    loop();
-  }
+    while(true) {
+        loop();
+    }
 }

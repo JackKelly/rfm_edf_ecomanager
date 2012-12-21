@@ -17,7 +17,7 @@
 #include "tests/FakeArduino.h"
 #endif
 
-#include "Packet.h"
+#include "RxPacketFromSensor.h"
 #include "DynamicArray.h"
 #include "RollingAv.h"
 
@@ -44,7 +44,7 @@ public:
 	CcTx();
 	CcTx(const id_t& _id);
 	~CcTx();
-	void update(const RXPacket& packet);
+	void update(const RxPacketFromSensor& packet);
 	void missing();
 	const millis_t& get_eta();
 	void print();

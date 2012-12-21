@@ -6,7 +6,12 @@
  */
 
 #include "RxPacketFromSensor.h"
+
+#ifdef TESTING
+#include <tests/FakeArduino.h>
+#else
 #include <Arduino.h>
+#endif // TESTING
 
 RxPacketFromSensor::RxPacketFromSensor()
 :tx_type(CCTX), id(ID_INVALID) {}

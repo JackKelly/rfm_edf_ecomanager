@@ -6,14 +6,13 @@
  */
 
 #include <iostream>
-#include "FakeArduino.h"
-
-#include "../Packet.h"
+#include <tests/FakeArduino.h>
+#include "../RxPacketFromSensor.h"
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE PacketTest
 #include <boost/test/unit_test.hpp>
 
-void append_array(RXPacket& rx_packet,
+void append_array(RxPacketFromSensor& rx_packet,
         const byte data[], const index_t length)
 {
     for (index_t i=0; i<length; i++){
@@ -23,7 +22,7 @@ void append_array(RXPacket& rx_packet,
 
 BOOST_AUTO_TEST_CASE(txPacket1)
 {
-    RXPacket rx_packet;
+    RxPacketFromSensor rx_packet;
 
     const index_t LENGTH = 16;
     const byte data[] = {
@@ -34,7 +33,7 @@ BOOST_AUTO_TEST_CASE(txPacket1)
 
     BOOST_CHECK(rx_packet.is_ok());
 
-    BOOST_CHECK_EQUAL(rx_packet.get_tx_type(), TX);
+    BOOST_CHECK_EQUAL(rx_packet.get_tx_type(), CCTX);
 
     BOOST_CHECK(!rx_packet.is_pairing_request());
     BOOST_CHECK_EQUAL(rx_packet.get_id(), 3455);
@@ -47,7 +46,7 @@ BOOST_AUTO_TEST_CASE(txPacket1)
 
 BOOST_AUTO_TEST_CASE(txPacket2)
 {
-    RXPacket rx_packet;
+    RxPacketFromSensor rx_packet;
 
     const index_t LENGTH = 16;
     const byte data[] = {
@@ -58,7 +57,7 @@ BOOST_AUTO_TEST_CASE(txPacket2)
 
     BOOST_CHECK(rx_packet.is_ok());
 
-    BOOST_CHECK_EQUAL(rx_packet.get_tx_type(), TX);
+    BOOST_CHECK_EQUAL(rx_packet.get_tx_type(), CCTX);
 
     BOOST_CHECK(!rx_packet.is_pairing_request());
     BOOST_CHECK_EQUAL(rx_packet.get_id(), 3455);
@@ -71,7 +70,7 @@ BOOST_AUTO_TEST_CASE(txPacket2)
 
 BOOST_AUTO_TEST_CASE(txPacket3)
 {
-    RXPacket rx_packet;
+    RxPacketFromSensor rx_packet;
 
     const index_t LENGTH = 16;
     const byte data[] = {
@@ -82,7 +81,7 @@ BOOST_AUTO_TEST_CASE(txPacket3)
 
     BOOST_CHECK(rx_packet.is_ok());
 
-    BOOST_CHECK_EQUAL(rx_packet.get_tx_type(), TX);
+    BOOST_CHECK_EQUAL(rx_packet.get_tx_type(), CCTX);
 
     BOOST_CHECK(!rx_packet.is_pairing_request());
     BOOST_CHECK_EQUAL(rx_packet.get_id(), 3913);
@@ -95,7 +94,7 @@ BOOST_AUTO_TEST_CASE(txPacket3)
 
 BOOST_AUTO_TEST_CASE(txPacket4)
 {
-    RXPacket rx_packet;
+    RxPacketFromSensor rx_packet;
 
     const index_t LENGTH = 16;
     const byte data[] = {
@@ -106,7 +105,7 @@ BOOST_AUTO_TEST_CASE(txPacket4)
 
     BOOST_CHECK(rx_packet.is_ok());
 
-    BOOST_CHECK_EQUAL(rx_packet.get_tx_type(), TX);
+    BOOST_CHECK_EQUAL(rx_packet.get_tx_type(), CCTX);
 
     BOOST_CHECK(rx_packet.is_pairing_request());
     BOOST_CHECK_EQUAL(rx_packet.get_id(), 2425);
@@ -119,7 +118,7 @@ BOOST_AUTO_TEST_CASE(txPacket4)
 
 BOOST_AUTO_TEST_CASE(txPacket5)
 {
-    RXPacket rx_packet;
+    RxPacketFromSensor rx_packet;
 
     const index_t LENGTH = 16;
     const byte data[] = {
@@ -130,7 +129,7 @@ BOOST_AUTO_TEST_CASE(txPacket5)
 
     BOOST_CHECK(rx_packet.is_ok());
 
-    BOOST_CHECK_EQUAL(rx_packet.get_tx_type(), TX);
+    BOOST_CHECK_EQUAL(rx_packet.get_tx_type(), CCTX);
 
     BOOST_CHECK(!rx_packet.is_pairing_request());
     BOOST_CHECK_EQUAL(rx_packet.get_id(), 77);
@@ -143,7 +142,7 @@ BOOST_AUTO_TEST_CASE(txPacket5)
 
 BOOST_AUTO_TEST_CASE(demanchesterise)
 {
-    RXPacket rx_packet;
+    RxPacketFromSensor rx_packet;
 
     const index_t LENGTH = 16;
     const byte data[] = {
@@ -167,7 +166,7 @@ BOOST_AUTO_TEST_CASE(demanchesterise)
 
 BOOST_AUTO_TEST_CASE(demanchesteriseFail)
 {
-    RXPacket rx_packet;
+    RxPacketFromSensor rx_packet;
 
     const index_t LENGTH = 16;
     const byte data[] = {

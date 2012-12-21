@@ -4,5 +4,5 @@
 *.*~
 Release
 *.o
-CcArray_test
-tests/RollingAv_test
+*.d
+tests/*_test

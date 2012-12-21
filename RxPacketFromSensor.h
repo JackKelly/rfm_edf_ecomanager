@@ -11,7 +11,7 @@
 #include <Packet.h>
 #include "consts.h"
 
-class RxPacketFromSensor : public RXPacket {
+class RxPacketFromSensor : public RXPacket<> {
 public:
     RxPacketFromSensor();
     void print_id_and_watts() const;

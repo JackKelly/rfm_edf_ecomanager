@@ -1,40 +1,38 @@
-compile = g++ -Wall -g -c -O0 -D TESTING -I/home/jack/workspace/avr/rfm_edf_ecomanager
-link = g++ -Wall -g -O0 -D TESTING 
+nanode_rf_utils_dir = /home/jack/workspace/avr/nanode_rf_utils
+compile = g++ -Wall -MMD -g -c -O0 -D TESTING -I/home/jack/workspace/avr/rfm_edf_ecomanager -I$(nanode_rf_utils_dir) $<
+link = g++ -Wall -g -O0 -D TESTING $^ -lboost_unit_test_framework -o $@ && ./$@ 
 
 #-fno-elide-constructors
 # -I/usr/lib/avr/include/ -D UBRRH -I/usr/lib/avr/include/avr/pgmspace.h -I/usr/share/arduino/hardware/arduino/cores/arduino/ -I/usr/share/arduino/hardware/arduino/variants/standard/
 
-all: CcArray_test RollingAv_test Packet_test
-
-Packet_test: Packet_test.o Packet.o FakeArduino.o
-	$(link) Packet_test.o Packet.o FakeArduino.o -lboost_unit_test_framework -o Packet_test && ./Packet_test
+all: CcArray_test RollingAv_test RxPacketFromSensor_test
 
 RollingAv_test: RollingAv.o RollingAv_test.o
-	$(link) RollingAv.o RollingAv_test.o -lboost_unit_test_framework -o RollingAv_test && ./RollingAv_test
+	$(link)
 
-CcArray_test: CcTx.o CcArray_test.o Packet.o FakeArduino.o RollingAv.o
-	$(link) CcTx.o CcArray_test.o Packet.o FakeArduino.o RollingAv.o -lboost_unit_test_framework -o CcArray_test && ./CcArray_test
+CcArray_test: CcTx.o CcArray_test.o $(nanode_rf_utils_dir)/tests/FakeArduino.o RollingAv.o
+	$(link)
+	
+RxPacketFromSensor_test: RxPacketFromSensor.o RxPacketFromSensor_test.o $(nanode_rf_utils_dir)/tests/FakeArduino.o
+	$(link)
 	
 CcTx.o: ../CcTx.cpp ../CcTx.h ../consts.h ../DynamicArray.h ../RollingAv.h ../RollingAv.cpp
-	 $(compile) ../CcTx.cpp
+	 $(compile)
 	
 CcArray_test.o: CcArray_test.cpp ../CcTx.h ../DynamicArray.h ../RollingAv.h ../RollingAv.cpp
-	$(compile) CcArray_test.cpp
+	$(compile)
 	
-Packet.o: ../Packet.h ../Packet.cpp
-	$(compile) ../Packet.cpp
-	
-FakeArduino.o: FakeArduino.cpp FakeArduino.h
-	$(compile) FakeArduino.cpp
-	
-RollingAv.o: ../RollingAv.h ../RollingAv.cpp
-	$(compile) ../RollingAv.cpp	
+RollingAv.o: ../RollingAv.cpp ../RollingAv.h
+	$(compile)
 
 RollingAv_test.o: RollingAv_test.cpp ../RollingAv.h ../RollingAv.cpp
-	$(compile) RollingAv_test.cpp	
+	$(compile)
+	
+RxPacketFromSensor.o: ../RxPacketFromSensor.cpp ../RxPacketFromSensor.h
+	$(compile)
 
-Packet_test.o: Packet_test.cpp ../Packet.h ../Packet.cpp
-	$(compile) Packet_test.cpp
+RxPacketFromSensor_test.o: RxPacketFromSensor_test.cpp ../RxPacketFromSensor.cpp ../RxPacketFromSensor.h
+	$(compile)
 	
 clean:
-	rm -rf *.o CcArray_test
+	rm -rf *.o *_test *.d
