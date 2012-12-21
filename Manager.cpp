@@ -365,10 +365,7 @@ void Manager::send_command_to_trx(const byte& cmd1,
             0x00, 0x41, 0x4B, 0x00, 0x00, 0x4F};
 
     // convert 32-bit id to single bytes
-    tx_data[1] = (id & 0xFF000000) >> 24;
-    tx_data[2] = (id & 0x00FF0000) >> 16;
-    tx_data[3] = (id & 0x0000FF00) >> 8;
-    tx_data[4] = (id & 0x000000FF);
+    utils::uint_to_bytes(id, tx_data+1);
 
     // add command byte pair
     tx_data[6] = cmd1;
