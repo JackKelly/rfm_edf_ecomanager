@@ -11,8 +11,8 @@
 #include <utilsconsts.h>
 
 Manager::Manager()
-: auto_pair(true), pair_with(ID_INVALID), retry_missing_trxs(false),
-  print_packets(ALL_VALID),
+: auto_pair(true), pair_with(ID_INVALID), // retry_missing_trxs(false),
+  trx_retries(0), print_packets(ALL_VALID),
   retries(0), time_to_start_next_trx_roll_call(0)  {}
 
 
@@ -124,28 +124,38 @@ void Manager::poll_next_cc_trx()
 
     using namespace utils;
 
-	// don't continually poll TRXs;
-    // instead only do one roll call per SAMPLE_PERIOD
 	if (cc_trxs.get_i()==0) {
+	    /* The code in this block will be executed once per TRX roll call,
+	     * at the start of the roll call. */
+
 		if (in_future(time_to_start_next_trx_roll_call)) {
 		    /* We've finished the first pass of polling
 		     * all TRXs for this SAMPLE_PERIOD.
 		     * So now poll the missing TRXs. */
-		    retry_missing_trxs = true;
+		    if (trx_retries < MAX_RETRIES) {
+		        trx_retries++;
+		    }
 		} else {
 		    /* Time to start the first pass of another TRX roll call. */
-		    retry_missing_trxs = false;
 			time_to_start_next_trx_roll_call = millis() + SAMPLE_PERIOD;
+			trx_retries = 0;
 		}
 	}
 
-	if (retry_missing_trxs && cc_trxs.current().active) {
-	    cc_trxs.next();
-	} else {
+	/* Now actually poll the current TRX if necessary.
+	 * Either trx_retries==0 (this is the first attempt to poll TRXs this period)
+	 * or this trx is inactive so we need to retry it. */
+    if (trx_retries==0 || // This is the first run this period
+       (!cc_trxs.current().active && trx_retries < MAX_RETRIES)) {
+
         poll_cc_trx(cc_trxs.current().id);
         cc_trxs.current().active = wait_for_response(cc_trxs.current().id, CC_TRX_TIMEOUT);
-        cc_trxs.next();
-	}
+
+        if (cc_trxs.current().active) {
+            delay(INTER_TRX_DELAY); // Wait so we don't completely saturate the airwaves.
+        }
+    }
+    cc_trxs.next();
 }
 
 

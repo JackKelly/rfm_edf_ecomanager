@@ -45,7 +45,8 @@ private:
     bool auto_pair; /* auto_pair mode on or off? */
     id_t pair_with; /* radio ID to pair with */
 
-    bool retry_missing_trxs;
+    // bool retry_missing_trxs;
+    uint8_t trx_retries;
 
     enum {
         ONLY_KNOWN, /* Only print packets we know about */
