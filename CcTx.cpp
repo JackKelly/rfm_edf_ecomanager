@@ -82,7 +82,7 @@ void CcTx::update(const RxPacketFromSensor& packet)
         new_sample_period = (packet.get_timecode() - last_seen) / num_periods_missed;
 
         // Check the new sample_period is sane
-        if (new_sample_period > 5700 && new_sample_period < 6300) {
+        if (new_sample_period > 5500 && new_sample_period < 6500) {
             sample_period.add_sample(new_sample_period);
             log(DEBUG, PSTR("TX %lu. Adding new_sample_period %u, average now=%u"),
                     id, new_sample_period, sample_period.get_av()); /* Adding new sample period */
