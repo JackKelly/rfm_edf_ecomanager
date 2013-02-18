@@ -7,7 +7,7 @@ in a building.
 Current status
 ==============
 
-The code is "feature complete" and implements in that it implements all of the features listed in the
+The code is "feature complete" in that it implements all of the features listed in the
 [user manual](https://github.com/JackKelly/rfm_edf_ecomanager/wiki).
 
 
