@@ -43,7 +43,7 @@ void RxPacketFromSensor::handle_first_byte(const byte& first_byte)
     }
 }
 
-void RxPacketFromSensor::print_id_and_watts() const
+void RxPacketFromSensor::print_id_and_watts(const bool reply_to_poll) const
 {
     print_id_and_type();
 
@@ -55,6 +55,8 @@ void RxPacketFromSensor::print_id_and_watts() const
     if (tx_type == CCTRX) {
         Serial.print(F(", \"state\": "));
         Serial.print(packet[10]==0x53 ? F("1") : F("0"));
+        Serial.print(F(", \"reply_to_poll\": "));
+        Serial.print(reply_to_poll ? F("1") : F("0"));
     }
 
     Serial.println(F("}"));

@@ -14,7 +14,7 @@
 class RxPacketFromSensor : public RxPacket<> {
 public:
     RxPacketFromSensor();
-    void print_id_and_watts() const;
+    void print_id_and_watts(const bool reply_to_poll = false) const;
     void print_id_and_type(const bool on_its_own = false) const;
     void print_sensors() const;
     bool is_pairing_request() const;

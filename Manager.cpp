@@ -241,7 +241,7 @@ bool Manager::process_rx_pack_buf_and_find_id(const id_t& target_id)
 				    //****** CC TRX (transceiver; e.g. EDF IAM) ******
 				    if (cc_trxs.find(id)) {
 				        // Received ID is a CC_TRX id we know about
-				        packet->print_id_and_watts(); // send data over serial
+				        packet->print_id_and_watts(id == target_id); // send data over serial
 				    }
 				    //********* UNKNOWN TRX ID *************************
 				    else {
